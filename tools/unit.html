@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单位换算 · TubeCalc</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav class="nav"><div class="nav-inner">
+  <a class="brand" href="../index.html">TubeCalc<span> · 科研小工具</span></a>
+  <div class="nav-links">
+    <a href="../index.html">首页</a>
+    <a href="mw.html">分子量</a>
+    <a href="seq.html">序列工具</a>
+    <a href="stats.html">统计计算</a>
+    <a href="dilution.html">稀释计算</a>
+    <a href="unit.html" class="active">单位换算</a>
+    <a href="mix.html">配方计算</a>
+  </div>
+</div></nav>
+
+<main class="container">
+  <h1 class="page-title">单位换算</h1>
+  <p class="page-desc">实验常用量：长度、质量、体积、摩尔浓度与摩尔数。输入数值即时换算。</p>
+
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label for="cat">物理量</label>
+        <select id="cat"></select>
+      </div>
+      <div>
+        <label for="val">数值</label>
+        <input type="number" id="val" step="any" value="1">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="from">从</label>
+        <select id="from"></select>
+      </div>
+      <div>
+        <label for="to">到</label>
+        <select id="to"></select>
+      </div>
+    </div>
+    <div class="error" id="err"></div>
+    <div class="result">
+      <label>结果</label>
+      <div class="big-number"><span id="res"></span><small id="resUnit"></small></div>
+    </div>
+    <div id="allTable"></div>
+  </div>
+</main>
+
+<footer>
+  © 2026 <a href="../index.html">TubeCalc</a> · gal 为美制加仑，lb/oz 为常衡制
+</footer>
+
+<script>
+'use strict';
+const CATS = {
+  '长度（基准 m）': { m: 1, km: 1e3, dm: 1e-1, cm: 1e-2, mm: 1e-3, 'μm': 1e-6, nm: 1e-9, in: 0.0254, ft: 0.3048, mi: 1609.344 },
+  '质量（基准 kg）': { kg: 1, g: 1e-3, mg: 1e-6, 'μg': 1e-9, ng: 1e-12, t: 1e3, lb: 0.45359237, oz: 0.028349523 },
+  '体积（基准 L）': { L: 1, mL: 1e-3, 'μL': 1e-6, nL: 1e-9, 'm³': 1e3, 'ft³': 28.316846592, 'gal (US)': 3.785411784 },
+  '摩尔浓度（基准 mol/L）': { 'M': 1, mM: 1e-3, 'μM': 1e-6, nM: 1e-9, pM: 1e-12 },
+  '物质的量（基准 mol）': { mol: 1, mmol: 1e-3, 'μmol': 1e-6, nmol: 1e-9 }
+};
+const catSel = document.getElementById('cat');
+const fromSel = document.getElementById('from');
+const toSel = document.getElementById('to');
+const valIn = document.getElementById('val');
+
+function fillOptions(sel, obj, skip) {
+  sel.innerHTML = '';
+  for (const k in obj) {
+    if (k === skip) continue;
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k;
+    sel.appendChild(o);
+  }
+}
+function initCat() {
+  catSel.innerHTML = '';
+  for (const c in CATS) {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    catSel.appendChild(o);
+  }
+}
+function initUnits() {
+  const units = CATS[catSel.value];
+  const keys = Object.keys(units);
+  fillOptions(fromSel, units, null);
+  fillOptions(toSel, units, null);
+  fromSel.value = keys[0];
+  toSel.value = keys[Math.min(2, keys.length - 1)];
+  convert();
+}
+function fmtX(x) {
+  if (!isFinite(x)) return '—';
+  if (x !== 0 && (Math.abs(x) < 1e-5 || Math.abs(x) >= 1e7)) return x.toExponential(5);
+  return String(Math.round(x * 1e8) / 1e8);
+}
+function convert() {
+  const err = document.getElementById('err');
+  err.textContent = '';
+  const units = CATS[catSel.value];
+  const v = parseFloat(valIn.value);
+  if (valIn.value.trim() === '' || !isFinite(v)) {
+    document.getElementById('res').textContent = '—';
+    document.getElementById('allTable').innerHTML = '';
+    return;
+  }
+  const base = v * units[fromSel.value];
+  const out = base / units[toSel.value];
+  document.getElementById('res').textContent = fmtX(out);
+  document.getElementById('resUnit').textContent = toSel.value;
+  let html = '<table class="tbl"><tr><th>等于</th></tr>';
+  for (const k in units) {
+    html += '<tr><td>' + fmtX(base / units[k]) + ' ' + k + '</td></tr>';
+  }
+  html += '</table>';
+  document.getElementById('allTable').innerHTML = html;
+}
+catSel.addEventListener('change', initUnits);
+fromSel.addEventListener('change', convert);
+toSel.addEventListener('change', convert);
+valIn.addEventListener('input', convert);
+initCat();
+initUnits();
+</script>
+</body>
+</html>

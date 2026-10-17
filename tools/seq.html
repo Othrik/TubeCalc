@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>序列处理工具 · TubeCalc</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<nav class="nav"><div class="nav-inner">
+  <a class="brand" href="../index.html">TubeCalc<span> · 科研小工具</span></a>
+  <div class="nav-links">
+    <a href="../index.html">首页</a>
+    <a href="mw.html">分子量</a>
+    <a href="seq.html" class="active">序列工具</a>
+    <a href="stats.html">统计计算</a>
+    <a href="dilution.html">稀释计算</a>
+    <a href="unit.html">单位换算</a>
+    <a href="mix.html">配方计算</a>
+  </div>
+</div></nav>
+
+<main class="container">
+  <h1 class="page-title">序列处理工具</h1>
+  <p class="page-desc">粘贴 DNA/RNA 序列，进行反向互补、转录与组成分析。输入会自动去除空白与数字。</p>
+
+  <div class="panel">
+    <label for="seqIn">输入序列（DNA 或 RNA）</label>
+    <textarea id="seqIn" rows="6" placeholder="例如：ATGGCCTATTGGACGGCAGTTAG"></textarea>
+    <div class="row">
+      <button class="btn" id="rcBtn">反向互补</button>
+      <button class="btn btn-ghost" id="trBtn">转录 DNA→RNA</button>
+      <button class="btn btn-ghost" id="rtBtn">逆转录 RNA→DNA</button>
+      <button class="btn btn-ghost" id="copyBtn">复制结果</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+    </div>
+    <div class="error" id="err"></div>
+    <pre class="out" id="out"></pre>
+  </div>
+
+  <div class="panel" id="statPanel" style="display:none">
+    <label>组成分析</label>
+    <div id="statBody"></div>
+  </div>
+</main>
+
+<footer>
+  © 2026 <a href="../index.html">TubeCalc</a> · Tm：&lt;14 nt 用 Wallace 法则，其余用 GC 经验公式（仅作参考）
+</footer>
+
+<script>
+'use strict';
+function cleanSeq(s) {
+  return s.toUpperCase().replace(/[^ACGTUN]/g, '');
+}
+function checkSeq(s) {
+  if (!s) return '请输入序列';
+  if (/[^ACGTUN]/.test(s)) return '包含无法识别的碱基字符（仅支持 A C G T U N）';
+  if (/[T]/.test(s) && /[U]/.test(s)) return '同时含有 T 和 U，请确认是 DNA 还是 RNA';
+  return '';
+}
+const compDNA = {A:'T', T:'A', G:'C', C:'G', U:'A', N:'N'};
+const compRNA = {A:'U', U:'A', G:'C', C:'G', T:'A', N:'N'};
+function isRNA(s) { return /U/.test(s) && !/T/.test(s); }
+function revComp(s) {
+  const map = isRNA(s) ? compRNA : compDNA;
+  let r = '';
+  for (let i = s.length - 1; i >= 0; i--) r += map[s[i]] || 'N';
+  return r;
+}
+function transcribe(s) { return s.replace(/T/g, 'U'); }
+function reverseTranscribe(s) { return s.replace(/U/g, 'T'); }
+function fmtN(x, d) { return Number(x).toFixed(d === undefined ? 2 : d); }
+
+function stats(s) {
+  const cnt = {};
+  for (const b of ['A', 'C', 'G', 'T', 'U', 'N']) cnt[b] = (s.match(new RegExp(b, 'g')) || []).length;
+  const atgc = cnt.A + cnt.C + cnt.G + cnt.T + cnt.U;
+  const gc = cnt.G + cnt.C;
+  const gcPct = atgc ? 100 * gc / atgc : 0;
+  let tm;
+  if (atgc < 14) tm = 2 * (cnt.A + cnt.T + cnt.U) + 4 * gc;      // Wallace 法则
+  else tm = 64.9 + 41 * (gc - 16.4) / atgc;                       // GC 经验公式
+  return { cnt, atgc, gcPct, tm };
+}
+
+function renderStats(s) {
+  const st = stats(s);
+  let html = '<table class="tbl"><tr><th>指标</th><th>数值</th></tr>';
+  html += '<tr><td>总长度</td><td>' + s.length + ' nt</td></tr>';
+  const bases = isRNA(s) ? ['A', 'U', 'G', 'C'] : ['A', 'T', 'G', 'C'];
+  for (const b of bases) html += '<tr><td>' + b + '</td><td>' + st.cnt[b] + '</td></tr>';
+  if (st.cnt.N) html += '<tr><td>N（未确定）</td><td>' + st.cnt.N + '</td></tr>';
+  html += '<tr><td>GC 含量</td><td>' + fmtN(st.gcPct) + ' %</td></tr>';
+  html += '<tr><td>Tm 估算</td><td>' + fmtN(st.tm, 1) + ' °C' + (st.atgc < 14 ? '<span class="badge">Wallace</span>' : '') + '</td></tr>';
+  html += '</table>';
+  document.getElementById('statBody').innerHTML = html;
+  document.getElementById('statPanel').style.display = '';
+}
+
+function run(fn) {
+  const err = document.getElementById('err');
+  err.textContent = '';
+  const raw = document.getElementById('seqIn').value;
+  const s = cleanSeq(raw);
+  const problem = checkSeq(s);
+  if (problem) { err.textContent = problem; return; }
+  const res = fn(s);
+  document.getElementById('out').textContent = res;
+  if (res === s || true) renderStats(fn === stats ? s : res);
+}
+function plainStats() {
+  const err = document.getElementById('err');
+  err.textContent = '';
+  const s = cleanSeq(document.getElementById('seqIn').value);
+  const problem = checkSeq(s);
+  if (problem) { err.textContent = problem; return; }
+  document.getElementById('out').textContent = '(组成分析见下方表格)';
+  renderStats(s);
+}
+
+document.getElementById('rcBtn').addEventListener('click', () => run(revComp));
+document.getElementById('trBtn').addEventListener('click', () => run(transcribe));
+document.getElementById('rtBtn').addEventListener('click', () => run(reverseTranscribe));
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('seqIn').value = '';
+  document.getElementById('out').textContent = '';
+  document.getElementById('statPanel').style.display = 'none';
+  document.getElementById('err').textContent = '';
+});
+document.getElementById('copyBtn').addEventListener('click', function () {
+  const t = document.getElementById('out').textContent;
+  if (!t) return;
+  const self = this;
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject())
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = t; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    })
+    .finally(() => {
+      const old = self.textContent; self.textContent = '已复制';
+      setTimeout(() => { self.textContent = old; }, 1200);
+    });
+});
+</script>
+</body>
+</html>
