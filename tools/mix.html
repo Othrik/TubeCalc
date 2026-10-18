@@ -16,6 +16,7 @@
 .mix-head { font-size:12.5px; color:var(--muted); display:grid; grid-template-columns: minmax(120px,1.2fr) 1.4fr 1.4fr .9fr 44px; gap:10px; padding:0 12px; margin-top:18px; }
 .cell { display:flex; gap:6px; align-items:center; min-width:0; }
 .cell input[type=text], .cell input[type=number], .cell select { min-width:0; flex:1; }
+.cell.name select { flex:0 0 auto; width:80px; }
 .vol-out { font-weight:600; font-variant-numeric:tabular-nums; }
 .row-warn { color:var(--danger); font-size:12px; grid-column:1/-1; }
 .del { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:8px; cursor:pointer; height:38px; }
@@ -42,7 +43,7 @@
 
 <main class="container">
   <h1 class="page-title">配方计算器</h1>
-  <p class="page-desc">反应体系 / 母液配制：按"储液浓度 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液（如 5× buffer → 1×），溶剂自动补齐，数据自动保存在本浏览器。</p>
+  <p class="page-desc">反应体系 / 母液配制：按"储液浓度 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液与粉末称量，溶剂自动补齐，数据自动保存在本浏览器。</p>
 
   <div class="mix-controls">
     <label>总体积
@@ -54,11 +55,11 @@
     <button class="btn btn-ghost" id="copyTsv">复制表格 (TSV)</button>
   </div>
 
-  <div class="mix-head"><span>组分</span><span>储液浓度</span><span>终浓度</span><span>加样量</span><span></span></div>
+  <div class="mix-head"><span>组分</span><span>储液 / 分子量</span><span>终浓度</span><span>加样量 / 质量</span><span></span></div>
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
-  <div class="hint" style="margin-top:12px">「自动计算」行按 V=C终×V总÷C储 计算；「手动指定」行直接填体积（若同时填储液浓度会反显终浓度）；水的加样量 = 总体积 − 各组分之和。储液是倍液（如 5× buffer）时，储液与终浓度的单位都选 ×：储液 5×、终浓度 1× 即取 V总/5，2× 即取 V总/2。</div>
+  <div class="hint" style="margin-top:12px">「算体积」行按 V=C终×V总÷C储 计算；「定体积」行直接填体积（若同时填储液浓度会反显终浓度）；「粉末」行直接算称量质量：终浓度选 mol/L 单位需填分子量，选 mg/mL 等质量浓度单位则无需分子量；粉末按不占体积处理（溶解后定容），不影响水的体积；水的加样量 = 总体积 − 各液态组分之和。储液是倍液（如 5× buffer）时，储液与终浓度的单位都选 ×：储液 5×、终浓度 1× 即取 V总/5。</div>
 </main>
 
 <footer><span class="foot-note">计算全部在浏览器本地进行</span><br>© 2026 <a href="../index.html">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></footer>
@@ -67,12 +68,22 @@
 const LS_KEY = 'tubecalc_mix_v1';
 const $ = (s, p) => (p || document).querySelector(s);
 const UNITS = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×']];
+// 粉末行终浓度单位：摩尔浓度（需分子量）或质量浓度（键→g/L 换算系数）
+const P_UNITS = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL']];
+const P_MASS = { gl:1, mgml:1, mgl:0.001, ugml:0.001, ngml:1e-6 };
 let rows = [];
 
 function fmtVol(v) {
   if (!isFinite(v)) return '—';
   const a = Math.abs(v);
   return (a >= 100 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : v.toFixed(3));
+}
+function fmtMass(g) {
+  if (!isFinite(g)) return '—';
+  if (g >= 1) return g.toFixed(3) + ' g';
+  if (g * 1e3 >= 1) return fmtVol(g * 1e3) + ' mg';
+  if (g * 1e6 >= 1) return fmtVol(g * 1e6) + ' μg';
+  return fmtVol(g * 1e9) + ' ng';
 }
 function fmtConc(v) {
   const a = Math.abs(v);
@@ -97,6 +108,16 @@ function unitSel(sel, cls) {
   return '<select class="' + cls + '">' + UNITS.map(u =>
     '<option value="' + u[0] + '"' + (u[0] === sel ? ' selected' : '') + '>' + u[1] + '</option>').join('') + '</select>';
 }
+function powderUnitSel(sel, cls) {
+  return '<select class="' + cls + '">' + P_UNITS.map(u =>
+    '<option value="' + u[0] + '"' + (u[0] === sel ? ' selected' : '') + '>' + u[1] + '</option>').join('') + '</select>';
+}
+function typeSel(r) {
+  return '<select class="ty" title="组分类型">' +
+    '<option value="calc"' + (r.type === 'calc' ? ' selected' : '') + '>算体积</option>' +
+    '<option value="fixed"' + (r.type === 'fixed' ? ' selected' : '') + '>定体积</option>' +
+    '<option value="powder"' + (r.type === 'powder' ? ' selected' : '') + '>粉末</option></select>';
+}
 
 function render() {
   $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name"><input type="text" value="水（溶剂）" disabled></div>' +
@@ -105,22 +126,34 @@ function render() {
   rows.forEach((r, i) => {
     const d = document.createElement('div');
     d.className = 'mix-row';
+    let col2, col3, col4;
+    if (r.type === 'powder') {
+      col2 = '<div class="cell"><input type="number" data-k="mw" placeholder="分子量 g/mol" min="0" step="any" value="' + (r.mw || '') + '"></div>';
+      col3 = '<div class="cell"><input type="number" data-k="fv" placeholder="终浓度" min="0" step="any" value="' + r.fv + '">' + powderUnitSel(r.fu, 'fu') + '</div>';
+      col4 = '<div class="cell"><span class="vol-out" data-vol>—</span></div>';
+    } else {
+      col2 = '<div class="cell"><input type="number" data-k="sv" placeholder="储液浓度" min="0" step="any" value="' + r.sv + '">' + unitSel(r.su, 'su') + '</div>';
+      if (r.type === 'calc') {
+        col3 = '<div class="cell"><input type="number" data-k="fv" placeholder="终浓度" min="0" step="any" value="' + r.fv + '">' + unitSel(r.fu, 'fu') + '</div>';
+        col4 = '<div class="cell"><span class="vol-out" data-vol>—</span></div>';
+      } else {
+        col3 = '<div class="cell"><span class="hint" style="flex:1">体积手动指定</span></div>';
+        col4 = '<div class="cell vol-fixed"><input type="number" data-k="vol" placeholder="μL" min="0" step="any" value="' + (r.vol || '') + '"></div>';
+      }
+    }
     d.innerHTML =
-      '<div class="cell name"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div>' +
-      '<div class="cell"><input type="number" data-k="sv" placeholder="储液浓度" min="0" step="any" value="' + r.sv + '">' + unitSel(r.su, 'su') + '</div>' +
-      (r.type === 'calc'
-        ? '<div class="cell"><input type="number" data-k="fv" placeholder="终浓度" min="0" step="any" value="' + r.fv + '">' + unitSel(r.fu, 'fu') + '</div>'
-        : '<div class="cell"><span class="hint" style="flex:1">体积手动指定</span></div>') +
-      (r.type === 'calc'
-        ? '<div class="cell"><span class="vol-out" data-vol>—</span></div>'
-        : '<div class="cell vol-fixed"><input type="number" data-k="vol" placeholder="μL" min="0" step="any" value="' + (r.vol || '') + '"></div>') +
+      '<div class="cell name"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '">' + typeSel(r) + '</div>' +
+      col2 + col3 + col4 +
       '<button class="del" data-del title="删除该组分">×</button>' +
       (r.type === 'fixed' && r.sv !== '' ? '<div class="hint" data-inv style="grid-column:1/-1"></div>' : '');
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value; changed();
     }));
     d.querySelectorAll('select').forEach(el => el.addEventListener('change', () => {
-      if (el.classList.contains('su')) r.su = el.value; else r.fu = el.value; changed();
+      if (el.classList.contains('ty')) { r.type = el.value; if (r.mw === undefined) r.mw = ''; render(); }
+      else if (el.classList.contains('su')) r.su = el.value;
+      else r.fu = el.value;
+      changed();
     }));
     $('[data-del]', d).addEventListener('click', () => { rows.splice(i, 1); render(); });
     box.appendChild(d);
@@ -150,6 +183,18 @@ function updateOutputs() {
         $('[data-vol]', d).textContent = '—';
         if (xMix) warn = '×（倍数）需储液与终浓度同时使用';
       }
+    } else if (r.type === 'powder') {
+      const cfN = parseFloat(r.fv), mwN = parseFloat(r.mw);
+      let m = NaN;
+      if (P_MASS.hasOwnProperty(r.fu)) {
+        if (isFinite(cfN)) m = cfN * P_MASS[r.fu] * vt / 1e6;      // g/L × L = g
+      } else if (isFinite(cfN) && isFinite(mwN) && mwN > 0) {
+        m = cfN * parseFloat(r.fu) * vt / 1e6 * mwN;                // mol/L × L × g/mol = g
+      } else if (isFinite(cfN)) {
+        warn = '按 mol/L 终浓度需填分子量（g/mol）';
+      }
+      r._m = isFinite(m) ? m : 0;
+      $('[data-vol]', d).textContent = isFinite(m) ? fmtMass(m) : '—';
     } else {
       v = parseFloat(r.vol) || 0; sum += v;
       const svN = parseFloat(r.sv);
@@ -179,7 +224,7 @@ function restore() {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
     if (s && Array.isArray(s.rows)) {
       $('#total').value = s.total; $('#totalUnit').value = s.totalUnit;
-      rows = s.rows.map(r => Object.assign({ name:'', type:'calc', sv:'', su:'1', fv:'', fu:'1', vol:'' }, r));
+      rows = s.rows.map(r => Object.assign({ name:'', type:'calc', sv:'', su:'1', fv:'', fu:'1', vol:'', mw:'' }, r));
       return true;
     }
   } catch (e) {}
@@ -188,19 +233,28 @@ function restore() {
 
 $('#total').addEventListener('input', changed);
 $('#totalUnit').addEventListener('change', changed);
-$('#addRow').addEventListener('click', () => { rows.push({ name:'', type:'calc', sv:'', su:'1', fv:'', fu:'1', vol:'' }); render(); });
+$('#addRow').addEventListener('click', () => { rows.push({ name:'', type:'calc', sv:'', su:'1', fv:'', fu:'1', vol:'', mw:'' }); render(); });
 $('#loadDemo').addEventListener('click', () => { const d = demo(); $('#total').value = d.total; $('#totalUnit').value = d.totalUnit; rows = d.rows; render(); });
 $('#copyTsv').addEventListener('click', function () {
   const vt = totalUpt();
   const UL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×'};
-  let out = '组分\t储液浓度\t终浓度\t加样量\n水（溶剂）\t—\t—\t' + $('#waterVol').textContent + '\n';
+  const PUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','gl':' g/L','mgml':' mg/mL','mgl':' mg/L','ugml':' μg/mL','ngml':' ng/mL'};
+  let out = '组分\t储液/分子量\t终浓度\t加样量\n水（溶剂）\t—\t—\t' + $('#waterVol').textContent + '\n';
   rows.forEach(r => {
-    const suX = r.su === 'x';
-    const csN = suX ? parseFloat(r.sv) : parseFloat(r.sv) * parseFloat(r.su);
-    const cs = (r.sv === '' || r.sv == null) ? '—' : r.sv + UL[r.su];
-    const cf = (r.type === 'calc' && r.fv !== '' && r.fv != null) ? r.fv + (UL[r.fu] || '')
+    let cs, cf, amt;
+    if (r.type === 'powder') {
+      cs = r.mw ? r.mw + ' g/mol' : '粉末';
+      cf = (r.fv !== '' && r.fv != null) ? r.fv + (PUL[r.fu] || '') : '—';
+      amt = fmtMass(r._m);
+    } else {
+      const suX = r.su === 'x';
+      const csN = suX ? parseFloat(r.sv) : parseFloat(r.sv) * parseFloat(r.su);
+      cs = (r.sv === '' || r.sv == null) ? '—' : r.sv + UL[r.su];
+      cf = (r.type === 'calc' && r.fv !== '' && r.fv != null) ? r.fv + (UL[r.fu] || '')
              : (r.type === 'fixed' && r.sv !== '' && r.sv != null ? '≈' + fmtConc(csN * (r._v || 0) / vt) + (suX ? ' ×' : ' M') : '—');
-    out += [r.name || '未命名', cs, cf, r.type === 'calc' ? fmtVol(r._v) + ' μL' : (r.vol || 0) + ' μL'].join('\t') + '\n';
+      amt = r.type === 'calc' ? fmtVol(r._v) + ' μL' : (r.vol || 0) + ' μL';
+    }
+    out += [r.name || '未命名', cs, cf, amt].join('\t') + '\n';
   });
   const btn = $('#copyTsv'), t = btn.textContent;
   const done = () => { btn.textContent = '已复制'; setTimeout(() => btn.textContent = t, 1200); };
@@ -210,7 +264,7 @@ $('#copyTsv').addEventListener('click', function () {
   }).finally(done);
 });
 
-if (!restore()) rows = [{ name:'', type:'calc', sv:'', su:'1', fv:'', fu:'1', vol:'' }];
+if (!restore()) rows = [{ name:'', type:'calc', sv:'', su:'1', fv:'', fu:'1', vol:'', mw:'' }];
 render();
 </script>
 </body>
