@@ -42,7 +42,7 @@
 
 <main class="container">
   <h1 class="page-title">配方计算器</h1>
-  <p class="page-desc">反应体系 / 母液配制：按"储液浓度 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），溶剂自动补齐，数据自动保存在本浏览器。</p>
+  <p class="page-desc">反应体系 / 母液配制：按"储液浓度 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液（如 5× buffer → 1×），溶剂自动补齐，数据自动保存在本浏览器。</p>
 
   <div class="mix-controls">
     <label>总体积
@@ -58,7 +58,7 @@
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
-  <div class="hint" style="margin-top:12px">「自动计算」行按 V=C终×V总÷C储 计算；「手动指定」行直接填体积（若同时填储液浓度会反显终浓度）；水的加样量 = 总体积 − 各组分之和。</div>
+  <div class="hint" style="margin-top:12px">「自动计算」行按 V=C终×V总÷C储 计算；「手动指定」行直接填体积（若同时填储液浓度会反显终浓度）；水的加样量 = 总体积 − 各组分之和。储液是倍液（如 5× buffer）时，储液与终浓度的单位都选 ×：储液 5×、终浓度 1× 即取 V总/5，2× 即取 V总/2。</div>
 </main>
 
 <footer><span class="foot-note">计算全部在浏览器本地进行</span><br>© 2026 <a href="../index.html">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></footer>
@@ -66,7 +66,7 @@
 <script>
 const LS_KEY = 'tubecalc_mix_v1';
 const $ = (s, p) => (p || document).querySelector(s);
-const UNITS = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM']];
+const UNITS = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×']];
 let rows = [];
 
 function fmtVol(v) {
@@ -137,19 +137,26 @@ function updateOutputs() {
     const r = rows[i];
     let v = 0, warn = '';
     if (r.type === 'calc') {
-      const cs = parseFloat(r.sv) * parseFloat(r.su);
-      const cf = parseFloat(r.fv) * parseFloat(r.fu);
-      v = (cs > 0 && isFinite(cf)) ? cf * vt / cs : NaN;
+      const svN = parseFloat(r.sv), fvN = parseFloat(r.fv);
+      const cs = r.su === 'x' ? svN : svN * parseFloat(r.su);
+      const cf = r.fu === 'x' ? fvN : fvN * parseFloat(r.fu);
+      const xMix = (r.su === 'x') !== (r.fu === 'x');
+      v = (cs > 0 && isFinite(cf) && !xMix) ? cf * vt / cs : NaN;
       if (isFinite(v)) {
         sum += v;
         if (cf > cs) warn = '终浓度高于储液浓度，无法配制';
         $('[data-vol]', d).textContent = fmtVol(v) + ' μL';
-      } else { $('[data-vol]', d).textContent = '—'; }
+      } else {
+        $('[data-vol]', d).textContent = '—';
+        if (xMix) warn = '×（倍数）需储液与终浓度同时使用';
+      }
     } else {
       v = parseFloat(r.vol) || 0; sum += v;
-      const cs = parseFloat(r.sv) * parseFloat(r.su);
+      const svN = parseFloat(r.sv);
+      const cs = r.su === 'x' ? svN : svN * parseFloat(r.su);
+      const usuf = r.su === 'x' ? ' ×' : ' M';
       const inv = $('[data-inv]', d);
-      if (inv) inv.textContent = (cs > 0 && vt > 0) ? '按当前储液折算终浓度 ≈ ' + fmtConc(cs * v / vt) + ' M' : '';
+      if (inv) inv.textContent = (cs > 0 && vt > 0) ? '按当前储液折算终浓度 ≈ ' + fmtConc(cs * v / vt) + usuf : '';
     }
     r._v = isFinite(v) ? v : 0;
     let w = $('.row-warn', d);
@@ -185,12 +192,14 @@ $('#addRow').addEventListener('click', () => { rows.push({ name:'', type:'calc',
 $('#loadDemo').addEventListener('click', () => { const d = demo(); $('#total').value = d.total; $('#totalUnit').value = d.totalUnit; rows = d.rows; render(); });
 $('#copyTsv').addEventListener('click', function () {
   const vt = totalUpt();
-  const UL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM'};
+  const UL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×'};
   let out = '组分\t储液浓度\t终浓度\t加样量\n水（溶剂）\t—\t—\t' + $('#waterVol').textContent + '\n';
   rows.forEach(r => {
+    const suX = r.su === 'x';
+    const csN = suX ? parseFloat(r.sv) : parseFloat(r.sv) * parseFloat(r.su);
     const cs = (r.sv === '' || r.sv == null) ? '—' : r.sv + UL[r.su];
-    const cf = (r.type === 'calc' && r.fv !== '' && r.fv != null) ? r.fv + UL[r.fu]
-             : (r.type === 'fixed' && r.sv !== '' && r.sv != null ? '≈' + fmtConc(parseFloat(r.sv) * parseFloat(r.su) * r._v / vt) + ' M' : '—');
+    const cf = (r.type === 'calc' && r.fv !== '' && r.fv != null) ? r.fv + (UL[r.fu] || '')
+             : (r.type === 'fixed' && r.sv !== '' && r.sv != null ? '≈' + fmtConc(csN * (r._v || 0) / vt) + (suX ? ' ×' : ' M') : '—');
     out += [r.name || '未命名', cs, cf, r.type === 'calc' ? fmtVol(r._v) + ' μL' : (r.vol || 0) + ' μL'].join('\t') + '\n';
   });
   const btn = $('#copyTsv'), t = btn.textContent;
