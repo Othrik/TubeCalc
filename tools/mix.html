@@ -14,14 +14,30 @@
   padding:10px 12px; border:1px solid var(--border); border-radius:11px; margin-top:10px; background:var(--card); }
 .mix-row.water { background:var(--accent-soft); border-color:var(--accent); }
 .mix-head { font-size:12.5px; color:var(--muted); display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; padding:0 12px; margin-top:18px; }
+.mix-head span { display:flex; align-items:center; gap:6px; }
+.mix-head span::before { content:''; flex:0 0 8px; width:8px; height:8px; border-radius:3px; background:currentColor; opacity:.35; }
+.mix-head span:nth-child(2)::before { background:#5e5ce6; opacity:1; }
+.mix-head span:nth-child(3)::before { background:#22a5b4; opacity:1; }
+.mix-head span:nth-child(4)::before { background:#e8890c; opacity:1; }
+.mix-head span:empty::before { display:none; }
 .cell { display:flex; gap:6px; align-items:center; min-width:0; }
-.cell input[type=text], .cell input[type=number], .cell select { min-width:0; flex:1; }
-.cell select { flex:0 0 auto; max-width:92px; }
+.ig { flex:1; display:flex; gap:6px; align-items:center; min-width:0; }
+.ig input[type=text], .ig input[type=number], .ig select { min-width:0; flex:1; }
+.ig select { flex:0 0 auto; max-width:92px; }
+/* 列语义色：储液=紫（投入），终浓度=青（目标），用量=琥珀（结果） */
+.c2 .ig input, .c2 .ig select { background:rgba(94,92,230,.07); border-color:rgba(94,92,230,.30); }
+.c3 .ig input, .c3 .ig select { background:rgba(34,165,180,.08); border-color:rgba(34,165,180,.32); }
+.c4 .ig input, .c4 .ig select { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
+.c4 .ig input { font-weight:600; }
+.mix-row.water .vol-out { display:inline-block; padding:9px 12px; border-radius:10px; background:rgba(255,159,10,.10); border:1px solid rgba(255,159,10,.40); }
 .vol-out { font-weight:600; font-variant-numeric:tabular-nums; }
 .row-warn { color:var(--danger); font-size:12px; grid-column:1/-1; }
 .del { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:8px; cursor:pointer; height:38px; }
 .del:hover { color:var(--danger); border-color:var(--danger); }
-@media (max-width:760px){ .mix-head{display:none;} .mix-row{grid-template-columns:1fr 1fr;} .mix-row .cell.name{grid-column:1/3;} .mix-row .del{grid-column:2; justify-self:end;} .mix-row .row-warn{grid-column:1/3;} }
+@media (max-width:760px){ .mix-head{display:none;} .mix-row{grid-template-columns:1fr 1fr;} .mix-row .cell.name{grid-column:1/3;} .mix-row .del{grid-column:2; justify-self:end;} .mix-row .row-warn{grid-column:1/3;}
+  .cell{flex-direction:column; align-items:stretch; gap:4px;}
+  .cell::before{content:attr(data-l); font-size:11px; font-weight:600; color:var(--muted);}
+  .cell.name::before{color:var(--text);} .cell.c2::before{color:#7d7ce0;} .cell.c3::before{color:#1a97a8;} .cell.c4::before{color:#d97f06;} }
 #mixWarn { margin-top:14px; }
 .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
 </style>
@@ -109,17 +125,17 @@ function sel(list, val, cls) {
 }
 
 function render() {
-  $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name"><input type="text" value="水（溶剂）" disabled></div>' +
-    '<div class="cell">—</div><div class="cell">—</div><div class="cell"><span class="vol-out" id="waterVol">—</span></div><div></div></div>';
+  $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="组分"><div class="ig"><input type="text" value="水（溶剂）" disabled></div></div>' +
+    '<div class="cell" data-l="储液 / 分子量">—</div><div class="cell" data-l="终浓度">—</div><div class="cell c4" data-l="用量"><span class="vol-out" id="waterVol">—</span></div><div></div></div>';
   const box = $('#rows'); box.innerHTML = '';
   rows.forEach((r, i) => {
     const d = document.createElement('div');
     d.className = 'mix-row';
     d.innerHTML =
-      '<div class="cell name"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div>' +
-      '<div class="cell"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '">' + sel(SU, r.su, 'su') + '</div>' +
-      '<div class="cell"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '">' + sel(FU, r.fu, 'fu') + '</div>' +
-      '<div class="cell"><input type="number" data-k="amt" placeholder="μL / mg" min="0" step="any" value="' + (r.amt || '') + '">' + sel(AU, r.au || 'uL', 'au') + '</div>' +
+      '<div class="cell name" data-l="组分"><div class="ig"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div></div>' +
+      '<div class="cell c2" data-l="储液 / 分子量"><div class="ig"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '">' + sel(SU, r.su, 'su') + '</div></div>' +
+      '<div class="cell c3" data-l="终浓度"><div class="ig"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '">' + sel(FU, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c4" data-l="用量"><div class="ig"><input type="number" data-k="amt" placeholder="μL / mg" min="0" step="any" value="' + (r.amt || '') + '">' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="删除该组分">×</button>' +
       '<div class="hint" data-inv style="grid-column:1/-1"></div>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
