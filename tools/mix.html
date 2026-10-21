@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>配方计算器 · TubeCalc</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/style.css?v=20261021b">
 <style>
 .mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }
 .mix-controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
 .mix-total { display:flex; gap:8px; }
 .mix-row { display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; align-items:center;
   padding:10px 12px; border:1px solid var(--border); border-radius:11px; margin-top:10px; background:var(--card); }
-.mix-row.water { background:var(--accent-soft); border-color:var(--accent); }
+.mix-row.water { background:var(--card); box-shadow: inset 3px 0 0 var(--accent); }   /* 同底色融入卡片流，仅左侧细蓝条标记溶剂身份 */
+.mix-row.water select { flex:0 0 auto; max-width:132px; background:var(--accent-soft); border-color:rgba(0,113,227,.35); font-weight:600; }
+.solv-tag { font-size:12px; color:var(--muted); }
+.solv-mass { font-size:12px; color:var(--muted); margin-left:8px; font-variant-numeric:tabular-nums; }
 .mix-head { font-size:12.5px; color:var(--muted); display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; padding:0 12px; margin-top:18px; }
 .mix-head span { display:flex; align-items:center; gap:6px; }
 .mix-head span::before { content:''; flex:0 0 8px; width:8px; height:8px; border-radius:3px; background:currentColor; opacity:.35; }
@@ -117,7 +120,10 @@ const FUD = { '1':['M',1], '0.001':['M',0.001], '0.000001':['M',1e-6], '1e-9':['
 const MO = ['1','0.001','0.000001','1e-9'];   // 摩尔单位键
 // 用量列单位：μL（体积，计入溶剂扣减）或质量（不占体积）
 const AU = [['uL','μL'], ['mg','mg'], ['ug','μg'], ['g','g']];
+// 溶剂选项：键（语言无关，存 LS）→ 显示名 → 密度 g/mL（约 20 ℃；黏稠溶剂常按质量取用，非水溶剂显示质量参考）
+const SOLV = [['water','水',1], ['ethanol','乙醇',0.789], ['methanol','甲醇',0.792], ['isopropanol','异丙醇',0.786], ['dmso','DMSO',1.10], ['glycerol','甘油',1.261], ['other','其他',0]];
 let rows = [];
+let solv = 'water';
 
 function fmtVol(v) {
   if (!isFinite(v)) return '—';
@@ -128,6 +134,7 @@ function fmtConc(v) {
   const a = Math.abs(v);
   return (a >= 100 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : a >= 0.001 ? v.toFixed(4) : v.toExponential(2));
 }
+function fmtMass(g) { return g >= 1 ? g.toFixed(2) + ' g' : Math.round(g * 1000) + ' mg'; }
 function totalUpt() { return (parseFloat($('#total').value) || 0) * parseFloat($('#totalUnit').value); }
 
 function demo() {
@@ -163,8 +170,10 @@ function dd(groups, val, cls) {   // 自绘分组下拉（储液单位专用：�
 }
 
 function render() {
-  $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="组分"><div class="ig"><input type="text" value="水（溶剂）" disabled></div></div>' +
-    '<div class="cell" data-l="储液 / 分子量">—</div><div class="cell" data-l="终浓度">—</div><div class="cell c4" data-l="用量"><span class="vol-out" id="waterVol">—</span></div><div></div></div>';
+  $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="组分"><div class="ig">' +
+    '<select id="solvSel" aria-label="溶剂">' + SOLV.map(s => '<option value="' + s[0] + '"' + (s[0] === solv ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select><span class="solv-tag">溶剂</span></div></div>' +
+    '<div class="cell" data-l="储液 / 分子量">—</div><div class="cell" data-l="终浓度">—</div><div class="cell c4" data-l="用量"><span class="vol-out" id="waterVol">—</span><span class="solv-mass" id="waterMass"></span></div><div></div></div>';
+  $('#solvSel').addEventListener('change', () => { solv = $('#solvSel').value; changed(); });
   const box = $('#rows'); box.innerHTML = '';
   rows.forEach((r, i) => {
     if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 储液选 × → 终浓度限 ×（含旧数据归一）
@@ -314,7 +323,7 @@ function updateOutputs() {
     if (w) w.textContent = warn;
   });
   const water = vt - sum;
-  const wv = $('#waterVol');
+  const wv = $('#waterVol'), wm = $('#waterMass');
   if (water >= 0) {
     const totalStr = (($('#total').value || '0') + ' ' + (parseFloat($('#totalUnit').value) === 1000 ? 'mL' : 'μL')).replace(/^0+(\d)/, '$1');
     wv.textContent = useMW ? '定容至 ' + totalStr : fmtVol(water) + ' μL';
@@ -322,18 +331,22 @@ function updateOutputs() {
     wv.textContent = '—';
   }
   wv.style.color = water < 0 ? 'var(--danger)' : '';
+  // 非水溶剂附质量参考（黏稠溶剂常按质量取用）；水密度=1 与体积等值不显示，其他无密度
+  const sd = SOLV.find(s => s[0] === solv);
+  wm.textContent = (!useMW && water > 0 && sd && sd[2] && sd[2] !== 1) ? '≈ ' + fmtMass(water / 1000 * sd[2]) : '';
   $('#mixWarn').textContent = water < 0 ? ('溶剂为负：液态组分总体积已达 ' + fmtVol(sum) + ' μL，超过总体系 ' + fmtVol(vt) + ' μL，请调整') : '';
 }
 
 function persist() {
   const clean = rows.map(r => ({ name: r.name || '', sv: r.sv || '', su: r.su || '1', fv: r.fv || '', fu: r.fu || '1', amt: r.amt || '', au: r.au || 'uL' }));
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: $('#total').value, totalUnit: $('#totalUnit').value, rows: clean })); } catch (e) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: $('#total').value, totalUnit: $('#totalUnit').value, solv, rows: clean })); } catch (e) {}
 }
 function restore() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
     if (s && Array.isArray(s.rows)) {
       $('#total').value = s.total; $('#totalUnit').value = s.totalUnit;
+      solv = (s.solv && SOLV.some(x => x[0] === s.solv)) ? s.solv : 'water';
       rows = s.rows.map(r => {
         const o = { name:'', sv:'', su:'1', fv:'', fu:'1', amt:'', au:'uL', _lock:false };
         Object.assign(o, r);
@@ -356,7 +369,7 @@ $('#copyTsv').addEventListener('click', function () {
   const SUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pwv':' % w/v','gmol':' g/mol'};
   const FUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pwv':' % w/v','gl':' g/L','mgml':' mg/mL','mgl':' mg/L','ugml':' μg/mL','ngml':' ng/mL'};
   const AUL = {'uL':' μL','mg':' mg','ug':' μg','g':' g'};
-  let out = '组分\t储液/分子量\t终浓度\t用量\n水（溶剂）\t—\t—\t' + $('#waterVol').textContent + '\n';
+  let out = '组分\t储液/分子量\t终浓度\t用量\n' + $('#solvSel').selectedOptions[0].textContent + '（溶剂）\t—\t—\t' + $('#waterVol').textContent + ($('#waterMass').textContent ? ' ' + $('#waterMass').textContent : '') + '\n';
   rows.forEach(r => {
     const cs = (r.sv === '' || r.sv == null) ? '—' : r.sv + (SUL[r.su] || '');
     const cf = (r.fv === '' || r.fv == null) ? '—' : r.fv + (FUL[r.fu] || '');
