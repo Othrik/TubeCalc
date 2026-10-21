@@ -107,7 +107,7 @@
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
-  <div class="hint" style="margin-top:12px">三列怎么填都行：<b>算体积</b> — 填储液浓度 + 终浓度（同量纲单位），用量自动算出；<b>算称量</b> — 第二列单位选 g/mol 填分子量、终浓度用 mol/L，或终浓度直接选 % w/v / mg/mL 等质量单位（无需分子量），用量列自动给出质量；<b>手动</b> — 浓度留空，直接在用量列填体积（μL）或质量（mg/μg/g）。常用场景：× 倍液（储液选 × 后，终浓度单位自动限定为 ×，5×→1× 即取 V总/5）；乙醇等纯液（终浓度选 % v/v、储液不填按 100% 算，70% 即取 0.7×V总；从 95% 母液稀释则储液也选 % v/v 填 95）；琼脂糖/SDS 等（终浓度选 % w/v，1% = 10 g/L）。改浓度会重新自动计算；<b>同时填了储液与终浓度（或用质量浓度单位）时，用量数字自动算出并锁定，只允许调整单位</b>；手动填用量请清空终浓度。粉末/质量用量不占体积（溶解后定容）：涉及分子量/称量的配方直接显示"定容至总体积"，其余配方显示溶剂所需体积（= 总体积 − 各液态用量之和）。</div>
+  <div class="hint" style="margin-top:12px">三列怎么填都行：<b>算体积</b> — 填储液浓度 + 终浓度（同量纲单位），用量自动算出；<b>算称量</b> — 第二列单位选 g/mol 填分子量、终浓度用 mol/L，或终浓度直接选 % w/v / mg/mL 等质量单位（无需分子量），用量列自动给出质量；<b>手动</b> — 浓度留空，直接在用量列填体积（μL/mL）或质量（mg/μg/g）。常用场景：× 倍液（储液选 × 后，终浓度单位自动限定为 ×，5×→1× 即取 V总/5）；乙醇等纯液（终浓度选 % v/v、储液不填按 100% 算，70% 即取 0.7×V总；从 95% 母液稀释则储液也选 % v/v 填 95）；琼脂糖/SDS 等（终浓度选 % w/v，1% = 10 g/L）。改浓度会重新自动计算；<b>同时填了储液与终浓度（或用质量浓度单位）时，用量数字自动算出并锁定，只允许调整单位</b>；手动填用量请清空终浓度。粉末/质量用量不占体积（溶解后定容）：涉及分子量/称量的配方直接显示"定容至总体积"，其余配方显示溶剂所需体积（= 总体积 − 各液态用量之和）。</div>
 </main>
 
 <footer><span class="foot-note">计算全部在浏览器本地进行</span><br>© 2026 <a href="../index.html">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></footer>
@@ -128,7 +128,7 @@ const SUD = { '1':['M',1], '0.001':['M',0.001], '0.000001':['M',1e-6], '1e-9':['
 const FUD = { '1':['M',1], '0.001':['M',0.001], '0.000001':['M',1e-6], '1e-9':['M',1e-9], 'x':['RX',1], 'pvv':['RV',0.01], 'pwv':['GL',10], 'gl':['GL',1], 'mgml':['GL',1], 'mgl':['GL',0.001], 'ugml':['GL',0.001], 'ngml':['GL',1e-6] };
 const MO = ['1','0.001','0.000001','1e-9'];   // 摩尔单位键
 // 用量列单位：μL（体积，计入溶剂扣减）或质量（不占体积）
-const AU = [['uL','μL'], ['mg','mg'], ['ug','μg'], ['g','g']];
+const AU = [['uL','μL'], ['ml','mL'], ['mg','mg'], ['ug','μg'], ['g','g']];
 // 溶剂选项：键（语言无关，存 LS）→ 显示名 → 密度 g/mL（约 20 ℃；黏稠溶剂常按质量取用，非水溶剂显示质量参考）
 const SOLV = [['water','水',1], ['ethanol','乙醇',0.789], ['methanol','甲醇',0.792], ['isopropanol','异丙醇',0.786], ['dmso','DMSO',1.10], ['glycerol','甘油',1.261], ['other','其他',0]];
 let rows = [];
@@ -197,7 +197,7 @@ function render() {
       '<div class="cell name" data-l="组分"><div class="ig"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div></div>' +
       '<div class="cell c2" data-l="储液 / 分子量"><div class="ig"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '">' + dd(SU, r.su, 'su') + '</div></div>' +
       '<div class="cell c3" data-l="终浓度"><div class="ig"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '">' + sel(fuList, r.fu, 'fu') + '</div></div>' +
-      '<div class="cell c4" data-l="用量"><div class="ig"><input type="number" data-k="amt" placeholder="μL / mg" min="0" step="any" value="' + (r.amt || '') + '">' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
+      '<div class="cell c4" data-l="用量"><div class="ig"><input type="number" data-k="amt" placeholder="μL / mL / mg" min="0" step="any" value="' + (r.amt || '') + '">' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="删除该组分">×</button>' +
       '<div class="hint" data-inv style="grid-column:1/-1"></div>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
@@ -284,10 +284,11 @@ function updateOutputs() {
     const canV = isFinite(res.v), canM = isFinite(res.m);
     // 用量列：浓度齐全 → 数字自动算出并锁定（只读），仅允许调整单位
     if (canV) {
-      if (amtIn.value !== fmtVol(res.v)) amtIn.value = fmtVol(res.v);
+      if (auSel.value !== 'uL' && auSel.value !== 'ml') auSel.value = 'uL';   // 质量残留值归位体积
+      const div = auSel.value === 'ml' ? 1000 : 1;
+      if (amtIn.value !== fmtVol(res.v / div)) amtIn.value = fmtVol(res.v / div);
       r.amt = amtIn.value;
-      if (auSel.value !== 'uL') auSel.value = 'uL';
-      r.au = 'uL';
+      r.au = auSel.value;
     } else if (canM) {
       const m = res.m, u = auSel.value;
       let txt;
@@ -303,7 +304,7 @@ function updateOutputs() {
     if (amtIn.readOnly !== auto) amtIn.readOnly = auto;
     amtIn.title = auto ? '用量由浓度自动算出（数字锁定，可换单位）；手动填写请清空终浓度' : '';
     Array.prototype.forEach.call(auSel.options, o => {
-      const isVol = o.value === 'uL';
+      const isVol = o.value === 'uL' || o.value === 'ml';
       o.disabled = canV ? !isVol : canM ? isVol : false;
     });
     // 计入溶剂扣减的体积
@@ -312,7 +313,7 @@ function updateOutputs() {
     else if (isFinite(res.m)) vol = 0;   // 质量/粉末不占体积
     else {
       const a = parseFloat(r.amt);
-      vol = (isFinite(a) && r.au === 'uL') ? a : 0;
+      vol = (isFinite(a) && r.au === 'uL') ? a : (isFinite(a) && r.au === 'ml') ? a * 1000 : 0;
     }
     sum += vol;
     // 行下反显提示
@@ -320,13 +321,14 @@ function updateOutputs() {
     let tip = '';
     if (!isFinite(res.v) && !isFinite(res.m) && !warn) {
       const a = parseFloat(r.amt);
-      if (isFinite(a) && a > 0 && r.au === 'uL' && r.sv !== '' && r.fv === '') {
+      if (isFinite(a) && a > 0 && (r.au === 'uL' || r.au === 'ml') && r.sv !== '' && r.fv === '') {
+        const aU = r.au === 'ml' ? a * 1000 : a;   // 折算提示统一用 μL
         if (MO.includes(r.su)) {
-          tip = '按当前储液折算终浓度 ≈ ' + fmtConc(parseFloat(r.sv) * parseFloat(r.su) * a / vt) + ' M';
+          tip = '按当前储液折算终浓度 ≈ ' + fmtConc(parseFloat(r.sv) * parseFloat(r.su) * aU / vt) + ' M';
         } else if (r.su === 'x') {
-          tip = '按当前储液折算终浓度 ≈ ' + fmtConc(parseFloat(r.sv) * a / vt) + ' ×';
+          tip = '按当前储液折算终浓度 ≈ ' + fmtConc(parseFloat(r.sv) * aU / vt) + ' ×';
         } else if (r.su === 'pwv' || r.su === 'pvv') {
-          tip = '按当前储液折算终浓度 ≈ ' + fmtConc(parseFloat(r.sv) * a / vt) + (r.su === 'pwv' ? ' % w/v' : ' % v/v');
+          tip = '按当前储液折算终浓度 ≈ ' + fmtConc(parseFloat(r.sv) * aU / vt) + (r.su === 'pwv' ? ' % w/v' : ' % v/v');
         }
       }
     }
@@ -384,7 +386,7 @@ $('#loadDemo').addEventListener('click', () => { const d = demo(); $('#total').v
 $('#copyTsv').addEventListener('click', function () {
   const SUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pwv':' % w/v','gmol':' g/mol'};
   const FUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pwv':' % w/v','gl':' g/L','mgml':' mg/mL','mgl':' mg/L','ugml':' μg/mL','ngml':' ng/mL'};
-  const AUL = {'uL':' μL','mg':' mg','ug':' μg','g':' g'};
+  const AUL = {'uL':' μL','ml':' mL','mg':' mg','ug':' μg','g':' g'};
   const wUnit = (useMWNow || $('#waterVol').textContent === '—') ? '' : (solvU === 'ml' ? ' mL' : ' μL');
   let out = '组分\t储液/分子量\t终浓度\t用量\n' + $('#solvSel').selectedOptions[0].textContent + '（溶剂）\t—\t—\t' + $('#waterVol').textContent + wUnit + ($('#waterMass').textContent ? ' ' + $('#waterMass').textContent : '') + '\n';
   rows.forEach(r => {
