@@ -24,8 +24,26 @@
 .ig { flex:1; display:flex; gap:6px; align-items:center; min-width:0; }
 .ig input[type=text], .ig input[type=number], .ig select { min-width:0; flex:1; }
 .ig select { flex:0 0 auto; max-width:92px; }
+/* 自绘储液单位下拉：小标题（小字灰）→ 选项 → 当前选中（蓝+勾），三层视觉层次 */
+.dd { position:relative; flex:0 0 auto; max-width:104px; }
+.dd-btn { display:inline-flex; align-items:center; gap:5px; padding:11px 12px; font-size:16px; font-family:inherit;
+  color:var(--text); background:var(--glass-strong); border:1px solid var(--border); border-radius:12px; outline:none;
+  cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease; white-space:nowrap; }
+.dd-btn:focus-visible { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
+.dd-ar { font-size:10px; color:var(--muted); }
+.dd-panel { display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:40; min-width:172px; padding:6px;
+  background:var(--card); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5);
+  border:1px solid var(--border); border-radius:13px; box-shadow:0 14px 36px rgba(0,0,0,.17); }
+.dd.open .dd-panel { display:block; }
+.dd-sec { font-size:10.5px; font-weight:600; letter-spacing:.14em; color:var(--muted); padding:7px 10px 3px; }
+.dd-sec:not(:first-child) { margin-top:5px; padding-top:9px; border-top:1px solid var(--border); }
+.dd-it { display:block; width:100%; padding:7px 10px; border:0; border-radius:9px; background:none;
+  font-size:14px; font-family:inherit; color:var(--text); text-align:left; cursor:pointer; }
+.dd-it:hover { background:var(--accent-soft); }
+.dd-it.cur { color:var(--accent); font-weight:600; background:var(--accent-soft); }
+.dd-it.cur::after { content:'✓'; float:right; font-size:13px; font-weight:700; }
 /* 列语义色：储液=紫（投入），终浓度=青（目标），用量=琥珀（结果） */
-.c2 .ig input, .c2 .ig select { background:rgba(94,92,230,.07); border-color:rgba(94,92,230,.30); }
+.c2 .ig input, .c2 .ig select, .c2 .ig .dd-btn { background:rgba(94,92,230,.07); border-color:rgba(94,92,230,.30); }
 .c3 .ig input, .c3 .ig select { background:rgba(34,165,180,.08); border-color:rgba(34,165,180,.32); }
 .c4 .ig input, .c4 .ig select { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
 .c4 .ig input { font-weight:600; }
@@ -85,13 +103,11 @@
 <script>
 const LS_KEY = 'tubecalc_mix_v1';
 const $ = (s, p) => (p || document).querySelector(s);
-// 第二列单位（按储液形态分组）：溶液=摩尔/倍液/质量浓度母液；纯液体=% v/v（纯液或体积比母液，留空=100%）；固体=g/mol 分子量直接称量
+// 第二列单位（自绘分组下拉，三类）：浓度类母液（M 系 / × / 质量浓度）；纯液按体积分数 % v/v（留空=100%）；粉剂按 g/mol 称分子量
 const SU = [
-  ['溶液 · 摩尔浓度', [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM']]],
-  ['溶液 · 倍液', [['x','×']]],
-  ['纯液体 · 体积分数', [['pvv','% v/v']]],
-  ['溶液 · 质量浓度', [['pwv','% w/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL']]],
-  ['固体 · 分子量', [['gmol','g/mol']]]
+  ['溶液', [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×'], ['pwv','% w/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL']]],
+  ['纯液体', [['pvv','% v/v']]],
+  ['固体', [['gmol','g/mol']]]
 ];
 // 第三列单位：M 系=摩尔终浓度；×=倍液；% v/v=体积比；% w/v 与 g/L 系=质量浓度（可称粉或配母液稀释）
 const FU = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×'], ['pvv','% v/v'], ['pwv','% w/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL']];
@@ -135,6 +151,17 @@ function sel(list, val, cls) {
     : list.map(opt).join('')) + '</select>';
 }
 
+function dd(groups, val, cls) {   // 自绘分组下拉（储液单位专用：小标题+选项+当前勾选）
+  const flat = groups.flatMap(g => g[1]);
+  const cur = flat.find(u => u[0] === val) || flat[0];
+  return '<div class="dd ' + cls + '-dd">' +
+    '<button type="button" class="dd-btn" aria-haspopup="listbox">' + cur[1] + '<span class="dd-ar">▾</span></button>' +
+    '<div class="dd-panel">' + groups.map(g =>
+      '<div class="dd-sec">' + g[0] + '</div>' + g[1].map(u =>
+        '<button type="button" class="dd-it' + (u[0] === cur[0] ? ' cur' : '') + '" data-v="' + u[0] + '">' + u[1] + '</button>').join('')
+    ).join('') + '</div></div>';
+}
+
 function render() {
   $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="组分"><div class="ig"><input type="text" value="水（溶剂）" disabled></div></div>' +
     '<div class="cell" data-l="储液 / 分子量">—</div><div class="cell" data-l="终浓度">—</div><div class="cell c4" data-l="用量"><span class="vol-out" id="waterVol">—</span></div><div></div></div>';
@@ -146,7 +173,7 @@ function render() {
     d.className = 'mix-row';
     d.innerHTML =
       '<div class="cell name" data-l="组分"><div class="ig"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div></div>' +
-      '<div class="cell c2" data-l="储液 / 分子量"><div class="ig"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '">' + sel(SU, r.su, 'su') + '</div></div>' +
+      '<div class="cell c2" data-l="储液 / 分子量"><div class="ig"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '">' + dd(SU, r.su, 'su') + '</div></div>' +
       '<div class="cell c3" data-l="终浓度"><div class="ig"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '">' + sel(fuList, r.fu, 'fu') + '</div></div>' +
       '<div class="cell c4" data-l="用量"><div class="ig"><input type="number" data-k="amt" placeholder="μL / mg" min="0" step="any" value="' + (r.amt || '') + '">' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="删除该组分">×</button>' +
@@ -155,13 +182,18 @@ function render() {
       r[el.dataset.k] = el.value;
       changed();
     }));
+    const suDD = $('.su-dd', d);
+    $('.dd-btn', suDD).addEventListener('click', e => {
+      e.stopPropagation();
+      document.querySelectorAll('.dd.open').forEach(x => { if (x !== suDD) x.classList.remove('open'); });
+      suDD.classList.toggle('open');
+    });
+    suDD.querySelectorAll('.dd-it').forEach(it => it.addEventListener('click', () => {
+      r.su = it.dataset.v;
+      if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 切到 ×：终浓度自动并锁定为 ×，清值防误读
+      render();                                                     // 重建行以更新第三列可选项
+    }));
     d.querySelectorAll('select').forEach(el => el.addEventListener('change', () => {
-      if (el.className === 'su') {
-        r.su = el.value;
-        if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 切到 ×：终浓度自动并锁定为 ×，清值防误读
-        render();                                                      // 重建行以更新第三列可选项
-        return;
-      }
       r[el.className] = el.value;
       changed();
     }));
@@ -339,6 +371,8 @@ $('#copyTsv').addEventListener('click', function () {
   }).finally(done);
 });
 
+document.addEventListener('click', () => document.querySelectorAll('.dd.open').forEach(x => x.classList.remove('open')));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.dd.open').forEach(x => x.classList.remove('open')); });
 if (!restore()) rows = [{ name:'', sv:'', su:'1', fv:'', fu:'1', amt:'', au:'uL' }];
 render();
 </script>
