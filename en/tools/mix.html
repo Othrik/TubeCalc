@@ -123,7 +123,7 @@ function demo() {
 
 function sel(list, val, cls) {
   return '<select class="' + cls + '">' + list.map(u =>
-    '<option value="' + u[0] + '"' + (u[0] === val ? ' selected' : '') + '>' + u[1] + '</option>').join('') + '</select>';
+    '<option value="' + u[0] + '"' + (u[0] === val ? ' selected' : '') + (u[2] ? ' disabled' : '') + '>' + u[1] + '</option>').join('') + '</select>';
 }
 
 function render() {
@@ -132,7 +132,7 @@ function render() {
   const box = $('#rows'); box.innerHTML = '';
   rows.forEach((r, i) => {
     if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 储液选 × → 终浓度限 ×（含旧数据归一）
-    const fuList = r.su === 'x' ? FU.filter(u => u[0] === 'x') : FU;
+    const fuList = r.su === 'x' ? FU.map(u => u[0] === 'x' ? u : [u[0], u[1], true]) : FU;   // 储液×：其他单位置灰禁选
     const d = document.createElement('div');
     d.className = 'mix-row';
     d.innerHTML =
