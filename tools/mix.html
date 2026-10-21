@@ -85,8 +85,14 @@
 <script>
 const LS_KEY = 'tubecalc_mix_v1';
 const $ = (s, p) => (p || document).querySelector(s);
-// 第二列单位：M 系=摩尔储液；×=倍液；% v/v=体积比；% w/v 与 g/L 系=质量浓度母液；g/mol=分子量（算称量）
-const SU = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×'], ['pvv','% v/v'], ['pwv','% w/v'], ['gmol','g/mol'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL']];
+// 第二列单位（按储液形态分组）：溶液=摩尔/倍液/质量浓度母液；纯液体=% v/v（纯液或体积比母液，留空=100%）；固体=g/mol 分子量直接称量
+const SU = [
+  ['溶液 · 摩尔浓度', [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM']]],
+  ['溶液 · 倍液', [['x','×']]],
+  ['纯液体 · 体积分数', [['pvv','% v/v']]],
+  ['溶液 · 质量浓度', [['pwv','% w/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL']]],
+  ['固体 · 分子量', [['gmol','g/mol']]]
+];
 // 第三列单位：M 系=摩尔终浓度；×=倍液；% v/v=体积比；% w/v 与 g/L 系=质量浓度（可称粉或配母液稀释）
 const FU = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×'], ['pvv','% v/v'], ['pwv','% w/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL']];
 // 量纲与换算系数：M→mol/L；RX→体积比(×=1)；RV→体积分数(%v/v=0.01)；GL→g/L（% w/v = 10 g/L）
@@ -122,8 +128,11 @@ function demo() {
 }
 
 function sel(list, val, cls) {
-  return '<select class="' + cls + '">' + list.map(u =>
-    '<option value="' + u[0] + '"' + (u[0] === val ? ' selected' : '') + (u[2] ? ' disabled' : '') + '>' + u[1] + '</option>').join('') + '</select>';
+  const opt = u => '<option value="' + u[0] + '"' + (u[0] === val ? ' selected' : '') + (u[2] ? ' disabled' : '') + '>' + u[1] + '</option>';
+  const grouped = list.length && Array.isArray(list[0][1]);   // [组名, [选项...]] 还是平铺 [值, 名, 禁用]
+  return '<select class="' + cls + '">' + (grouped
+    ? list.map(g => '<optgroup label="' + g[0] + '">' + g[1].map(opt).join('') + '</optgroup>').join('')
+    : list.map(opt).join('')) + '</select>';
 }
 
 function render() {
