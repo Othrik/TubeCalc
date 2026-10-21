@@ -3,34 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TubeCalc · 在线科研小工具</title>
-<meta name="description" content="轻量免费的在线科研小工具：分子量计算、序列处理、统计检验、溶液稀释与单位换算，全部在浏览器本地完成。">
+<title>TubeCalc · 配方计算器与在线科研小工具</title>
+<meta name="description" content="主打配方计算器：储液/终浓度自动算加样量，多溶剂与称量支持；另有分子量、序列、统计、稀释、单位换算等免费在线工具，全部在浏览器本地完成。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="assets/style.css?v=20261021b">
+<link rel="stylesheet" href="assets/style.css?v=20261021c">
 </head>
 <body>
 <nav class="nav"><div class="nav-inner">
   <a class="brand" href="index.html"><span class="brand-ic">🧪</span>TubeCalc</a>
   <div class="nav-links">
     <a href="index.html" class="active">首页</a>
+    <a href="tools/mix.html">配方计算</a>
     <a href="tools/mw.html">分子量</a>
     <a href="tools/seq.html">序列工具</a>
     <a href="tools/protein.html">蛋白质工具</a>
     <a href="tools/stats.html">统计计算</a>
     <a href="tools/dilution.html">稀释计算</a>
     <a href="tools/unit.html">单位换算</a>
-    <a href="tools/mix.html">配方计算</a>
     <a href="en/index.html" title="Switch to English">EN</a>
   </div>
 </div></nav>
 
 <main class="container">
   <div class="hero">
-    <h1>在线科研小工具</h1>
-    <p>TubeCalc — 试管旁的计算器，轻量、免费、本地计算。</p>
+    <h1>把配方一次算清</h1>
+    <p>主打工具 · 配方计算器：储液与终浓度进去，每个组分的加样量自动出来 — 溶剂可选、称量直读、TSV 进表格。</p>
     <p>轻量、免费、无需注册 — 为实验室日常计算而建，所有计算均在你的浏览器本地完成，数据不上传。</p>
+    <div class="hero-cta">
+      <a class="btn hero-btn" href="tools/mix.html">打开配方计算器 →</a>
+      <a class="hero-more" href="#tools">浏览全部工具</a>
+    </div>
   </div>
 
+  <a class="tool-card featured" href="tools/mix.html">
+    <span class="featured-tag">主打工具</span>
+    <h3>配方计算器</h3>
+    <p>整张反应体系一次算清：按"储液 → 终浓度"自动给出每个组分的加样量，溶剂自动补齐，改任何数字即时重算。</p>
+    <ul class="feat-list">
+      <li>单位全支持：M/mM/μM、× 倍数、% v/v、% w/v、g/mol 称量</li>
+      <li>溶剂可选：水、乙醇、DMSO、甘油等，附质量参考</li>
+      <li>数据本地自动保存，TSV 一键复制进 Excel</li>
+    </ul>
+    <span class="open">打开 →</span>
+  </a>
+  <h2 class="sec-title" id="tools">全部工具</h2>
   <div class="grid">
     <a class="tool-card" href="tools/mw.html">
       <h3>分子量计算器</h3>
@@ -60,11 +76,6 @@
     <a class="tool-card" href="tools/protein.html">
       <h3>蛋白质序列分析</h3>
       <p>分子量、理论 pI、消光系数 ε280、A280 与氨基酸组成、GRAVY 疏水指数。</p>
-      <span class="open">打开 →</span>
-    </a>
-    <a class="tool-card" href="tools/mix.html">
-      <h3>配方计算器</h3>
-      <p>反应体系配制：按储液/终浓度自动算加样量，水自动补齐，一键复制到电子表格。</p>
       <span class="open">打开 →</span>
     </a>
   </div>

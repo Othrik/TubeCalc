@@ -141,6 +141,25 @@ a:hover { text-decoration: underline; }
 .tool-card p { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
 .tool-card .open { color: var(--accent); font-size: 13px; margin-top: 12px; display: inline-block; font-weight: 600; }
 
+/* 主打功能：英雄区 CTA + 特色大卡 */
+.hero-cta { margin-top: 22px; display: flex; gap: 18px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.btn.hero-btn { margin-top: 0; font-size: 16px; padding: 13px 28px; }   /* 双类选择器压过 .btn 基础规则 */
+.hero-more { color: var(--muted); font-size: 14.5px; text-decoration: underline dotted 1px; text-underline-offset: 4px; }
+.hero-more:hover { color: var(--text); }
+.tool-card.featured { position: relative; margin: 6px 0 26px; padding: 26px 28px;
+  border-color: rgba(0, 113, 227, .30);
+  background: linear-gradient(135deg, var(--accent-soft), var(--glass) 55%); }
+.tool-card.featured h3 { font-size: 20px; margin-bottom: 8px; }
+.tool-card.featured p { font-size: 14.5px; max-width: 680px; }
+.featured-tag { position: absolute; top: 20px; right: 22px; font-size: 11.5px; font-weight: 700; letter-spacing: .6px;
+  color: var(--accent); background: var(--accent-soft); border: 1px solid rgba(0, 113, 227, .28);
+  border-radius: 980px; padding: 4px 11px; }
+.feat-list { list-style: none; margin: 14px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 20px; }
+.feat-list li { color: var(--muted); font-size: 13.5px; line-height: 1.55; padding-left: 19px; position: relative; }
+.feat-list li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+.sec-title { font-size: 15px; font-weight: 650; color: var(--muted); letter-spacing: .3px; margin: 0 0 12px; }
+
 /* 工具页 */
 .page-title { font-size: clamp(24px, 4.5vw, 30px); margin-bottom: 6px; font-weight: 700; }
 .page-desc { color: var(--muted); font-size: 15px; margin-bottom: 24px; }

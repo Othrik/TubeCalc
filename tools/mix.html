@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>配方计算器 · TubeCalc</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="../assets/style.css?v=20261021b">
+<link rel="stylesheet" href="../assets/style.css?v=20261021c">
 <style>
 .mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }
 .mix-controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
@@ -17,6 +17,10 @@
 .solv-u { flex:0 0 auto; width:auto; padding:7px 9px; font-size:13px; font-family:inherit; border-radius:8px;
   background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }   /* 与用量列琥珀语义一致 */
 .solv-tag { font-size:12px; color:var(--muted); }
+.ghost { flex:1; display:flex; align-items:center; justify-content:center; padding:11px 0; line-height:20px;
+  border-radius:10px; color:var(--muted); font-size:16px; }   /* 占位框：与组分行输入框同高同宽，结构性列对齐 */
+.ghost.g2 { background:rgba(94,92,230,.05); }
+.ghost.g3 { background:rgba(34,165,180,.06); }
 .solv-mass { font-size:12px; color:var(--muted); margin-left:8px; font-variant-numeric:tabular-nums; }
 .demo-link { font-size:12.5px; color:var(--muted); background:none; border:none; padding:8px 2px; cursor:pointer;
   text-decoration:underline dotted 1px; text-underline-offset:4px; }
@@ -74,13 +78,13 @@
   <a class="brand" href="../index.html"><span class="brand-ic">🧪</span>TubeCalc</a>
   <div class="nav-links">
     <a href="../index.html">首页</a>
+    <a href="mix.html" class="active">配方计算</a>
     <a href="mw.html">分子量</a>
     <a href="seq.html">序列工具</a>
     <a href="protein.html">蛋白质工具</a>
     <a href="stats.html">统计计算</a>
     <a href="dilution.html">稀释计算</a>
     <a href="unit.html">单位换算</a>
-    <a href="mix.html" class="active">配方计算</a>
     <a href="../en/tools/mix.html" title="Switch to English">EN</a>
   </div>
 </div></nav>
@@ -179,7 +183,7 @@ function dd(groups, val, cls) {   // 自绘分组下拉（储液单位专用：�
 function render() {
   $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="组分"><div class="ig">' +
     '<select id="solvSel" aria-label="溶剂">' + SOLV.map(s => '<option value="' + s[0] + '"' + (s[0] === solv ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select><span class="solv-tag">溶剂</span></div></div>' +
-    '<div class="cell" data-l="储液 / 分子量">—</div><div class="cell" data-l="终浓度">—</div><div class="cell c4" data-l="用量"><span class="vol-out" id="waterVol">—</span><select id="solvU" class="solv-u" aria-label="溶剂单位"><option value="uL"' + (solvU === 'uL' ? ' selected' : '') + '>μL</option><option value="ml"' + (solvU === 'ml' ? ' selected' : '') + '>mL</option></select><span class="solv-mass" id="waterMass"></span></div><div></div></div>';
+    '<div class="cell" data-l="储液 / 分子量"><span class="ghost g2">—</span></div><div class="cell" data-l="终浓度"><span class="ghost g3">—</span></div><div class="cell c4" data-l="用量"><span class="vol-out" id="waterVol">—</span><select id="solvU" class="solv-u" aria-label="溶剂单位"><option value="uL"' + (solvU === 'uL' ? ' selected' : '') + '>μL</option><option value="ml"' + (solvU === 'ml' ? ' selected' : '') + '>mL</option></select><span class="solv-mass" id="waterMass"></span></div><div></div></div>';
   $('#solvSel').addEventListener('change', () => { solv = $('#solvSel').value; changed(); });
   $('#solvU').addEventListener('change', () => { solvU = $('#solvU').value; changed(); });
   const box = $('#rows'); box.innerHTML = '';
