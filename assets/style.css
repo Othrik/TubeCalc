@@ -91,7 +91,7 @@ a:hover { text-decoration: underline; }
   font-weight: 700; font-size: 18px; color: var(--text);
   letter-spacing: .2px; white-space: nowrap;
 }
-.brand-ic { color: var(--accent); flex: 0 0 auto; }
+.brand-ic { font-size: 17px; line-height: 1; }
 .nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
 .nav-links a {
   color: var(--muted); font-size: 14px; padding: 7px 12px;
