@@ -87,10 +87,11 @@ a:hover { text-decoration: underline; }
   height: 56px; display: flex; align-items: center; gap: 18px;
 }
 .brand {
+  display: flex; align-items: center; gap: 7px;
   font-weight: 700; font-size: 18px; color: var(--text);
   letter-spacing: .2px; white-space: nowrap;
 }
-.brand span { color: var(--muted); font-weight: 500; font-size: 14px; }
+.brand-ic { color: var(--accent); flex: 0 0 auto; }
 .nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
 .nav-links a {
   color: var(--muted); font-size: 14px; padding: 7px 12px;
