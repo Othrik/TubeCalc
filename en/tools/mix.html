@@ -77,7 +77,7 @@
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
-  <div class="hint" style="margin-top:12px">Fill any combination you like: <b>Volume mode</b> — enter stock concentration + final concentration (same-dimension units) and the amount is computed automatically; <b>Weighing mode</b> — pick g/mol in the stock column and use mol/L for the final concentration, or pick a mass unit such as % w/v or mg/mL directly (no MW needed) and the amount column gives a mass; <b>Manual</b> — leave concentrations blank and enter a volume (μL) or mass (mg/μg/g) directly. Common cases: ×-fold buffers (choose × for both, 5×→1× takes Vtotal/5); pure liquids like ethanol (final conc. as % v/v, blank stock = 100%, so 70% takes 0.7×Vtotal; diluting from 95% stock — set the stock to % v/v 95 as well); agarose/SDS etc. (final conc. as % w/v, 1% = 10 g/L). Changing concentrations recomputes automatically; <b>when both stock and final concentration are set (or a mass-concentration unit is used), the amount number is computed and locked — only the unit can be changed</b>; clear the final concentration to enter an amount manually. Powder/mass amounts occupy no volume (dissolve, then bring to volume): recipes involving molecular weight/weighing show "make up to total volume", all others show the solvent volume (= total volume − sum of liquid amounts).</div>
+  <div class="hint" style="margin-top:12px">Fill any combination you like: <b>Volume mode</b> — enter stock concentration + final concentration (same-dimension units) and the amount is computed automatically; <b>Weighing mode</b> — pick g/mol in the stock column and use mol/L for the final concentration, or pick a mass unit such as % w/v or mg/mL directly (no MW needed) and the amount column gives a mass; <b>Manual</b> — leave concentrations blank and enter a volume (μL) or mass (mg/μg/g) directly. Common cases: ×-fold buffers (pick × as the stock and the final-concentration unit locks to ×; 5×→1× takes Vtotal/5); pure liquids like ethanol (final conc. as % v/v, blank stock = 100%, so 70% takes 0.7×Vtotal; diluting from 95% stock — set the stock to % v/v 95 as well); agarose/SDS etc. (final conc. as % w/v, 1% = 10 g/L). Changing concentrations recomputes automatically; <b>when both stock and final concentration are set (or a mass-concentration unit is used), the amount number is computed and locked — only the unit can be changed</b>; clear the final concentration to enter an amount manually. Powder/mass amounts occupy no volume (dissolve, then bring to volume): recipes involving molecular weight/weighing show "make up to total volume", all others show the solvent volume (= total volume − sum of liquid amounts).</div>
 </main>
 
 <footer><span class="foot-note">All calculations run locally in your browser</span><br>© 2026 <a href="../../index.html">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></footer>
@@ -131,12 +131,14 @@ function render() {
     '<div class="cell" data-l="Stock / MW">—</div><div class="cell" data-l="Final conc.">—</div><div class="cell c4" data-l="Amount"><span class="vol-out" id="waterVol">—</span></div><div></div></div>';
   const box = $('#rows'); box.innerHTML = '';
   rows.forEach((r, i) => {
+    if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 储液选 × → 终浓度限 ×（含旧数据归一）
+    const fuList = r.su === 'x' ? FU.filter(u => u[0] === 'x') : FU;
     const d = document.createElement('div');
     d.className = 'mix-row';
     d.innerHTML =
       '<div class="cell name" data-l="Component"><div class="ig"><input type="text" data-k="name" placeholder="Component name" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div></div>' +
       '<div class="cell c2" data-l="Stock / MW"><div class="ig"><input type="number" data-k="sv" placeholder="Stock conc. / MW" min="0" step="any" value="' + r.sv + '">' + sel(SU, r.su, 'su') + '</div></div>' +
-      '<div class="cell c3" data-l="Final conc."><div class="ig"><input type="number" data-k="fv" placeholder="Final conc. (optional)" min="0" step="any" value="' + r.fv + '">' + sel(FU, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c3" data-l="Final conc."><div class="ig"><input type="number" data-k="fv" placeholder="Final conc. (optional)" min="0" step="any" value="' + r.fv + '">' + sel(fuList, r.fu, 'fu') + '</div></div>' +
       '<div class="cell c4" data-l="Amount"><div class="ig"><input type="number" data-k="amt" placeholder="μL / mg" min="0" step="any" value="' + (r.amt || '') + '">' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="Remove this component">×</button>' +
       '<div class="hint" data-inv style="grid-column:1/-1"></div>';
@@ -145,6 +147,12 @@ function render() {
       changed();
     }));
     d.querySelectorAll('select').forEach(el => el.addEventListener('change', () => {
+      if (el.className === 'su') {
+        r.su = el.value;
+        if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 切到 ×：终浓度自动并锁定为 ×，清值防误读
+        render();                                                      // 重建行以更新第三列可选项
+        return;
+      }
       r[el.className] = el.value;
       changed();
     }));
