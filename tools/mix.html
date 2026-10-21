@@ -26,6 +26,18 @@
 .demo-link { font-size:12.5px; color:var(--muted); background:none; border:none; padding:8px 2px; cursor:pointer;
   text-decoration:underline dotted 1px; text-underline-offset:4px; }
 .demo-link:hover { color:var(--text); }
+/* 配方检查报告面板 */
+.check-panel { margin-top:10px; border:1px solid var(--border); border-radius:12px; background:var(--card); padding:12px 14px; }
+.check-title { display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px; margin-bottom:6px; }
+.check-close { border:0; background:none; color:var(--muted); cursor:pointer; font-size:15px; padding:2px 6px; line-height:1; border-radius:6px; }
+.check-close:hover { color:var(--text); background:var(--accent-soft); }
+.check-item { display:flex; gap:9px; padding:4px 0; font-size:13.5px; line-height:1.55; }
+.check-item::before { content:''; flex:0 0 8px; width:8px; height:8px; border-radius:3px; margin-top:6px; background:var(--muted); opacity:.35; }
+.check-item.lv-err { color:var(--danger); font-weight:600; } .check-item.lv-err::before { background:var(--danger); opacity:1; }
+.check-item.lv-warn::before { background:#e8890c; opacity:1; }
+.check-item.lv-ok::before { background:#30d158; opacity:1; }
+.check-item.lv-info::before { background:var(--muted); opacity:.55; }
+.check-sum { font-size:12.5px; color:var(--muted); margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); }
 .mix-head { font-size:12.5px; color:var(--muted); display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; padding:0 12px; margin-top:18px; }
 .mix-head span { display:flex; align-items:center; gap:6px; }
 .mix-head span::before { content:''; flex:0 0 8px; width:8px; height:8px; border-radius:3px; background:currentColor; opacity:.35; }
@@ -100,6 +112,7 @@
     </label>
     <button class="btn" id="addRow">添加组分</button>
     <button class="btn btn-ghost" id="copyTsv">复制表格 (TSV)</button>
+    <button class="btn btn-ghost" id="checkBtn">检查配方</button>
     <button type="button" class="demo-link" id="loadDemo" title="填入示例数据演示用法（会覆盖当前配方）">载入示例配方</button>
   </div>
 
@@ -107,6 +120,7 @@
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
+  <div class="check-panel" id="checkPanel" hidden></div>
   <div class="hint" style="margin-top:12px">三列怎么填都行：<b>算体积</b> — 填储液浓度 + 终浓度（同量纲单位），用量自动算出；<b>算称量</b> — 第二列单位选 g/mol 填分子量、终浓度用 mol/L，或终浓度直接选 % w/v / mg/mL 等质量单位（无需分子量），用量列自动给出质量；<b>手动</b> — 浓度留空，直接在用量列填体积（μL/mL）或质量（mg/μg/g）。常用场景：× 倍液（储液选 × 后，终浓度单位自动限定为 ×，5×→1× 即取 V总/5）；乙醇等纯液（终浓度选 % v/v、储液不填按 100% 算，70% 即取 0.7×V总；从 95% 母液稀释则储液也选 % v/v 填 95）；琼脂糖/SDS 等（终浓度选 % w/v，1% = 10 g/L）。改浓度会重新自动计算；<b>同时填了储液与终浓度（或用质量浓度单位）时，用量数字自动算出并锁定，只允许调整单位</b>；手动填用量请清空终浓度。粉末/质量用量不占体积（溶解后定容）：涉及分子量/称量的配方直接显示"定容至总体积"，其余配方显示溶剂所需体积（= 总体积 − 各液态用量之和）。</div>
 </main>
 
@@ -146,6 +160,13 @@ function fmtConc(v) {
   return (a >= 100 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : a >= 0.001 ? v.toFixed(4) : v.toExponential(2));
 }
 function fmtMass(g) { return g >= 1 ? g.toFixed(2) + ' g' : Math.round(g * 1000) + ' mg'; }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+function rowVol(r, res) {   // 该行占用的体系体积（μL；质量行不占体积）
+  if (isFinite(res.v)) return res.v;
+  if (isFinite(res.m)) return 0;
+  const a = parseFloat(r.amt);
+  return (isFinite(a) && r.au === 'uL') ? a : (isFinite(a) && r.au === 'ml') ? a * 1000 : 0;
+}
 function totalUpt() { return (parseFloat($('#total').value) || 0) * parseFloat($('#totalUnit').value); }
 
 function demo() {
@@ -308,14 +329,7 @@ function updateOutputs() {
       o.disabled = canV ? !isVol : canM ? isVol : false;
     });
     // 计入溶剂扣减的体积
-    let vol = 0;
-    if (isFinite(res.v)) vol = res.v;
-    else if (isFinite(res.m)) vol = 0;   // 质量/粉末不占体积
-    else {
-      const a = parseFloat(r.amt);
-      vol = (isFinite(a) && r.au === 'uL') ? a : (isFinite(a) && r.au === 'ml') ? a * 1000 : 0;
-    }
-    sum += vol;
+    sum += rowVol(r, res);
     // 行下反显提示
     const inv = $('[data-inv]', d);
     let tip = '';
@@ -352,6 +366,7 @@ function updateOutputs() {
   const sd = SOLV.find(s => s[0] === solv);
   wm.textContent = (!useMW && water > 0 && sd && sd[2] && sd[2] !== 1) ? '≈ ' + fmtMass(water / 1000 * sd[2]) : '';
   $('#mixWarn').textContent = water < 0 ? ('溶剂为负：液态组分总体积已达 ' + fmtVol(sum) + ' μL，超过总体系 ' + fmtVol(vt) + ' μL，请调整') : '';
+  if (!$('#checkPanel').hidden) fillCheck();   // 报告打开时实时刷新
 }
 
 function persist() {
@@ -378,6 +393,68 @@ function restore() {
   } catch (e) {}
   return false;
 }
+
+// ===== 配方检查：按钮触发，报告打开时随数据变动实时刷新 =====
+function fillCheck() {
+  const vt = totalUpt();
+  const issues = [];
+  if (!(vt > 0)) issues.push({ lv:'err', text:'总体积未填写有效数值（应大于 0）' });
+  const named = {};
+  let autoN = 0, manual = [], sum = 0;
+  rows.forEach((r, i) => {
+    const n = i + 1;
+    const label = '第' + n + '行' + (r.name && r.name.trim() ? '（' + r.name.trim() + '）' : '');
+    const res = calcRow(r, vt);
+    if (res.warn) issues.push({ lv:'err', text:label + '：' + res.warn });
+    sum += rowVol(r, res);
+    const hasData = (r.sv !== '' && r.sv != null) || (r.fv !== '' && r.fv != null) || (r.amt !== '' && r.amt != null);
+    if (!hasData) { issues.push({ lv:'info', text:label + (label ? '：' : '第' + n + '行：') + (r.name ? '占位行，尚无数据' : '空行，可删除') }); return; }
+    const nm = (r.name || '').trim();
+    if (!nm) issues.push({ lv:'warn', text:'第' + n + '行：有数据但未命名，建议补组分名' });
+    else (named[nm] = named[nm] || []).push(n);
+    const svN = parseFloat(r.sv), fvN = parseFloat(r.fv);
+    if (r.sv !== '' && isFinite(svN) && svN > 0 && MO.includes(r.su) && svN * parseFloat(r.su) > 10)
+      issues.push({ lv:'warn', text:label + '：储液浓度 ' + fmtConc(svN * parseFloat(r.su)) + ' M 异常高（水溶液常见上限约 10 M），请核对' });
+    if (r.fv !== '' && isFinite(fvN) && fvN > 0 && MO.includes(r.fu) && fvN * parseFloat(r.fu) > 10)
+      issues.push({ lv:'warn', text:label + '：终浓度 ' + fmtConc(fvN * parseFloat(r.fu)) + ' M 异常高，请核对' });
+    if (r.fu === 'pvv' && isFinite(fvN) && fvN > 100)
+      issues.push({ lv:'warn', text:label + '：终浓度 % v/v 超过 100%，物理上不可行' });
+    if (isFinite(res.v)) autoN++;
+    else if (!isFinite(res.m) && r.sv !== '' && (r.au === 'uL' || r.au === 'ml')) manual.push({ r, n, label, aU: (r.au === 'ml' ? parseFloat(r.amt) * 1000 : parseFloat(r.amt)) });
+  });
+  Object.keys(named).forEach(k => { if (named[k].length > 1) issues.push({ lv:'warn', text:'组分“' + k + '”出现 ' + named[k].length + ' 次（第 ' + named[k].join('、') + ' 行），确认不是重复添加' }); });
+  if (vt > 0) {
+    const water = vt - sum;
+    if (water < 0) issues.push({ lv:'err', text:'溶剂为负：液态组分合计 ' + fmtVol(sum) + ' μL 已超过总体系 ' + fmtVol(vt) + ' μL' });
+    else if (useMWNow) issues.push({ lv:'ok', text:'定容型配方：质量组分不占体积，溶解后定容至 ' + fmtVol(vt) + ' μL' });
+    else if (water === 0) issues.push({ lv:'info', text:'溶剂用量为 0：液态组分恰好占满总体系（纯液配方如此，含水体系请复核）' });
+    else issues.push({ lv:'ok', text:'体积核算平衡：液态组分 ' + fmtVol(sum) + ' μL + 溶剂 ' + fmtVol(water) + ' μL = 总体系 ' + fmtVol(vt) + ' μL' });
+    if (autoN) issues.push({ lv:'ok', text:autoN + ' 个自动计算组分的用量均由目标终浓度反推，与填入的浓度定义一致' });
+    manual.forEach(m => {
+      const svN = parseFloat(m.r.sv);
+      if (!(vt > 0 && isFinite(m.aU) && m.aU > 0 && isFinite(svN))) return;
+      let s = null;
+      if (MO.includes(m.r.su)) s = fmtConc(svN * parseFloat(m.r.su) * m.aU / vt) + ' M';
+      else if (m.r.su === 'x') s = fmtConc(svN * m.aU / vt) + ' ×';
+      else if (m.r.su === 'pwv' || m.r.su === 'pvv') s = fmtConc(svN * m.aU / vt) + (m.r.su === 'pwv' ? ' % w/v' : ' % v/v');
+      if (s) issues.push({ lv:'info', text:m.label + '：手动用量折算终浓度 ≈ ' + s + '（无目标浓度可比对，请人工确认）' });
+    });
+  }
+  const order = { err:0, warn:1, info:2, ok:3 };
+  issues.sort((a, b) => order[a.lv] - order[b.lv]);
+  const errN = issues.filter(x => x.lv === 'err').length, warnN = issues.filter(x => x.lv === 'warn').length;
+  const head = errN ? '发现 ' + errN + ' 处错误' + (warnN ? '、' + warnN + ' 处提醒' : '') : warnN ? '发现 ' + warnN + ' 处提醒' : '✓ 全部通过';
+  const p = $('#checkPanel');
+  p.innerHTML = '<div class="check-title"><span>配方检查报告 · ' + head + '</span><button class="check-close" aria-label="关闭报告">✕</button></div>' +
+    (issues.length ? issues.map(x => '<div class="check-item lv-' + x.lv + '">' + esc(x.text) + '</div>').join('') : '<div class="check-item lv-ok">未发现任何问题</div>') +
+    '<div class="check-sum">数据变动时本报告自动刷新；行号与表格从上到下一致</div>';
+  $('.check-close', p).addEventListener('click', () => { p.hidden = true; });
+}
+$('#checkBtn').addEventListener('click', () => {
+  const p = $('#checkPanel');
+  p.hidden = !p.hidden;
+  if (!p.hidden) { fillCheck(); p.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+});
 
 $('#total').addEventListener('input', changed);
 $('#totalUnit').addEventListener('change', changed);
