@@ -14,14 +14,15 @@
   padding:10px 12px; border:1px solid var(--border); border-radius:11px; margin-top:10px; background:var(--card); }
 .mix-row.water { background:var(--card); box-shadow: inset 3px 0 0 var(--accent); }   /* 同底色融入卡片流，仅左侧细蓝条标记溶剂身份 */
 #solvSel { flex:0 0 auto; max-width:132px; background:var(--accent-soft); border-color:rgba(0,113,227,.35); font-weight:600; }
-.solv-u { flex:0 0 auto; width:auto; padding:7px 9px; font-size:13px; font-family:inherit; border-radius:8px;
-  background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }   /* 与用量列琥珀语义一致 */
 .solv-tag { font-size:12px; color:var(--muted); }
 .ghost { flex:1; display:flex; align-items:center; justify-content:center; padding:11px 0; line-height:20px;
   border-radius:10px; color:var(--muted); font-size:16px; }   /* 占位框：与组分行输入框同高同宽，结构性列对齐 */
 .ghost.g2 { background:rgba(94,92,230,.05); }
 .ghost.g3 { background:rgba(34,165,180,.06); }
-.solv-mass { font-size:12px; color:var(--muted); margin-left:8px; font-variant-numeric:tabular-nums; }
+.mix-row.water .vol-out { flex:1; min-width:0; display:flex; align-items:center; height:42px; padding:0 14px;
+  border-radius:12px; font-size:16px; background:rgba(255,159,10,.10); border:1px solid rgba(255,159,10,.40); }   /* 与组分行用量输入框同规格 */
+.solv-mass { grid-column:1/-1; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.solv-mass:empty { display:none; }
 .demo-link { font-size:12.5px; color:var(--muted); background:none; border:none; padding:8px 2px; cursor:pointer;
   text-decoration:underline dotted 1px; text-underline-offset:4px; }
 .demo-link:hover { color:var(--text); }
@@ -183,7 +184,8 @@ function dd(groups, val, cls) {   // 自绘分组下拉（储液单位专用：�
 function render() {
   $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="Component"><div class="ig">' +
     '<select id="solvSel" aria-label="Solvent">' + SOLV.map(s => '<option value="' + s[0] + '"' + (s[0] === solv ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select><span class="solv-tag">Solvent</span></div></div>' +
-    '<div class="cell" data-l="Stock / MW"><span class="ghost g2">—</span></div><div class="cell" data-l="Final conc."><span class="ghost g3">—</span></div><div class="cell c4" data-l="Amount"><span class="vol-out" id="waterVol">—</span><select id="solvU" class="solv-u" aria-label="Solvent unit"><option value="uL"' + (solvU === 'uL' ? ' selected' : '') + '>μL</option><option value="ml"' + (solvU === 'ml' ? ' selected' : '') + '>mL</option></select><span class="solv-mass" id="waterMass"></span></div><div></div></div>';
+    '<div class="cell" data-l="Stock / MW"><span class="ghost g2">—</span></div><div class="cell" data-l="Final conc."><span class="ghost g3">—</span></div><div class="cell c4" data-l="Amount"><div class="ig"><span class="vol-out" id="waterVol">—</span><select id="solvU" aria-label="Solvent unit"><option value="uL"' + (solvU === 'uL' ? ' selected' : '') + '>μL</option><option value="ml"' + (solvU === 'ml' ? ' selected' : '') + '>mL</option></select></div></div><div></div>' +
+    '<div class="solv-mass" id="waterMass"></div></div>';
   $('#solvSel').addEventListener('change', () => { solv = $('#solvSel').value; changed(); });
   $('#solvU').addEventListener('change', () => { solvU = $('#solvU').value; changed(); });
   const box = $('#rows'); box.innerHTML = '';
