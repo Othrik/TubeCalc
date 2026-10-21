@@ -13,9 +13,14 @@
 .mix-row { display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; align-items:center;
   padding:10px 12px; border:1px solid var(--border); border-radius:11px; margin-top:10px; background:var(--card); }
 .mix-row.water { background:var(--card); box-shadow: inset 3px 0 0 var(--accent); }   /* 同底色融入卡片流，仅左侧细蓝条标记溶剂身份 */
-.mix-row.water select { flex:0 0 auto; max-width:132px; background:var(--accent-soft); border-color:rgba(0,113,227,.35); font-weight:600; }
+#solvSel { flex:0 0 auto; max-width:132px; background:var(--accent-soft); border-color:rgba(0,113,227,.35); font-weight:600; }
+.solv-u { flex:0 0 auto; width:auto; padding:7px 9px; font-size:13px; font-family:inherit; border-radius:8px;
+  background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }   /* 与用量列琥珀语义一致 */
 .solv-tag { font-size:12px; color:var(--muted); }
 .solv-mass { font-size:12px; color:var(--muted); margin-left:8px; font-variant-numeric:tabular-nums; }
+.demo-link { font-size:12.5px; color:var(--muted); background:none; border:none; padding:8px 2px; cursor:pointer;
+  text-decoration:underline dotted 1px; text-underline-offset:4px; }
+.demo-link:hover { color:var(--text); }
 .mix-head { font-size:12.5px; color:var(--muted); display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; padding:0 12px; margin-top:18px; }
 .mix-head span { display:flex; align-items:center; gap:6px; }
 .mix-head span::before { content:''; flex:0 0 8px; width:8px; height:8px; border-radius:3px; background:currentColor; opacity:.35; }
@@ -90,8 +95,8 @@
       <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span>
     </label>
     <button class="btn" id="addRow">Add component</button>
-    <button class="btn btn-ghost" id="loadDemo">Load example recipe</button>
     <button class="btn btn-ghost" id="copyTsv">Copy table (TSV)</button>
+    <button type="button" class="demo-link" id="loadDemo" title="Load example data for a quick demo (replaces the current recipe)">Load example recipe</button>
   </div>
 
   <div class="mix-head"><span>Component</span><span>Stock / MW</span><span>Final conc.</span><span>Amount</span><span></span></div>
@@ -124,6 +129,8 @@ const AU = [['uL','μL'], ['mg','mg'], ['ug','μg'], ['g','g']];
 const SOLV = [['water','Water',1], ['ethanol','Ethanol',0.789], ['methanol','Methanol',0.792], ['isopropanol','Isopropanol',0.786], ['dmso','DMSO',1.10], ['glycerol','Glycerol',1.261], ['other','Other',0]];
 let rows = [];
 let solv = 'water';
+let solvU = 'uL';   // 溶剂体积显示单位（μL/mL）
+let useMWNow = false;   // 最近一次计算是否存在称量步骤（TSV 复原溶剂用量单位用）
 
 function fmtVol(v) {
   if (!isFinite(v)) return '—';
@@ -172,8 +179,9 @@ function dd(groups, val, cls) {   // 自绘分组下拉（储液单位专用：�
 function render() {
   $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="Component"><div class="ig">' +
     '<select id="solvSel" aria-label="Solvent">' + SOLV.map(s => '<option value="' + s[0] + '"' + (s[0] === solv ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select><span class="solv-tag">Solvent</span></div></div>' +
-    '<div class="cell" data-l="Stock / MW">—</div><div class="cell" data-l="Final conc.">—</div><div class="cell c4" data-l="Amount"><span class="vol-out" id="waterVol">—</span><span class="solv-mass" id="waterMass"></span></div><div></div></div>';
+    '<div class="cell" data-l="Stock / MW">—</div><div class="cell" data-l="Final conc.">—</div><div class="cell c4" data-l="Amount"><span class="vol-out" id="waterVol">—</span><select id="solvU" class="solv-u" aria-label="Solvent unit"><option value="uL"' + (solvU === 'uL' ? ' selected' : '') + '>μL</option><option value="ml"' + (solvU === 'ml' ? ' selected' : '') + '>mL</option></select><span class="solv-mass" id="waterMass"></span></div><div></div></div>';
   $('#solvSel').addEventListener('change', () => { solv = $('#solvSel').value; changed(); });
+  $('#solvU').addEventListener('change', () => { solvU = $('#solvU').value; changed(); });
   const box = $('#rows'); box.innerHTML = '';
   rows.forEach((r, i) => {
     if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 储液选 × → 终浓度限 ×（含旧数据归一）
@@ -324,9 +332,11 @@ function updateOutputs() {
   });
   const water = vt - sum;
   const wv = $('#waterVol'), wm = $('#waterMass');
+  useMWNow = useMW;
+  $('#solvU').style.display = useMW ? 'none' : '';
   if (water >= 0) {
     const totalStr = (($('#total').value || '0') + ' ' + (parseFloat($('#totalUnit').value) === 1000 ? 'mL' : 'μL')).replace(/^0+(\d)/, '$1');
-    wv.textContent = useMW ? 'Make up to ' + totalStr : fmtVol(water) + ' μL';
+    wv.textContent = useMW ? 'Make up to ' + totalStr : fmtVol(water / (solvU === 'ml' ? 1000 : 1));
   } else {
     wv.textContent = '—';
   }
@@ -339,7 +349,7 @@ function updateOutputs() {
 
 function persist() {
   const clean = rows.map(r => ({ name: r.name || '', sv: r.sv || '', su: r.su || '1', fv: r.fv || '', fu: r.fu || '1', amt: r.amt || '', au: r.au || 'uL' }));
-  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: $('#total').value, totalUnit: $('#totalUnit').value, solv, rows: clean })); } catch (e) {}
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ total: $('#total').value, totalUnit: $('#totalUnit').value, solv, solvU, rows: clean })); } catch (e) {}
 }
 function restore() {
   try {
@@ -347,6 +357,7 @@ function restore() {
     if (s && Array.isArray(s.rows)) {
       $('#total').value = s.total; $('#totalUnit').value = s.totalUnit;
       solv = (s.solv && SOLV.some(x => x[0] === s.solv)) ? s.solv : 'water';
+      solvU = (s.solvU === 'ml') ? 'ml' : 'uL';
       rows = s.rows.map(r => {
         const o = { name:'', sv:'', su:'1', fv:'', fu:'1', amt:'', au:'uL', _lock:false };
         Object.assign(o, r);
@@ -369,7 +380,8 @@ $('#copyTsv').addEventListener('click', function () {
   const SUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pwv':' % w/v','gmol':' g/mol'};
   const FUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pwv':' % w/v','gl':' g/L','mgml':' mg/mL','mgl':' mg/L','ugml':' μg/mL','ngml':' ng/mL'};
   const AUL = {'uL':' μL','mg':' mg','ug':' μg','g':' g'};
-  let out = 'Component\tStock/MW\tFinal conc.\tAmount\n' + $('#solvSel').selectedOptions[0].textContent + ' (solvent)\t—\t—\t' + $('#waterVol').textContent + ($('#waterMass').textContent ? ' ' + $('#waterMass').textContent : '') + '\n';
+  const wUnit = (useMWNow || $('#waterVol').textContent === '—') ? '' : (solvU === 'ml' ? ' mL' : ' μL');
+  let out = 'Component\tStock/MW\tFinal conc.\tAmount\n' + $('#solvSel').selectedOptions[0].textContent + ' (solvent)\t—\t—\t' + $('#waterVol').textContent + wUnit + ($('#waterMass').textContent ? ' ' + $('#waterMass').textContent : '') + '\n';
   rows.forEach(r => {
     const cs = (r.sv === '' || r.sv == null) ? '—' : r.sv + (SUL[r.su] || '');
     const cf = (r.fv === '' || r.fv == null) ? '—' : r.fv + (FUL[r.fu] || '');
