@@ -15,8 +15,20 @@
 .af-seq i, .af-seq b { font-style: normal; font-weight: 400; flex: 0 0 auto; }
 .af-seq i { width: 15px; text-align: center; }
 .af-seq b { width: 8px; }
-.af-note { font-weight: 400; margin-left: 10px; color: var(--muted); font-size: 12px; }
 @media (max-width: 560px) { .af-res { font-size: 12.5px; } .af-seq i { width: 13px; } .af-seq b { width: 7px; } }
+/* 氨基酸组成可视化：类别总览条 + 按含量排序的条形图（颜色=化学类别） */
+.aa-strip { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 4px 0 8px; }
+.aa-strip i { font-style: normal; min-width: 2px; }
+.aa-legend { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size: 12px; color: var(--muted); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.aa-legend b { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
+.aa-row { display: grid; grid-template-columns: 26px 104px 1fr 92px; gap: 8px; align-items: center; padding: 3.5px 0; font-size: 13px; }
+.aa-chip { width: 22px; height: 22px; border-radius: 7px; color: #fff; font-weight: 600; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.aa-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aa-bar { height: 10px; border-radius: 5px; background: var(--accent-soft); overflow: hidden; }
+.aa-bar i { display: block; height: 100%; border-radius: 5px; font-style: normal; }
+.aa-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.aa-val b { color: var(--text); font-weight: 600; }
+@media (max-width: 560px) { .aa-row { grid-template-columns: 24px 64px 1fr 76px; gap: 6px; font-size: 12.5px; } .aa-chip { width: 20px; height: 20px; border-radius: 6px; } }
 </style>
 </head>
 <body>
@@ -51,7 +63,7 @@
   </div>
 
   <div class="panel" id="seqPanel" style="display:none">
-    <label>序列视图（AlphaFold 风格）<span class="af-note" id="seqNote"></span></label>
+    <label>序列视图</label>
     <div id="afSeq" class="af-seq"></div>
   </div>
 
@@ -136,16 +148,38 @@ function analyze(s) {
   return { cnt, n, mw, eRed, eOx, absRed, absOx, gravy, pI, ssNum };
 }
 
+// 化学类别（Lehninger 四分类）
+const AA_CLASS = { G:0, A:0, V:0, L:0, I:0, M:0, F:0, W:0, P:0, S:1, T:1, N:1, Q:1, Y:1, C:1, K:2, R:2, H:2, D:3, E:3 };
+const AA_CLS = [
+  { name: '非极性（疏水）', color: '#5e5ce6' },
+  { name: '极性（不带电）', color: '#22a5b4' },
+  { name: '带正电（碱性）', color: '#e8890c' },
+  { name: '带负电（酸性）', color: '#ff453a' }
+];
 function compTable(st) {
-  let html = '<table class="tbl"><tr><th>氨基酸</th><th>数目</th><th>占比</th><th>氨基酸</th><th>数目</th><th>占比</th></tr>';
-  for (let i = 0; i < 10; i++) {
-    const a = AA[i], b = AA[i + 10];
-    html += '<tr>'
-      + '<td>' + a + ' ' + AA_NAME[a] + '</td><td>' + st.cnt[a] + '</td><td>' + fmt(100 * st.cnt[a] / st.n, 1) + ' %</td>'
-      + '<td>' + b + ' ' + AA_NAME[b] + '</td><td>' + st.cnt[b] + '</td><td>' + fmt(100 * st.cnt[b] / st.n, 1) + ' %</td>'
-      + '</tr>';
-  }
-  html += '</table>';
+  const n = st.n, massT = st.mw - H2O;   // 残基总质量（去末端水）
+  // 类别总览条 + 图例
+  const clsN = [0, 0, 0, 0];
+  for (const a of AA) clsN[AA_CLASS[a]] += st.cnt[a];
+  let html = '<div class="aa-strip">' + clsN.map((c, i) =>
+    c ? '<i style="flex:' + c + ';background:' + AA_CLS[i].color + '" title="' + AA_CLS[i].name + '：' + c + ' 个 · ' + fmt(100 * c / n, 1) + '%"></i>' : ''
+  ).join('') + '</div>';
+  html += '<div class="aa-legend">' + AA_CLS.map((c, i) =>
+    '<span><b style="background:' + c.color + '"></b>' + c.name + ' ' + clsN[i] + ' · ' + fmt(100 * clsN[i] / n, 1) + '%</span>'
+  ).join('') + '</div>';
+  // 逐氨基酸条形（按含量降序，条宽相对最高值；悬停含质量占比）
+  const present = AA.split('').filter(a => st.cnt[a] > 0)
+    .sort((x, y) => st.cnt[y] - st.cnt[x] || (x < y ? -1 : 1));
+  const max = Math.max.apply(null, present.map(a => st.cnt[a]));
+  html += present.map(a => {
+    const cls = AA_CLS[AA_CLASS[a]];
+    const pct = 100 * st.cnt[a] / n, mpct = 100 * st.cnt[a] * RES_MASS[a] / massT;
+    return '<div class="aa-row" title="' + AA_NAME[a] + '：' + st.cnt[a] + ' 个 · 摩尔 ' + fmt(pct, 1) + '% · 质量 ' + fmt(mpct, 1) + '%">'
+      + '<span class="aa-chip" style="background:' + cls.color + '">' + a + '</span>'
+      + '<span class="aa-name">' + AA_NAME[a] + '</span>'
+      + '<span class="aa-bar"><i style="width:' + (100 * st.cnt[a] / max).toFixed(1) + '%;background:' + cls.color + '"></i></span>'
+      + '<span class="aa-val"><b>' + st.cnt[a] + '</b> · ' + fmt(pct, 1) + '%</span></div>';
+  }).join('');
   return html;
 }
 
@@ -225,7 +259,6 @@ function afLayout(seq) {
     html += '<div class="af-ruler">' + ruler + '</div><div class="af-res">' + letters + '</div>';
   }
   box.innerHTML = html;
-  document.getElementById('seqNote').textContent = n + ' aa · ' + Math.ceil(n / c) + ' 行 × ' + c + ' 残基/行';
 }
 window.addEventListener('resize', () => {
   if (!afSeqData) return;
