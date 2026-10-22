@@ -64,6 +64,15 @@ import Layout from '../../layouts/Layout.astro';
 .src-tag svg { width:14px; height:14px; }
 .src-tag.pencil { color:var(--muted); }
 .src-tag.fx { color:var(--accent); font:italic 700 13px/1 Georgia,'Times New Roman',serif; letter-spacing:.5px; }
+/* 折算终浓度融合格：储液+用量已填且终浓度留空时，终浓度列融为单框显示；点击恢复手动输入 */
+.dfv-box { display:none; position:relative; flex:1; min-width:0; align-items:center; gap:6px; height:42px; box-sizing:border-box; padding:9px 30px 9px 12px; border-radius:10px; background:rgba(10,132,255,.08); border:1px solid rgba(10,132,255,.35); cursor:pointer; white-space:nowrap; }
+.cell.c3.dfv .dfv-box { display:inline-flex; }
+.cell.c3.dfv .ibox, .cell.c3.dfv .dd { display:none; }
+.dfv-pre { color:var(--muted); font-size:11px; flex:none; }
+.dfv-approx { color:var(--muted); flex:none; }
+.dfv-val { font-weight:600; font-variant-numeric:tabular-nums; overflow:hidden; text-overflow:ellipsis; }
+.dfv-box .src-tag { right:9px; }
+@media (max-width:760px){ .dfv-pre { display:none; } }   /* 窄屏格上方已有"终浓度"栏标签，去前缀防截断 */
 .row-warn { color:var(--danger); font-size:12px; grid-column:1/-1; }
 .del { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:8px; cursor:pointer; }
 .del:hover { color:var(--danger); border-color:var(--danger); }
@@ -158,6 +167,32 @@ function fmtConc(v) {
   return (a >= 100 ? v.toFixed(1) : a >= 1 ? v.toFixed(2) : a >= 0.001 ? v.toFixed(4) : v.toExponential(2));
 }
 function fmtMass(g) { return g >= 1 ? g.toFixed(2) + ' g' : Math.round(g * 1000) + ' mg'; }
+const GLB = { gl:'g/L', mgml:'mg/mL', mgl:'mg/L', ugml:'μg/mL', ngml:'ng/mL' };
+const fmtCs = v => fmtConc(v).replace(/(\.\d*?)0+(?=e|$)/, '$1').replace(/\.$/, '');   // 去尾零：0.1000→0.1
+// 折算终浓度：储液+用量已填且终浓度留空时反推（返回显示串或 null）
+function derivedFv(r, vt) {
+  if (r.fv !== '' && r.fv !== undefined && r.fv !== null || r.sv === '' || !(vt > 0)) return null;
+  const sv = parseFloat(r.sv); if (!isFinite(sv)) return null;
+  const a = parseFloat(r.amt); if (!isFinite(a) || a <= 0) return null;
+  if (r.au === 'uL' || r.au === 'ml') {
+    const aU = r.au === 'ml' ? a * 1000 : a;   // 统一 μL
+    const c = sv * aU / vt;                    // 与储液同单位的终浓度
+    if (MO.includes(r.su)) return fmtCs(c) + ' M';
+    if (r.su === 'x') return fmtCs(c) + ' ×';
+    if (r.su === 'pwv') return fmtCs(c) + ' % w/v';
+    if (r.su === 'pvv') return fmtCs(c) + ' % v/v';
+    if (GLB[r.su]) return fmtCs(c) + ' ' + GLB[r.su];
+  } else {                                     // 质量用量：g/mol→摩尔终浓度；质量浓度储液→同单位
+    const g = r.au === 'g' ? a : r.au === 'mg' ? a / 1000 : r.au === 'ug' ? a / 1e6 : NaN;
+    if (!isFinite(g)) return null;
+    if (r.su === 'gmol') {
+      if (!(sv > 0)) return null;
+      return fmtCs(g / sv / (vt / 1e6)) + ' M';
+    }
+    if (GLB[r.su]) return fmtCs(g / (vt / 1e6) / SUD[r.su][1]) + ' ' + GLB[r.su];
+  }
+  return null;
+}
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 function rowVol(r, res) {   // 该行占用的体系体积（μL；质量行不占体积）
   if (isFinite(res.v)) return res.v;
@@ -215,14 +250,17 @@ function render() {
     d.innerHTML =
       '<div class="cell name" data-l="组分"><div class="ig"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div></div>' +
       '<div class="cell c2" data-l="储液 / 分子量"><div class="ig"><span class="ibox"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
-      '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + sel(fuList, r.fu, 'fu') + '<span class="dfv-box" title="点击改为手动填写终浓度"><span class="dfv-pre">折算终浓度</span><span class="dfv-approx">≈</span><span class="dfv-val"></span><span class="src-tag fx" aria-hidden="true">ƒx</span></span></div></div>' +
       '<div class="cell c4" data-l="用量"><div class="ig"><span class="ibox"><input type="number" data-k="amt" placeholder="μL / mL / mg" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由浓度自动计算" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="删除该组分">×</button>' +
       '<div class="hint" data-inv style="grid-column:1/-1"></div>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value;
+      if (el.dataset.k === 'sv' || el.dataset.k === 'amt') r._dfvOff = false;   // 重填储液/用量 → 重新给出折算
       changed();
     }));
+    const dfvBox = $('.dfv-box', d);
+    if (dfvBox) dfvBox.addEventListener('click', () => { r._dfvOff = true; changed(); });
     const suDD = $('.su-dd', d);
     $('.dd-btn', suDD).addEventListener('click', e => {
       e.stopPropagation();
@@ -328,12 +366,16 @@ function updateOutputs() {
       const isVol = o.value === 'uL' || o.value === 'ml';
       o.disabled = canV ? !isVol : canM ? isVol : false;
     });
+    // 折算终浓度融合格：储液+用量已填且终浓度留空 → 终浓度列融为单框；点击后回退为行下提示
+    const dfv = derivedFv(r, vt), dfvOn = !!dfv && !r._dfvOff;
+    $('.cell.c3', d).classList.toggle('dfv', dfvOn);
+    if (dfvOn) $('.dfv-val', d).textContent = dfv;
     // 计入溶剂扣减的体积
     sum += rowVol(r, res);
-    // 行下反显提示
+    // 行下反显提示（融合格显示时不再重复）
     const inv = $('[data-inv]', d);
     let tip = '';
-    if (!isFinite(res.v) && !isFinite(res.m) && !warn) {
+    if (!dfvOn && !isFinite(res.v) && !isFinite(res.m) && !warn) {
       const a = parseFloat(r.amt);
       if (isFinite(a) && a > 0 && (r.au === 'uL' || r.au === 'ml') && r.sv !== '' && r.fv === '') {
         const aU = r.au === 'ml' ? a * 1000 : a;   // 折算提示统一用 μL
