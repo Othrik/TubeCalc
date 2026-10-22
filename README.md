@@ -1,45 +1,30 @@
-# 🧪 TubeCalc
+# TubeCalc
 
-试管旁的计算器 — 为实验室日常计算而生的在线科研小工具集。
+在线科研小工具集（配方计算、蛋白质序列分析、分子量、序列处理、统计、稀释、单位换算）。纯前端运行，所有计算在浏览器本地完成，无后端、无追踪。
 
-**轻量 · 免费 · 无需注册** — 所有计算均在浏览器本地完成，数据不上传服务器。
+基于 [Astro](https://astro.build) 构建纯静态站点。
 
-## 工具列表
+## 结构
 
-| 工具 | 功能 |
-|---|---|
-| 分子量计算器 | 化学式 → 摩尔质量与元素组成，支持括号嵌套与水合物，质量 ⇌ 摩尔换算 |
-| 序列工具 | DNA/RNA 反向互补、转录、GC 含量、Tm 值 |
-| 统计计算 | 描述统计 + Welch t 检验（精确 p 值） |
-| 溶液稀释计算 | C1V1=C2V2，输入任意三项求解第四项 |
-| 单位换算 | 长度 / 质量 / 体积 / 摩尔浓度 / 物质的量 |
-| 配方计算器 | 反应体系配制：按储液与终浓度自动计算加样量，溶剂自动补齐 |
+- `src/layouts/Layout.astro` — 全站统一骨架（head / 导航 / 页脚），NAV 数组即导航唯一事实来源
+- `src/pages/index.astro` — 首页
+- `src/pages/tools/*.astro` — 各工具页（骨架全部来自 Layout，页面只保留自身内容与脚本）
+- `public/assets/style.css` — 全站样式
 
-## 特点
+## 开发
 
-- 纯 HTML/CSS/JS，零依赖、零构建，任何静态托管可直接部署
-- Apple 风格毛玻璃界面，自动适配浅色 / 深色模式
-- 响应式设计，手机、平板、桌面均可流畅使用
-- 配方与计算参数自动保存在浏览器本地
-
-## 本地使用
-
-直接双击 `index.html` 即可在浏览器打开，无需服务器。
-
-## 目录结构
-
+```bash
+npm install
+npm run dev      # 本地开发
+npm run build    # 产物输出 dist/，文件名保持 .html
 ```
-├── index.html         首页（工具导航）
-├── assets/style.css   全站样式
-└── tools/
-    ├── mw.html        分子量计算器
-    ├── seq.html       序列处理
-    ├── stats.html     统计计算
-    ├── dilution.html  溶液稀释计算
-    ├── unit.html      单位换算
-    └── mix.html       配方计算器
-```
+
+## 加一个新工具
+
+1. `src/pages/tools/xxx.astro`：复制任一工具页改内容，Layout 传 `title / active / note / root="../"`
+2. `src/layouts/Layout.astro` 的 NAV 数组加一行
+3. `npm run build`，把 `dist/` 部署到任意静态托管
 
 ## License
 
-MIT
+[MIT](LICENSE)
