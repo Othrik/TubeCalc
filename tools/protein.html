@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>蛋白质序列分析 · TubeCalc</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href="../assets/style.css?v=20261021c">
+<link rel="stylesheet" href="../assets/style.css?v=20261023a">
 <style>
 /* AF server 风格序列视图：每行 N 残基（10 个一组），组间加宽间隙，编号在每 10 个残基上方，末尾标总数 */
 .af-seq { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-top: 4px; overflow-x: auto; }
@@ -61,10 +61,10 @@ canvas.plot { width: 100%; display: block; }
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">分析</button>
-      <button class="btn btn-ghost" id="exBtn">示例序列</button>
       <button class="btn btn-ghost" id="copyBtn">复制结果</button>
       <button class="btn btn-ghost" id="clearBtn">清空</button>
     </div>
+    <button type="button" class="demo-link" id="exBtn" title="填入人泛素 Ub（76 aa）示例序列演示用法">载入示例序列</button>
     <div class="error" id="err"></div>
   </div>
 

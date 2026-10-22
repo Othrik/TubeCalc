@@ -195,6 +195,10 @@ textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
   background: var(--glass-strong); color: var(--accent);
   border: 1px solid var(--border);
 }
+/* 隐蔽的"载入示例"链接按钮：灰字小号 + 点状下划线，悬停加深 */
+.demo-link { font-size: 12.5px; color: var(--muted); background: none; border: none; padding: 8px 2px; cursor: pointer;
+  text-decoration: underline dotted 1px; text-underline-offset: 4px; }
+.demo-link:hover { color: var(--text); }
 .row { display: flex; gap: 14px; flex-wrap: wrap; }
 .row > * { flex: 1; min-width: 150px; }
 .hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
