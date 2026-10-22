@@ -262,9 +262,9 @@ function render() {
     d.className = 'mix-row';
     d.innerHTML =
       '<div class="cell name" data-l="组分"><div class="ig namebox"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"><button type="button" class="mw-ic" title="识别为化学式：点击填充分子量并切换为固体 g/mol 称量" hidden>' + BENZENE + '</button></div></div>' +
-      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="储液 / 分子量"><div class="ig"><span class="ibox"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
-      '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由储液与用量折算" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
-      '<div class="cell c4" data-l="用量"><div class="ig"><span class="ibox"><input type="number" data-k="amt" placeholder="μL / mL / mg" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由浓度自动计算" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
+      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="储液 / 分子量"><div class="ig"><span class="ibox"><input type="number" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
+      '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由储液与用量折算" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c4" data-l="用量"><div class="ig"><span class="ibox"><input type="number" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由浓度自动计算" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="删除该组分">×</button>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value;
@@ -283,7 +283,10 @@ function render() {
     });
     suDD.querySelectorAll('.dd-it').forEach(it => it.addEventListener('click', () => {
       const wasPure = r.su === 'pure';
+      const wasGmol = r.su === 'gmol';
       r.su = it.dataset.v;
+      if (r.su === 'gmol' && (r.au === 'uL' || r.au === 'ml')) r.au = 'mg';   // 切到固体：体积用量归位 mg
+      if (wasGmol && r.su !== 'gmol' && r.au !== 'uL' && r.au !== 'ml') r.au = 'uL';   // 从固体切走：质量用量归位 μL
       if (r.su === 'x' && r.fu !== 'x') { r.fu = 'x'; r.fv = ''; }   // 切到 ×：终浓度自动并锁定为 ×，清值防误读
       if (r.su === 'pure') { r.sv = '100'; if (r.fu !== 'pvv') { r.fu = 'pvv'; r.fv = ''; } }   // 切到 纯液体：浓度固定 100%，终浓度锁 % v/v
       else if (wasPure) r.sv = '';   // 从纯液体切走：清掉固定的 100
@@ -413,7 +416,8 @@ function updateOutputs() {
       const isVol = o.value === 'uL' || o.value === 'ml';
       if (canV) { o.disabled = !isVol; o.title = isVol ? '' : '用量已由浓度算出体积，质量单位不适用'; }
       else if (canM) { o.disabled = isVol; o.title = isVol ? '用量已按质量自动算出，体积单位不适用' : ''; }
-      else { o.disabled = !isVol && r.su !== 'gmol'; o.title = o.disabled ? AUTIP_MASS : ''; }
+      else if (r.su === 'gmol') { o.disabled = isVol; o.title = isVol ? '固体储液按 g/mol 称量：用量为质量，请选 mg/μg/g' : ''; }
+      else { o.disabled = !isVol; o.title = o.disabled ? AUTIP_MASS : ''; }
     });
     auSel.dispatchEvent(new Event('dd:sync'));
     // 终浓度列：储液+用量已填且终浓度留空 → 折算值自动填入并锁定（只读），单位可切换显示；清空用量即退出

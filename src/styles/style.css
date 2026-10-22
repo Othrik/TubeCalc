@@ -293,6 +293,11 @@ footer .foot-ver { color: var(--muted); font-size: 12.5px; }
   cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease; white-space:nowrap; }
 .dd-btn:focus-visible { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
 .dd-ar { color:var(--muted); display:inline-flex; flex:0 0 auto; margin-top:1px; }
+.dd-tip { position:fixed; z-index:120; max-width:240px; padding:8px 12px; border-radius:10px;
+  background:rgba(28,30,34,.92); color:#fff; font-size:12.5px; line-height:1.55; font-weight:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.22); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  opacity:0; transform:translateY(4px); transition:opacity .16s ease, transform .16s ease; pointer-events:none; white-space:normal; }
+.dd-tip.show { opacity:1; transform:translateY(0); }
 .dd-panel { display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:40; min-width:172px; max-width:78vw;
   max-height:300px; overflow:auto; padding:6px;
   background:var(--card); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5);

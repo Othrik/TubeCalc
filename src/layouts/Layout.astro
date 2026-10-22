@@ -92,6 +92,42 @@ const NAV = [
   }).observe(document.body, { childList: true, subtree: true });
   document.addEventListener('click', function () { document.querySelectorAll('.dd.open').forEach(function (x) { x.classList.remove('open'); }); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') document.querySelectorAll('.dd.open').forEach(function (x) { x.classList.remove('open'); }); });
+
+  // ===== 统一悬停提示浮层：接管页面所有原生 title（含禁用单位的原因说明）=====
+  var tipEl = document.createElement('div');
+  tipEl.className = 'dd-tip';
+  tipEl.setAttribute('role', 'tooltip');
+  document.body.appendChild(tipEl);
+  var tipCur = null;
+  function tipShow(el) {
+    var txt = el.getAttribute('data-tip') || el.getAttribute('title');
+    if (!txt) return;
+    if (el.hasAttribute('title')) { el.setAttribute('data-tip', el.getAttribute('title')); el.removeAttribute('title'); }   // 移除原生 title，阻止系统气泡
+    tipCur = el;
+    tipEl.textContent = txt;
+    tipEl.classList.add('show');
+    var r = el.getBoundingClientRect();
+    var x = Math.min(Math.max(10, r.left + r.width / 2 - tipEl.offsetWidth / 2), window.innerWidth - tipEl.offsetWidth - 10);
+    var y = r.top - tipEl.offsetHeight - 8;
+    if (y < 8) y = r.bottom + 8;
+    tipEl.style.left = x + 'px';
+    tipEl.style.top = y + 'px';
+  }
+  function tipHide() { tipCur = null; tipEl.classList.remove('show'); }
+  document.addEventListener('mouseover', function (e) {
+    if (!e.target || !e.target.closest) return;
+    var el = e.target.closest('[data-tip],[title]');
+    if (el === tipCur) return;
+    if (el) tipShow(el); else tipHide();
+  });
+  document.addEventListener('mouseout', function (e) {
+    if (!tipCur) return;
+    var to = e.relatedTarget;
+    if (to && to.closest && to.closest('[data-tip],[title]')) return;   // 落到别的带提示元素：交给 mouseover 接管
+    tipHide();
+  });
+  window.addEventListener('scroll', tipHide, true);
+  window.addEventListener('blur', tipHide);
 })();
 </script>
 
