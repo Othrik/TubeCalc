@@ -60,6 +60,7 @@ import Layout from '../../layouts/Layout.astro';
 .ig .ibox { flex:1; min-width:0; }
 .ibox input { padding-right:30px; }
 .src-tag { position:absolute; right:9px; top:50%; transform:translateY(-50%); pointer-events:none; display:inline-flex; align-items:center; }
+.src-tag[hidden] { display:none; }   /* 必须显式：作者 display 会压过 UA 对 [hidden] 的默认隐藏 */
 .src-tag svg { width:14px; height:14px; }
 .src-tag.pencil { color:var(--muted); }
 .src-tag.fx { color:var(--accent); font:italic 700 13px/1 Georgia,'Times New Roman',serif; letter-spacing:.5px; }
