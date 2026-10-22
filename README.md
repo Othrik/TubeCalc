@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="public/icons/icon-512.png" width="88" alt="TubeCalc app icon — 3D test tube on brand blue">
+</div>
+
 # TubeCalc
 
 [English](#english) · [中文](#中文)
@@ -5,7 +9,7 @@
 <a id="english"></a>
 ## English
 
-A collection of free online science tools for the lab bench: **recipe calculator** (stock/final concentration → volumes, solvent make-up, weighing support, plus a built-in simplified dilution solver C₁V₁=C₂V₂), **protein sequence analysis**, **molecular weight** and **unit conversion**.
+A collection of free online science tools for the lab bench: **solution preparation calculator** (stock/final concentration → volumes, solvent make-up, weighing support, plus a built-in simplified dilution solver C₁V₁=C₂V₂), **protein sequence analysis**, **molecular weight** and **unit conversion**.
 
 Pure front-end — every computation runs locally in your browser. No backend, no tracking.
 
