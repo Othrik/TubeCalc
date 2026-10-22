@@ -8,7 +8,10 @@ import Layout from '../../layouts/Layout.astro';
   <Fragment slot="head">
     <style is:inline>
 
-.mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }
+.mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }   /* 行内元素统一 42px 高、清全局 label/btn 边距，底边对齐即全行水平 */
+.mix-controls label { margin:0; }   /* 全局 label 上边距 12px 会把"总体积"压低 */
+.mix-controls .btn { margin-top:0; height:42px; box-sizing:border-box; padding-top:0; padding-bottom:0; display:inline-flex; align-items:center; }   /* 全局 .btn margin-top:14px 同样破坏对齐 */
+.mix-controls .demo-link { margin-top:0; height:42px; display:inline-flex; align-items:center; }   /* 文字链与框行同高 */
 .mix-controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
 /* 总体积框：蓝色（与稀释页终体积同色，代表"体系规模"） */
 .mix-total .ibox input, .mix-total .dd-btn { background:rgba(0,113,227,.07); border-color:rgba(0,113,227,.30); }   /* .ibox input 需两级特异性压过全局 input 样式 */
