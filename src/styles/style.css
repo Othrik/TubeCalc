@@ -96,11 +96,10 @@ a:hover { text-decoration: underline; }
   font-weight: 700; font-size: 18px; color: var(--text);
   letter-spacing: .2px; white-space: nowrap;
 }
-.brand-ic {   /* 与 favicon 同款：蓝底圆角块 + 🧪，形成 App 图标式品牌组合 */
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 27px; height: 27px; border-radius: 6px; padding-top: 1px;
-  background: var(--accent); font-size: 15px; line-height: 1;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .10);
+.brand-ic {   /* 与 App 图标同源：斜 45° 圆底离心管 */
+  display: inline-block; width: 27px; height: 27px;
+  border-radius: 7px; vertical-align: -7px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
   transition: transform .18s ease;
 }
 .brand:hover .brand-ic { transform: scale(1.06); }

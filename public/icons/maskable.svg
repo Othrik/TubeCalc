@@ -5,10 +5,16 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" fill="url(#bg)"/>
-  <g transform="rotate(-45 256 256) translate(256 256) scale(.78) translate(-256 -256)">
-    <rect x="224" y="112" width="64" height="256" rx="32" fill="none" stroke="#fff" stroke-width="30"/>
-    <rect x="241" y="252" width="30" height="98" rx="15" fill="#fff" opacity=".92"/>
-    <circle cx="256" cy="152" r="10" fill="#fff" opacity=".5"/>
-    <circle cx="256" cy="196" r="7" fill="#fff" opacity=".5"/>
+  <g transform="rotate(45 256 256)">
+    <g transform="translate(256 256) scale(.85) translate(-256 -256)">
+      <rect x="222" y="62" width="68" height="36" rx="15" fill="#fff"/>
+      <rect x="194" y="92" width="124" height="42" rx="17" fill="#fff"/>
+      <path d="M206 132h100v168c0 74-20 118-50 118s-50-44-50-118Z" fill="rgba(255,255,255,.16)" stroke="#fff" stroke-width="17" stroke-linejoin="round"/>
+      <path d="M214 258h84v42c0 58-16 100-42 100s-42-42-42-100Z" fill="#34d15b"/>
+      <rect x="214" y="258" width="84" height="11" rx="5.5" fill="#fff" opacity=".38"/>
+      <rect x="222" y="152" width="14" height="72" rx="7" fill="#fff" opacity=".4"/>
+      <circle cx="238" cy="302" r="9" fill="#fff" opacity=".55"/>
+      <circle cx="272" cy="338" r="6" fill="#fff" opacity=".45"/>
+    </g>
   </g>
 </svg>
