@@ -122,7 +122,7 @@ const LS_KEY = 'tubecalc_mix_v1';
 const $ = (s, p) => (p || document).querySelector(s);
 // 数字来源图标：铅笔=手动输入 ƒx=自动计算
 const PENCIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
-const BENZENE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2.6 20.1 7.3v9.4L12 21.4 3.9 16.7V7.3z" stroke-linejoin="round"/><circle cx="12" cy="12" r="4.5"/></svg>';   // 苯环：六边形+内切圆
+const BENZENE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20.66 7.25v9.5L12 21.5 3.34 16.75v-9.5z"/><path d="M12 5 18.5 8.6M18.5 15.4 12 19.4M5.5 15.6V8.4"/></svg>';   // 苯环·凯库勒式：六边形+三条交替内双键
 // 第二列单位（自绘分组下拉，三类）：固体（粉剂称量，按 g/mol 填分子量）；溶液（一切浓度单位，含 % v/v 母液）；纯液体（浓度恒 100%，无需填值）
 const SU = [
   ['固体', [['gmol','g/mol']]],
