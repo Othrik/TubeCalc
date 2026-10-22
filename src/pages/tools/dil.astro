@@ -15,7 +15,7 @@ import Layout from '../../layouts/Layout.astro';
 .dil-wrap .dil-grid label { margin:0; font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0; white-space:nowrap; }   /* 覆盖全局 label 的 12px 上边距（首子豁免导致 C₁ 与其余列错位 12px） */
 .dil-op { align-self:flex-end; height:42px; line-height:42px; color:var(--muted); font-size:15px; text-align:center; }   /* 与 42px 框行严格同高居中 */
 .dig { display:flex; align-items:center; gap:6px; min-width:0; }
-/* 数字来源图标与输入框（与配方页同一套框样式） */
+/* 数字来源图标与输入框（与溶液配制页同一套框样式） */
 .ibox { position:relative; display:inline-flex; }
 .dig .ibox { flex:1; min-width:0; }
 .ibox input { padding-left:30px; padding-right:8px; text-align:right; }
@@ -29,7 +29,7 @@ import Layout from '../../layouts/Layout.astro';
 .dil-grid .dd { flex:0 1 auto; }
 .dil-grid .dd-btn { height:42px; }
 .dil-grid input:focus { outline:2px solid rgba(10,132,255,.35); border-color:var(--accent, #0a84ff); }
-/* 列语义色：C₁=储液紫，V₁=取用琥珀（同用量列），C₂=目标青，V₂=蓝（同配方页总体积，代表"体系规模"） */
+/* 列语义色：C₁=储液紫，V₁=取用琥珀（同用量列），C₂=目标青，V₂=蓝（同溶液配制页总体积，代表"体系规模"） */
 .f-c1 .ibox input, .f-c1 .dd-btn { background:rgba(94,92,230,.07); border-color:rgba(94,92,230,.30); }
 .f-v1 .ibox input, .f-v1 .dd-btn { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
 .f-c2 .ibox input, .f-c2 .dd-btn { background:rgba(34,165,180,.08); border-color:rgba(34,165,180,.32); }
@@ -44,7 +44,7 @@ import Layout from '../../layouts/Layout.astro';
 
 <main class="container dil-wrap">
   <h1 class="page-title">简单稀释计算器</h1>
-  <p class="page-desc pagedesc">C₁V₁ = C₂V₂：填任意三项，剩下一项自动求解。C₁ 与 C₂ 各自选浓度单位（摩尔、质量浓度、% w/v、% v/v、酶活性 U 系，同族自动换算），V₁ 与 V₂ 各自选体积单位；数据自动保存在本浏览器。要配多组分体系？<a href="/tools/mix/">前往配方计算器 →</a></p>
+  <p class="page-desc pagedesc">C₁V₁ = C₂V₂：填任意三项，剩下一项自动求解。C₁ 与 C₂ 各自选浓度单位（摩尔、质量浓度、% w/v、% v/v、酶活性 U 系，同族自动换算），V₁ 与 V₂ 各自选体积单位；数据自动保存在本浏览器。要配多组分体系？<a href="/tools/mix/">前往溶液配制计算器 →</a></p>
 
   <div class="dil-card">
     <div class="dil-title">简单稀释 <span class="dil-sub">C₁V₁ = C₂V₂ · 单位任意搭配，同族自动换算</span></div>

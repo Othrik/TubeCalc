@@ -8,7 +8,7 @@ const { title, desc = '', active = 'index', note = '' } = Astro.props;
 // 导航清单：唯一事实来源（绝对路径 + active 短名）
 const NAV = [
   ['/', '首页', 'index'],
-  ['/tools/mix/', '配方计算', 'mix'],
+  ['/tools/mix/', '溶液配制计算器', 'mix'],
   ['/tools/dil/', '简单稀释', 'dil'],
   ['/tools/protein/', '蛋白质工具', 'protein'],
   ['/tools/mw/', '分子量', 'mw'],
@@ -44,7 +44,7 @@ const NAV = [
 <slot />
 <footer>
   <span class="foot-note">{note}
-</span><br>© 2026 <a href="/">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a> · <span class="foot-ver">v{pkg.version}</span> · <button type="button" id="installChip" class="foot-chip" hidden>⤓ 安装为应用</button>
+</span><br>© 2026 <a href="/">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a> · <span class="foot-ver">v{pkg.version}</span>
 </footer>
 <script is:inline>
 (function () {
@@ -139,30 +139,7 @@ const NAV = [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=8').catch(function () {}); }); }
-  // 安装入口：Chromium 系（PC/安卓/Chrome）弹事件则显示按钮；iOS 显示"添加到主屏幕"指引
-  (function () {
-    var chip = null;
-    function ensure() { if (chip) return chip; chip = document.getElementById('installChip'); return chip; }
-    var deferred = null;
-    window.addEventListener('beforeinstallprompt', function (e) {
-      e.preventDefault(); deferred = e;
-      var c = ensure(); if (c) { c.hidden = false; c.textContent = '⤓ 安装为应用'; c.dataset.act = 'prompt'; }
-    });
-    document.addEventListener('click', function (e) {
-      var c = e.target.closest && e.target.closest('#installChip');
-      if (!c) return;
-      if (c.dataset.act === 'prompt' && deferred) { deferred.prompt(); deferred = null; c.hidden = true; }
-    });
-    function ready() {
-      var c = ensure(); if (!c) return;
-      var ua = navigator.userAgent || '';
-      var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      if (ios && !standalone) { c.hidden = false; c.dataset.act = 'hint'; c.textContent = 'iOS：分享 ⇧ → 添加到主屏幕'; }
-    }
-    if (document.readyState !== 'loading') ready(); else document.addEventListener('DOMContentLoaded', ready);
-  })();
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=9').catch(function () {}); }); }
 </script>
 
 </body>

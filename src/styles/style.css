@@ -299,7 +299,7 @@ footer .foot-ver { color: var(--muted); font-size: 12.5px; }
   .tool-card:hover { transform: none; }
 }
 
-/* ===== 自绘下拉组件（全站统一，源出配方计算储液单位下拉）===== */
+/* ===== 自绘下拉组件（全站统一，源出溶液配制计算器储液单位下拉）===== */
 .dd { position:relative; display:inline-block; }
 .dd-btn { display:inline-flex; align-items:center; gap:5px; padding:11px 12px; font-size:16px; font-family:inherit;
   color:var(--text); background:var(--glass-strong); border:1px solid var(--border); border-radius:12px; outline:none;
@@ -331,11 +331,7 @@ input[type="number"] { -moz-appearance:textfield; appearance:textfield; }
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
 
-/* App 化：安装入口 + 刘海屏安全区（standalone 模式下生效） */
-.foot-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 12px; margin-left:2px;
-  font-size:12.5px; font-family:inherit; color:var(--accent); background:var(--accent-soft);
-  border:1px solid transparent; border-radius:980px; cursor:pointer; transition:filter .15s ease; }
-.foot-chip:hover { filter:brightness(.96); }
+/* App 化：刘海屏安全区（standalone 模式下生效） */
 @media (display-mode: standalone) {
   footer { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
 }
