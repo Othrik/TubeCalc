@@ -6,6 +6,7 @@ import Layout from '../../layouts/Layout.astro';
   note="计算全部在浏览器本地进行"
 >
   <Fragment slot="head">
+    <script src="/mw.js" is:inline></script>
     <style is:inline>
 
 .mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }   /* 行内元素统一 42px 高、清全局 label/btn 边距，底边对齐即全行水平 */
@@ -81,6 +82,13 @@ import Layout from '../../layouts/Layout.astro';
   .cell::before{content:attr(data-l); font-size:11px; font-weight:600; color:var(--muted);}
   .cell.name::before{color:var(--text);} .cell.c2::before{color:#7d7ce0;} .cell.c3::before{color:#1a97a8;} .cell.c4::before{color:#d97f06;} }
 #mixWarn { margin-top:14px; }
+/* 组分名化学式识别：苯环按钮（输入框内侧右缘） */
+.cell.name .ig { position:relative; }
+.cell.name .ig input { padding-right:30px; }
+.mw-ic { position:absolute; right:7px; top:50%; transform:translateY(-50%); display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border:0; border-radius:6px; background:none; padding:0; cursor:pointer; color:var(--muted); }
+.mw-ic:hover { color:var(--accent); background:var(--accent-soft); }
+.mw-ic svg { display:block; }
+.mw-ic[hidden] { display:none; }
 .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
 
     </style>
@@ -114,6 +122,7 @@ const LS_KEY = 'tubecalc_mix_v1';
 const $ = (s, p) => (p || document).querySelector(s);
 // 数字来源图标：铅笔=手动输入 ƒx=自动计算
 const PENCIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>';
+const BENZENE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2.6 20.1 7.3v9.4L12 21.4 3.9 16.7V7.3z" stroke-linejoin="round"/><circle cx="12" cy="12" r="4.5"/></svg>';   // 苯环：六边形+内切圆
 // 第二列单位（自绘分组下拉，三类）：固体（粉剂称量，按 g/mol 填分子量）；溶液（一切浓度单位，含 % v/v 母液）；纯液体（浓度恒 100%，无需填值）
 const SU = [
   ['固体', [['gmol','g/mol']]],
@@ -252,15 +261,20 @@ function render() {
     const d = document.createElement('div');
     d.className = 'mix-row';
     d.innerHTML =
-      '<div class="cell name" data-l="组分"><div class="ig"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"></div></div>' +
+      '<div class="cell name" data-l="组分"><div class="ig namebox"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"><button type="button" class="mw-ic" title="识别为化学式：点击填充分子量并切换为固体 g/mol 称量" hidden>' + BENZENE + '</button></div></div>' +
       '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="储液 / 分子量"><div class="ig"><span class="ibox"><input type="number" data-k="sv" placeholder="储液浓度 / 分子量" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
       '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" data-k="fv" placeholder="终浓度（可空）" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由储液与用量折算" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
       '<div class="cell c4" data-l="用量"><div class="ig"><span class="ibox"><input type="number" data-k="amt" placeholder="μL / mL / mg" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由浓度自动计算" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="删除该组分">×</button>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value;
+      if (el.dataset.k === 'name') validateMw(d);
       changed();
     }));
+    $('.mw-ic', d).addEventListener('click', () => {
+      mwFill(r);   // 识别失败时静默（图标本就只在合法化学式时出现）；内部走 render 重建，与手点储液类型菜单同路径
+    });
+    validateMw(d);   // 初始渲染/恢复时也校验一次
     const suDD = $('.su-dd', d);
     $('.dd-btn', suDD).addEventListener('click', e => {
       e.stopPropagation();
@@ -286,6 +300,29 @@ function render() {
 }
 
 function changed() { updateOutputs(); persist(); }
+
+// 组分名是否为合法化学式 → 控制苯环图标显隐
+function validateMw(rowEl) {
+  const ic = rowEl.querySelector('.mw-ic');
+  const name = (rowEl.querySelector('[data-k="name"]').value || '').trim();
+  let ok = false, mw = null;
+  if (name && window.mwParse) {
+    try { mw = window.mwParse(name).mw; ok = true; } catch (e) {}
+  }
+  ic.hidden = !ok;
+  if (ok) ic.title = '识别为化学式（' + (Math.round(mw * 100) / 100) + ' g/mol）：点击填充分子量并切换为固体 g/mol 称量';
+}
+
+// 苯环点击：填充分子量到储液/分子量列并切换储液类型为固体 g/mol；返回是否成功
+function mwFill(r) {
+  let res;
+  try { res = window.mwParse((r.name || '').trim()); } catch (e) { return false; }
+  r.sv = String(Math.round(res.mw * 100) / 100);   // 分子量按 g/mol 填储液/分子量列
+  r.su = 'gmol';
+  render();   // 与手点储液类型菜单同一路径：重建行以更新第三列可选项与显示
+  changed();
+  return true;
+}
 
 // 返回该行计算结果：{v:体积μL} 或 {m:质量g}，或 {} 表示手动/不计算
 function calcRow(r, vt) {
