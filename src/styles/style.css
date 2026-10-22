@@ -93,11 +93,13 @@ a:hover { text-decoration: underline; }
 }
 
 /* iPad 独立模式：iPadOS 状态栏毛玻璃区域较高（约 60pt）且横屏下 env() 避让不可靠，
-   宽屏独立运行时强制预留顶部空间，防止状态栏雾化遮挡导航内容 */
+   宽屏独立运行时强制预留顶部空间，防止状态栏雾化遮挡导航内容。
+   总高=预留量+56px 内容行，保持内容行垂直居中（不能 height:auto——内容行会贴底） */
 @media (display-mode: standalone) and (min-width: 700px) {
   .nav-inner {
-    padding-top: max(env(safe-area-inset-top, 0px), 64px);
-    height: auto; /* padding 增大后不压缩 56px 内容行 */
+    --sb-top: max(env(safe-area-inset-top, 0px), 64px);
+    padding-top: var(--sb-top);
+    height: calc(var(--sb-top) + 56px);
   }
 }
 .brand {
