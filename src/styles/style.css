@@ -91,6 +91,15 @@ a:hover { text-decoration: underline; }
   max-width: 1024px; margin: 0 auto; padding: max(0px, env(safe-area-inset-top)) 20px 0;
   height: 56px; display: flex; align-items: center; gap: 18px;
 }
+
+/* iPad 独立模式：iPadOS 状态栏毛玻璃区域较高（约 60pt）且横屏下 env() 避让不可靠，
+   宽屏独立运行时强制预留顶部空间，防止状态栏雾化遮挡导航内容 */
+@media (display-mode: standalone) and (min-width: 700px) {
+  .nav-inner {
+    padding-top: max(env(safe-area-inset-top, 0px), 64px);
+    height: auto; /* padding 增大后不压缩 56px 内容行 */
+  }
+}
 .brand {
   display: flex; align-items: center; gap: 7px;
   font-weight: 700; font-size: 18px; color: var(--text);
