@@ -258,6 +258,7 @@ footer .foot-note {
 }
 footer a { color: var(--muted); }
 footer .foot-ver { color: var(--muted); font-size: 12.5px; }
+footer .foot-lic { display: inline-block; font-size: 12px; opacity: .75; }
 
 /* ===== 响应式：手机（≤768px）===== */
 @media (max-width: 768px) {
