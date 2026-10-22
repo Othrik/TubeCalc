@@ -6,6 +6,18 @@
 <title>蛋白质序列分析 · TubeCalc</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="../assets/style.css?v=20261021c">
+<style>
+/* AF server 风格序列视图：每行 N 残基（10 个一组），组间加宽间隙，编号在每 10 个残基上方，末尾标总数 */
+.af-seq { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-top: 4px; overflow-x: auto; }
+.af-ruler, .af-res { display: flex; flex-wrap: nowrap; }
+.af-ruler { height: 14px; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.af-res { font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; letter-spacing: 0; }
+.af-seq i, .af-seq b { font-style: normal; font-weight: 400; flex: 0 0 auto; }
+.af-seq i { width: 15px; text-align: center; }
+.af-seq b { width: 8px; }
+.af-note { font-weight: 400; margin-left: 10px; color: var(--muted); font-size: 12px; }
+@media (max-width: 560px) { .af-res { font-size: 12.5px; } .af-seq i { width: 13px; } .af-seq b { width: 7px; } }
+</style>
 </head>
 <body>
 <nav class="nav"><div class="nav-inner">
@@ -36,6 +48,11 @@
       <button class="btn btn-ghost" id="clearBtn">清空</button>
     </div>
     <div class="error" id="err"></div>
+  </div>
+
+  <div class="panel" id="seqPanel" style="display:none">
+    <label>序列视图（AlphaFold 风格）<span class="af-note" id="seqNote"></span></label>
+    <div id="afSeq" class="af-seq"></div>
   </div>
 
   <div class="panel" id="sumPanel" style="display:none">
@@ -171,6 +188,51 @@ function render(st) {
 }
 
 let lastText = '';
+
+// ===== AF server 风格序列视图 =====
+const AA3 = { A:'Ala', R:'Arg', N:'Asn', D:'Asp', C:'Cys', Q:'Gln', E:'Glu', G:'Gly', H:'His', I:'Ile',
+  L:'Leu', K:'Lys', M:'Met', F:'Phe', P:'Pro', S:'Ser', T:'Thr', W:'Trp', Y:'Tyr', V:'Val' };
+let afSeqData = '', afResizeTimer = null;
+function afCellW() {   // 探针实测残基格/组间隙宽度（与 CSS 媒体查询联动）
+  const box = document.getElementById('afSeq');
+  const probe = document.createElement('div');
+  probe.className = 'af-res';
+  probe.style.cssText = 'position:absolute;visibility:hidden;';
+  probe.innerHTML = '<i>A</i><b></b>';
+  box.appendChild(probe);
+  const w = probe.children[0].getBoundingClientRect().width, g = probe.children[1].getBoundingClientRect().width;
+  box.removeChild(probe);
+  return { w: w || 15, g: g || 8 };
+}
+function afLayout(seq) {
+  const box = document.getElementById('afSeq');
+  const avail = box.clientWidth || 800;
+  const cw = afCellW();
+  let c = 50;
+  while (c > 10 && c * cw.w + (c / 10 - 1) * cw.g > avail) c -= 10;
+  const n = seq.length;
+  let html = '';
+  for (let off = 0; off < n; off += c) {
+    const line = seq.slice(off, off + c);
+    let ruler = '', letters = '';
+    for (let j = 0; j < line.length; j++) {
+      const pos = off + j + 1;
+      const show = pos % 10 === 0 || pos === n;      // 每 10 个 + 序列末尾
+      ruler += show ? '<i>' + pos + '</i>' : '<i></i>';
+      letters += '<i title="' + pos + ' · ' + (AA3[line[j]] || line[j]) + '">' + line[j] + '</i>';
+      if ((j + 1) % 10 === 0 && j + 1 < line.length) { ruler += '<b></b>'; letters += '<b></b>'; }
+    }
+    html += '<div class="af-ruler">' + ruler + '</div><div class="af-res">' + letters + '</div>';
+  }
+  box.innerHTML = html;
+  document.getElementById('seqNote').textContent = n + ' aa · ' + Math.ceil(n / c) + ' 行 × ' + c + ' 残基/行';
+}
+window.addEventListener('resize', () => {
+  if (!afSeqData) return;
+  clearTimeout(afResizeTimer);
+  afResizeTimer = setTimeout(() => afLayout(afSeqData), 150);
+});
+
 document.getElementById('runBtn').addEventListener('click', () => {
   const err = document.getElementById('err');
   err.textContent = '';
@@ -180,11 +242,16 @@ document.getElementById('runBtn').addEventListener('click', () => {
     err.textContent = problem;
     document.getElementById('sumPanel').style.display = 'none';
     document.getElementById('compPanel').style.display = 'none';
+    document.getElementById('seqPanel').style.display = 'none';
+    afSeqData = '';
     return;
   }
   const st = analyze(s);
   render(st);
   lastText = summaryText(st);
+  afSeqData = s;
+  document.getElementById('seqPanel').style.display = '';
+  afLayout(s);
 });
 document.getElementById('exBtn').addEventListener('click', () => {
   document.getElementById('protIn').value = 'MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG';
@@ -194,7 +261,9 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('protIn').value = '';
   document.getElementById('sumPanel').style.display = 'none';
   document.getElementById('compPanel').style.display = 'none';
+  document.getElementById('seqPanel').style.display = 'none';
   document.getElementById('err').textContent = '';
+  afSeqData = '';
   lastText = '';
 });
 document.getElementById('copyBtn').addEventListener('click', function () {
