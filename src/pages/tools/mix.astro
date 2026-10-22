@@ -11,7 +11,7 @@ import Layout from '../../layouts/Layout.astro';
 .mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }
 .mix-controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
 /* 总体积框：蓝色（与稀释页终体积同色，代表"体系规模"） */
-.mix-total input, .mix-total .dd-btn { background:rgba(0,113,227,.07); border-color:rgba(0,113,227,.30); }
+.mix-total .ibox input, .mix-total .dd-btn { background:rgba(0,113,227,.07); border-color:rgba(0,113,227,.30); }   /* .ibox input 需两级特异性压过全局 input 样式 */
 .mix-total { display:flex; gap:8px; }
 .dil-entry a { color:var(--accent, #0a84ff); font-weight:600; }
 .mix-row { display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; align-items:center;
@@ -103,7 +103,6 @@ import Layout from '../../layouts/Layout.astro';
   <div class="error" id="mixWarn"></div>
   <div class="hint dil-entry" style="margin-top:12px">只想快速做一次<b>单组分简单稀释</b>（C₁V₁ = C₂V₂，浓度、体积单位任意搭配自动换算）？<a href="/tools/dil/">前往简单稀释计算器 →</a></div>
 
-  <div class="hint" style="margin-top:12px">三列怎么填都行：<b>算体积</b> — 填储液浓度 + 终浓度（同量纲单位），用量自动算出；<b>算称量</b> — 第二列单位选 g/mol 填分子量、终浓度用 mol/L，或终浓度直接选 % w/v / mg/mL 等质量单位（无需分子量），用量列自动给出质量；<b>手动</b> — 浓度留空，直接在用量列填体积（μL/mL）或质量（mg/μg/g）。常用场景：× 倍液（储液选 × 后，终浓度单位自动限定为 ×，5×→1× 即取 V总/5）；乙醇等纯液（第二列选"纯液体"，浓度固定 100%、终浓度自动为 % v/v，70% 即取 0.7×V总；从 95% 母液稀释则储液选 % v/v 填 95）；琼脂糖/SDS 等（终浓度选 % w/v，1% = 10 g/L）；酶活性（U 系）— 储液与终浓度均选 U/μL、U/mL，如 20 U/μL 储液配成 5 U/mL。改浓度会重新自动计算；<b>同时填了储液与终浓度（或用质量浓度单位）时，用量数字自动算出并锁定，只允许调整单位；反之填了储液与用量时，终浓度自动折算并锁定，可换显示单位</b>；手动填用量请清空终浓度，手动填终浓度请清空用量。粉末/质量用量不占体积（溶解后定容）：涉及分子量/称量的配方直接显示"定容至总体积"，其余配方显示溶剂所需体积（= 总体积 − 各液态用量之和）。</div>
 </main>
 
 

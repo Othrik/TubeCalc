@@ -59,7 +59,7 @@ const NAV = [
         }
         var it = document.createElement('button'); it.type = 'button'; it.className = 'dd-it'; it.setAttribute('role', 'option');
         it.textContent = o.textContent; it.dataset.v = o.value;
-        if (o.disabled) { it.disabled = true; if (o.title) it.title = o.title; }   // 禁用项置灰 + 悬停显示原因
+        if (o.disabled) { it.classList.add('dis'); if (o.title) it.title = o.title; }   // 禁用项置灰+悬停原因（不用 disabled 属性：浏览器会吞掉 disabled 元素的 title 提示）
         if (o.selected) it.classList.add('cur');
         panel.appendChild(it);
       });
@@ -74,7 +74,7 @@ const NAV = [
     });
     panel.addEventListener('click', function (e) {
       e.stopPropagation();
-      var it = e.target.closest('.dd-it'); if (!it || it.disabled) return;   // 禁用项不可选
+      var it = e.target.closest('.dd-it'); if (!it || it.classList.contains('dis')) return;   // 禁用项不可选
       sel.value = it.dataset.v;
       panel.querySelectorAll('.dd-it').forEach(function (x) { x.classList.toggle('cur', x === it); });
       label(); dd.classList.remove('open');

@@ -11,9 +11,9 @@ import Layout from '../../layouts/Layout.astro';
 .dil-card { margin-top:14px; padding:20px 22px; border:1px solid var(--border); border-radius:14px; background:var(--card, rgba(255,255,255,.55)); }
 .dil-title { font-weight:600; font-size:16px; }
 .dil-sub { font-weight:400; font-size:12.5px; color:var(--muted); margin-left:6px; }
-.dil-grid { display:grid; grid-template-columns:1fr 18px 1fr 18px 1fr 18px 1fr; gap:12px 4px; margin-top:16px; }
-.dil-grid label { font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0; }
-.dil-op { align-self:center; color:var(--muted); font-size:15px; text-align:center; padding-top:21px; }   /* 与 42px 框行对齐 */
+.dil-grid { display:grid; grid-template-columns:1fr 18px 1fr 18px 1fr 18px 1fr; gap:12px 4px; margin-top:16px; align-items:start; }   /* 各列顶对齐：框行恒在同一水平线 */
+.dil-wrap .dil-grid label { margin:0; font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0; white-space:nowrap; }   /* 覆盖全局 label 的 12px 上边距（首子豁免导致 C₁ 与其余列错位 12px） */
+.dil-op { align-self:flex-end; height:42px; line-height:42px; color:var(--muted); font-size:15px; text-align:center; }   /* 与 42px 框行严格同高居中 */
 .dig { display:flex; align-items:center; gap:6px; min-width:0; }
 /* 数字来源图标与输入框（与配方页同一套框样式） */
 .ibox { position:relative; display:inline-flex; }
@@ -99,7 +99,31 @@ import Layout from '../../layouts/Layout.astro';
     if (clearAuto) dilAuto = null;
   }
   const cuLabel = (id) => $(id).selectedOptions[0].textContent;
+  // C₂ 单位取决于 C₁：族不同自动归位（C₂ 有值则清空，旧量纲下无意义）
+  function reconcile() {
+    const c1u = $('#dilCU').value, c2u = $('#dilC2U').value;
+    if (CFAM[c1u] !== CFAM[c2u]) {
+      if (dilAuto === 'dilC2') dilAuto = null;
+      $('#dilC2U').value = c1u;
+      $('#dilC2U').dispatchEvent(new Event('dd:sync'));
+      const c2inp = $('#dilC2');
+      if (c2inp.value !== '') c2inp.value = '';
+      return true;
+    }
+    return false;
+  }
+  function filterConc() {   // C₂ 菜单按 C₁ 族过滤 + 悬停原因
+    const c1u = $('#dilCU').value;
+    const tip = '与 C₁（' + cuLabel('#dilCU') + '）量纲不同：简单稀释要求同族单位';
+    Array.prototype.forEach.call($('#dilC2U').options, (o) => {
+      o.disabled = CFAM[o.value] !== CFAM[c1u];
+      o.title = o.disabled ? tip : '';
+    });
+    $('#dilC2U').dispatchEvent(new Event('dd:sync'));
+  }
   function calc() {
+    const fixed = reconcile();
+    if (fixed) filterConc();
     const c1 = num('#dilC1'), v1 = num('#dilV1'), c2 = num('#dilC2'), v2 = num('#dilV2');
     const c1u = $('#dilCU').value, c2u = $('#dilC2U').value, v1u = $('#dilVU').value, v2u = $('#dilV2U').value;
     const out = $('#dilOut');
@@ -108,13 +132,14 @@ import Layout from '../../layouts/Layout.astro';
     if (dilAuto) vals[dilAuto] = null;
     const blanks = Object.values(vals).filter((x) => x === null).length;
     const clashMsg = '⚠ C₁ 与 C₂ 单位量纲不同（' + cuLabel('#dilCU') + ' 与 ' + cuLabel('#dilC2U') + '），无法换算：请把两者换成同族单位（如都用 mol/L 系、都用质量浓度）。';
-    if (blanks >= 2) { unlockAll(true); out.innerHTML = '填好任意三项，剩下一项自动填入并锁定（ƒx，可换单位显示）；清空任意一项即可重新填写。'; return; }
+    if (blanks >= 2) { unlockAll(true); filterConc(); out.innerHTML = '填好任意三项，剩下一项自动填入并锁定（ƒx，可换单位显示）；清空任意一项即可重新填写。'; return; }
     if (blanks === 0) {
       unlockAll(true);
       if (CFAM[c1u] !== CFAM[c2u]) { out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
       const L = c1 * CFAC[c1u] * v1 * VFAC[v1u], R = c2 * CFAC[c2u] * v2 * VFAC[v2u];
       const diff = Math.abs(L - R) / R;
       out.innerHTML = diff <= 0.005 ? '✓ 四项与 C₁V₁ = C₂V₂ 一致。' : '⚠ 数值与公式不符：按 C₁V₁ = C₂V₂，V₁ 应为 <b>' + fmt(R / (c1 * CFAC[c1u]) / VFAC[v1u]) + ' ' + cuLabel('#dilVU') + '</b>（当前填 ' + fmt(v1) + ' ' + cuLabel('#dilVU') + '）。';
+      filterConc();
       return;
     }
     const famClash = vals.dilC1 !== null && vals.dilC2 !== null && CFAM[c1u] !== CFAM[c2u];
@@ -140,6 +165,7 @@ import Layout from '../../layouts/Layout.astro';
     FIDS.forEach((id) => { if (id !== solvedId) { const inp = $('#' + id); inp.readOnly = false; setIcons(inp, false); } });
     lockField(solvedId, fmtN(solvedVal));
     dilAuto = solvedId;
+    filterConc();
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(ids.map((i) => [i, $('#' + i).value])))); } catch (e) {}
