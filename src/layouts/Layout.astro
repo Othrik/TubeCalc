@@ -27,14 +27,14 @@ const NAV = [
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TubeCalc">
 <link rel="manifest" href="/manifest.webmanifest">
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=3">
-<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=3">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=5">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=5">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
 <slot name="head" />
 </head>
 <body>
 <nav class="nav"><div class="nav-inner">
-  <a class="brand" href="/"><img class="brand-ic" src="/icons/icon-192.png?v=3" alt="TubeCalc 图标" width="27" height="27">TubeCalc</a>
+  <a class="brand" href="/"><img class="brand-ic" src="/icons/icon-192.png?v=5" alt="TubeCalc 图标" width="27" height="27">TubeCalc</a>
   <div class="nav-links">
     {NAV.map(([href, label, key]) => (
       <a href={href} class={key === active ? 'active' : null}>{label}</a>
@@ -139,7 +139,7 @@ const NAV = [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=3').catch(function () {}); }); }
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=5').catch(function () {}); }); }
   // 安装入口：Chromium 系（PC/安卓/Chrome）弹事件则显示按钮；iOS 显示"添加到主屏幕"指引
   (function () {
     var chip = null;

@@ -70,6 +70,12 @@ npm run build    # 产物输出 dist/，URL 为 /tools/mix/ 目录式干净路�
 
 版本号定义在 `package.json`，页脚展示；重要变更会打 git tag（当前 `v1.0.0`）。
 
+## Credits
+
+App icon tube artwork adapted from [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) (Flat style), licensed under the MIT License, Copyright (c) Microsoft Corporation.
+
+应用图标中的试管图形改编自微软开源项目 Fluent Emoji（Flat 风格，MIT 许可，版权所有 (c) Microsoft Corporation）。
+
 ## License
 
 [MIT](LICENSE)
