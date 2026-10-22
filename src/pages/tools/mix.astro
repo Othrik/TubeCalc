@@ -6,7 +6,7 @@ import Layout from '../../layouts/Layout.astro';
   note="计算全部在浏览器本地进行"
 >
   <Fragment slot="head">
-    <script src="/mw.js" is:inline></script>
+    <script src="/mw.js?v=2" is:inline></script>
     <style is:inline>
 
 .mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }   /* 行内元素统一 42px 高、清全局 label/btn 边距，底边对齐即全行水平 */
@@ -291,6 +291,7 @@ function render() {
       render();                                                     // 重建行以更新第三列可选项
     }));
     d.querySelectorAll('select').forEach(el => el.addEventListener('change', () => {
+      if (el.classList.contains('au')) r._auTouched = true;   // 用户手选过用量单位：首次自动选单位逻辑不再干预
       r[el.className] = el.value;
       changed();
     }));
@@ -390,6 +391,10 @@ function updateOutputs() {
     // 用量列：浓度齐全 → 数字自动算出并锁定（只读），仅允许调整单位
     if (canV) {
       if (auSel.value !== 'uL' && auSel.value !== 'ml') { auSel.value = 'uL'; syncDDLabel(auSel); }   // 质量残留值归位体积
+      if (!r._auTouched && (r.amt === '' || r.amt == null)) {   // 首次自动算出用量 → 按量级选合适单位（≥1 mL 显示 mL）；用户手选过单位后不再干预
+        const want = res.v >= 1000 ? 'ml' : 'uL';
+        if (auSel.value !== want) { auSel.value = want; syncDDLabel(auSel); }
+      }
       const div = auSel.value === 'ml' ? 1000 : 1;
       if (amtIn.value !== fmtVol(res.v / div)) amtIn.value = fmtVol(res.v / div);
       r.amt = amtIn.value;

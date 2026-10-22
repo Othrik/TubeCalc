@@ -1,5 +1,6 @@
 // TubeCalc 共享分子量解析器：window.mwParse(化学式) → { mw, counts }，非法时抛出中文原因。
 // 与分子量页面同一套规则：支持括号、水合物（CuSO4·5H2O / . / *）。
+// 严格校验：下标/倍数必须 ≥1 的整数（拒绝 0 与前导零）、括号不得为空、元素符号须在周期表内、片段不得为空。
 (function () {
   'use strict';
   const MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -13,23 +14,31 @@
   Ta:180.95,W:183.84,Re:186.21,Os:190.23,Ir:192.22,Pt:195.08,Au:196.97,Hg:200.59,Tl:204.38,
   Pb:207.2,Bi:208.98,Po:209,At:210,Rn:222,Fr:223,Ra:226,Ac:227,Th:232.04,Pa:231.04,U:238.03,
   Np:237,Pu:244};
+  // 下标/倍数：拒绝 0 与前导零（"H0"、"H01"、"(Na)0Cl"、"0H2O" 均非法）
+  function subNum(s, what) {
+    if (s.length > 1 && s[0] === '0') throw what + '不能有前导零：' + s;
+    const n = parseInt(s, 10);
+    if (!(n >= 1)) throw what + '不能为 0';
+    return n;
+  }
   function parseSegment(seg) {
+    // 空白仅允许出现在水合物分隔符两侧（由 mwParse 统一归一化）；片段内部空白视为非法字符
     let i = 0, mult = 1;
-    const m = seg.match(/^\s*(\d+)/);
-    if (m) { mult = parseInt(m[1], 10); i = m[1].length; }
+    const m = seg.match(/^(\d+)/);
+    if (m) { mult = subNum(m[1], '前导倍数'); i = m[1].length; }
     const counts = {};
-    const stack = [counts];
-    let stackTop = 0;
+    const stack = [counts];   // 栈语义：pop/peek 用 stack.length 判断，不用外部计数器（连续括号组才不会串写残留对象）
     while (i < seg.length) {
       const ch = seg[i];
-      if (ch === '(') { stack.push({}); stackTop++; i++; }
+      if (ch === '(') { stack.push({}); i++; }
       else if (ch === ')') {
-        if (stackTop === 0) throw '括号不匹配';
+        if (stack.length === 1) throw '括号不匹配';
+        if (Object.keys(stack[stack.length - 1]).length === 0) throw '括号内为空';
         i++;
         let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
-        const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
-        const group = stack.pop(); stackTop--;
-        const top = stack[stackTop];
+        const n = (j > i) ? subNum(seg.slice(i, j), '括号倍数') : 1;
+        const group = stack.pop();
+        const top = stack[stack.length - 1];
         for (const el in group) top[el] = (top[el] || 0) + group[el] * n;
         i = j;
       }
@@ -39,29 +48,31 @@
         if (!(sym in MASS)) throw '无法识别的元素符号：' + sym;
         i += sym.length;
         let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
-        const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
-        const top = stack[stackTop];
+        const n = (j > i) ? subNum(seg.slice(i, j), '下标') : 1;
+        const top = stack[stack.length - 1];
         top[sym] = (top[sym] || 0) + n;
         i = j;
       }
       else if (/[a-z]/.test(ch)) { throw '元素符号位置出现小写字母（' + ch + '），请检查大小写'; }
       else { throw '无法识别的字符：' + ch; }
     }
-    if (stackTop !== 0) throw '括号不匹配';
+    if (stack.length !== 1) throw '括号不匹配';
     if (mult > 1) for (const el in counts) counts[el] *= mult;
     if (Object.keys(counts).length === 0) throw '存在空的片段';
     return counts;
   }
   window.mwParse = function (input) {
-    const segs = input.split(/[·.\*]/);
+    const segs = String(input).replace(/\s*([·.*])\s*/g, '·').split('·');   // 归一化分隔符两侧空白；片段内空白仍非法
     const total = {};
     for (const seg of segs) {
       if (!seg.trim()) throw '存在空的片段（检查分隔符）';
       const c = parseSegment(seg);
       for (const el in c) total[el] = (total[el] || 0) + c[el];
     }
+    if (!Object.keys(total).length) throw '不是有效的化学式';
     let mw = 0;
     for (const el in total) mw += MASS[el] * total[el];
+    if (!(mw > 0)) throw '不是有效的化学式';
     return { mw: Math.round(mw * 100000) / 100000, counts: total };
   };
 })();
