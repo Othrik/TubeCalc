@@ -41,11 +41,17 @@ import Layout from '../../layouts/Layout.astro';
 .c4 .ig input, .c4 .ig select, .c4 .ig .dd-btn { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
 .c4 .ig input { font-weight:600; }
 .c4 .ig input[readonly] { cursor:default; opacity:.9; }
-/* 单位框统一宽度：定宽 104px，单位文字水平居中，三角贴右 */
-.dd .dd-btn { width:104px; justify-content:center; position:relative; }
-.dd .dd-btn .dd-ar { position:absolute; right:9px; top:50%; transform:translateY(-50%); margin-top:0; }
+/* 单位框统一宽度：桌面端 .dd 定宽 104px（伸缩项，空间不足时收缩防挤压），按钮跟随 100%；窄屏(≤760)恢复自适应，避免两列网格溢出 */
+@media (min-width:761px){
+  .ig .dd, .mix-total .dd { flex:0 1 104px; }
+  .cell.c4 .dd { flex:0 0 auto; }
+  .cell.c4 .dd-btn { width:auto; }
+  .dd .dd-btn { width:100%; justify-content:space-between; }
+}
 .mix-row.water .vol-out { display:inline-block; padding:9px 12px; border-radius:10px; background:rgba(255,159,10,.10); border:1px solid rgba(255,159,10,.40); }
-.vol-out { font-weight:600; font-variant-numeric:tabular-nums; }
+/* 定容模式：用量格只留一个框（隐藏溶剂单位框，类打在稳定的 #waterRow 上，防行重建时序问题；溶剂名下拉不受影响） */
+#waterRow.mw .cell.c4 .dd { display:none; }
+.vol-out { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .row-warn { color:var(--danger); font-size:12px; grid-column:1/-1; }
 .del { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:8px; cursor:pointer; height:38px; }
 .del:hover { color:var(--danger); border-color:var(--danger); }
@@ -332,6 +338,7 @@ function updateOutputs() {
   const water = vt - sum;
   const wv = $('#waterVol'), wm = $('#waterMass');
   useMWNow = useMW;
+  $('#waterRow').classList.toggle('mw', useMW);
   $('#solvU').style.display = useMW ? 'none' : '';
   if (water >= 0) {
     const totalStr = (($('#total').value || '0') + ' ' + (parseFloat($('#totalUnit').value) === 1000 ? 'mL' : 'μL')).replace(/^0+(\d)/, '$1');
