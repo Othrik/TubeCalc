@@ -105,7 +105,7 @@ import Layout from '../../layouts/Layout.astro';
     </label>
     <button class="btn" id="addRow">添加组分</button>
     <button class="btn btn-ghost" id="copyTsv">复制表格 (TSV)</button>
-    <button type="button" class="demo-link" id="loadDemo" title="填入 100 mL 缓冲液示例（含纯液体与定加组分演示），会覆盖当前配方">载入示例配方</button>
+    <button type="button" class="demo-link" id="loadDemo" title="填入 100 mL 缓冲液示例（含纯液体与定加组分演示；定加行反推终浓度），会覆盖当前配方">载入示例配方</button>
   </div>
 
   <div class="mix-head"><span>组分</span><span>储液 / 分子量</span><span>终浓度</span><span>用量</span><span></span></div>
@@ -215,10 +215,12 @@ function totalUpt() { return (parseFloat($('#total').value) || 0) * parseFloat($
 
 function demo() {
   return { total: 100, totalUnit: '1000', rows: [
-    { name:'Tris-HCl（pH 7.5）',  sv:1,     su:'1',    fv:50,   fu:'0.001' },
+    { name:'Tris-HCl (pH 7.5)',  sv:1,     su:'1',    fv:50,   fu:'0.001' },
     { name:'NaCl',               sv:5,     su:'1',    fv:150,  fu:'0.001' },
+    { name:'EDTA',               sv:0.5,   su:'1',    fv:2,    fu:'0.001' },
+    { name:'BSA',                sv:10,    su:'pwv',  fv:0.1,  fu:'pwv' },
     { name:'Tween-20',           sv:'100', su:'pure', fv:0.05, fu:'pvv' },
-    { name:'抑菌剂（定加）',      sv:'',    su:'1',    fv:'',   fu:'1', amt:'200', au:'uL' }
+    { name:'Sodium Azide',       sv:5,     su:'pwv',  fv:'',   fu:'pwv', amt:'200', au:'uL' }
   ]};
 }
 
