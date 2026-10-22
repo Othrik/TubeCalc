@@ -21,7 +21,7 @@
 .aa-strip i { font-style: normal; min-width: 2px; }
 .aa-legend { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size: 12px; color: var(--muted); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
 .aa-legend b { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
-.aa-row { display: grid; grid-template-columns: 26px 152px 1fr 92px; gap: 8px; align-items: center; padding: 3.5px 0; font-size: 13px; }
+.aa-row { display: grid; grid-template-columns: 26px 196px 1fr 92px; gap: 8px; align-items: center; padding: 3.5px 0; font-size: 13px; }
 .aa-chip { width: 22px; height: 22px; border-radius: 7px; color: #fff; font-weight: 600; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .aa-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .aa-name b { font-weight: 600; }
@@ -29,7 +29,7 @@
 .aa-bar i { display: block; height: 100%; border-radius: 5px; font-style: normal; }
 .aa-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
 .aa-val b { color: var(--text); font-weight: 600; }
-@media (max-width: 560px) { .aa-row { grid-template-columns: 24px 112px 1fr 76px; gap: 6px; font-size: 12.5px; } .aa-chip { width: 20px; height: 20px; border-radius: 6px; } .aa-name { white-space: normal; line-height: 1.25; font-size: 12px; } }
+@media (max-width: 560px) { .aa-row { grid-template-columns: 24px 120px 1fr 76px; gap: 6px; font-size: 12.5px; } .aa-chip { width: 20px; height: 20px; border-radius: 6px; } .aa-name { white-space: normal; line-height: 1.25; font-size: 12px; } }
 /* 电荷 / 疏水性曲线画布 */
 canvas.plot { width: 100%; display: block; }
 .plot-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
@@ -115,7 +115,7 @@ const KD = {A:1.8,R:-4.5,N:-3.5,D:-3.5,C:2.5,Q:-3.5,E:-3.5,G:-0.4,H:-3.2,I:4.5,L
 // Bjellqvist pKa
 const PKA = {nTerm:7.50,cTerm:3.55,K:10.00,R:12.00,H:5.98,D:4.05,E:4.45,C:9.00,Y:10.00};
 
-const AA_NAME = {A:'Alanine 丙氨酸',R:'Arginine 精氨酸',N:'Asparagine 天冬酰胺',D:'Aspartic acid 天冬氨酸',C:'Cysteine 半胱氨酸',E:'Glutamic acid 谷氨酸',Q:'Glutamine 谷氨酰胺',G:'Glycine 甘氨酸',H:'Histidine 组氨酸',I:'Isoleucine 异亮氨酸',L:'Leucine 亮氨酸',K:'Lysine 赖氨酸',M:'Methionine 甲硫氨酸',F:'Phenylalanine 苯丙氨酸',P:'Proline 脯氨酸',S:'Serine 丝氨酸',T:'Threonine 苏氨酸',W:'Tryptophan 色氨酸',Y:'Tyrosine 酪氨酸',V:'Valine 缬氨酸'};
+const AA_NAME = {A:'Ala Alanine 丙氨酸',R:'Arg Arginine 精氨酸',N:'Asn Asparagine 天冬酰胺',D:'Asp Aspartic acid 天冬氨酸',C:'Cys Cysteine 半胱氨酸',E:'Glu Glutamic acid 谷氨酸',Q:'Gln Glutamine 谷氨酰胺',G:'Gly Glycine 甘氨酸',H:'His Histidine 组氨酸',I:'Ile Isoleucine 异亮氨酸',L:'Leu Leucine 亮氨酸',K:'Lys Lysine 赖氨酸',M:'Met Methionine 甲硫氨酸',F:'Phe Phenylalanine 苯丙氨酸',P:'Pro Proline 脯氨酸',S:'Ser Serine 丝氨酸',T:'Thr Threonine 苏氨酸',W:'Trp Tryptophan 色氨酸',Y:'Tyr Tyrosine 酪氨酸',V:'Val Valine 缬氨酸'};
 
 function cleanSeq(s) {
   const lines = s.split(/\r?\n/);
@@ -257,7 +257,7 @@ function render(st) {
 let lastText = '';
 
 // ===== AF server 风格序列视图 =====
-function aaFull(c) { return AA_NAME[c] ? AA_NAME[c].split(' ')[0] : c; }   // 单字母 → 英文全称
+function aaName(c) { return AA_NAME[c] || c; }   // 单字母 → "三字母 英文全称 中文"全名
 let afSeqData = '', afResizeTimer = null;
 function afCellW() {   // 探针实测残基格/组间隙宽度（与 CSS 媒体查询联动）
   const box = document.getElementById('afSeq');
@@ -285,7 +285,7 @@ function afLayout(seq) {
       const pos = off + j + 1;
       const show = pos % 10 === 0 || pos === n;      // 每 10 个 + 序列末尾
       ruler += show ? '<i>' + pos + '</i>' : '<i></i>';
-      letters += '<i title="' + pos + ' · ' + (aaFull(line[j]) || line[j]) + '">' + line[j] + '</i>';
+      letters += '<i title="' + pos + ' · ' + aaName(line[j]) + '">' + line[j] + '</i>';
       if ((j + 1) % 10 === 0 && j + 1 < line.length) { ruler += '<b></b>'; letters += '<b></b>'; }
     }
     html += '<div class="af-ruler">' + ruler + '</div><div class="af-res">' + letters + '</div>';
@@ -489,8 +489,8 @@ function drawHyd() {
   });
   cv._redraw = draw;
   cv._pts = { xs, ys, hi: null, segs: i => {
-    const full = aaFull(lastSeq[i]);
-    return [{ t: '残基 ' + xs[i] + ' · ' }, { t: full.slice(0, 3), b: true }, { t: full.slice(3) + ' · ' + ys[i].toFixed(2) }];
+    const nm = aaName(lastSeq[i]);
+    return [{ t: '残基 ' + xs[i] + ' · ' }, { t: nm.slice(0, 3), b: true }, { t: nm.slice(3) + ' · ' + ys[i].toFixed(2) }];
   } };
   draw(null);
 }
