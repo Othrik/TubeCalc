@@ -292,7 +292,7 @@ footer .foot-ver { color: var(--muted); font-size: 12.5px; }
   color:var(--text); background:var(--glass-strong); border:1px solid var(--border); border-radius:12px; outline:none;
   cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease; white-space:nowrap; }
 .dd-btn:focus-visible { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
-.dd-ar { font-size:10px; color:var(--muted); }
+.dd-ar { color:var(--muted); display:inline-flex; flex:0 0 auto; margin-top:1px; }
 .dd-panel { display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:40; min-width:172px; max-width:78vw;
   max-height:300px; overflow:auto; padding:6px;
   background:var(--card); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5);

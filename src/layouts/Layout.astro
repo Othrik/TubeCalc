@@ -49,7 +49,7 @@ const NAV = [
     var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'dd-btn'; btn.setAttribute('aria-haspopup', 'listbox');
     var panel = document.createElement('div'); panel.className = 'dd-panel'; panel.setAttribute('role', 'listbox');
     dd.appendChild(btn); dd.appendChild(panel);
-    function label() { var o = sel.selectedOptions[0]; btn.innerHTML = (o ? o.textContent : '—') + ' <span class="dd-ar">▾</span>'; }
+    function label() { var o = sel.selectedOptions[0]; btn.innerHTML = (o ? o.textContent : '—') + ' <svg class=\"dd-ar\" width=\"13\" height=\"11\" viewBox=\"0 0 13 11\" aria-hidden=\"true\"><path d=\"M2.6 2.2 L6.5 8.4 L10.4 2.2 Z\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/></svg>'; }
     function build() {
       panel.innerHTML = ''; var sec = null;
       Array.prototype.forEach.call(sel.options, function (o) {
