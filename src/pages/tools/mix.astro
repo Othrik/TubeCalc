@@ -105,7 +105,7 @@ import Layout from '../../layouts/Layout.astro';
     </label>
     <button class="btn" id="addRow">添加组分</button>
     <button class="btn btn-ghost" id="copyTsv">复制表格 (TSV)</button>
-    <button type="button" class="demo-link" id="loadDemo" title="填入示例数据演示用法（会覆盖当前配方）">载入示例配方</button>
+    <button type="button" class="demo-link" id="loadDemo" title="填入 100 mL 缓冲液示例（含纯液体与定加组分演示），会覆盖当前配方">载入示例配方</button>
   </div>
 
   <div class="mix-head"><span>组分</span><span>储液 / 分子量</span><span>终浓度</span><span>用量</span><span></span></div>
@@ -214,15 +214,11 @@ function rowVol(r, res) {   // 该行占用的体系体积（μL；质量行不�
 function totalUpt() { return (parseFloat($('#total').value) || 0) * parseFloat($('#totalUnit').value); }
 
 function demo() {
-  return { total: 200, totalUnit: '1', rows: [
-    { name:'Tris-HCl pH 8.0',        sv:1,     su:'1',    fv:75,  fu:'0.001' },
-    { name:'NaCl',                   sv:5,     su:'1',    fv:75,  fu:'0.001' },
-    { name:'TCEP',                   sv:120,   su:'0.001',fv:1.2, fu:'0.001' },
-    { name:'TMR-LPETG',              sv:1,     su:'0.001',fv:10,  fu:'0.000001' },
-    { name:'Cargo（GGA-PSP）',        sv:144.1, su:'1e-9', fv:2.5, fu:'1e-9' },
-    { name:'SortaseA（SRT7plus）',    sv:265.2, su:'1e-9', fv:0.5, fu:'1e-9' },
-    { name:'superTEV',               sv:24.9,  su:'1e-9', fv:1,   fu:'1e-9' },
-    { name:'QtEnc',                  sv:'',    su:'1',    fv:'',  fu:'1', amt:'', au:'uL' }
+  return { total: 100, totalUnit: '1000', rows: [
+    { name:'Tris-HCl（pH 7.5）',  sv:1,     su:'1',    fv:50,   fu:'0.001' },
+    { name:'NaCl',               sv:5,     su:'1',    fv:150,  fu:'0.001' },
+    { name:'Tween-20',           sv:'100', su:'pure', fv:0.05, fu:'pvv' },
+    { name:'抑菌剂（定加）',      sv:'',    su:'1',    fv:'',   fu:'1', amt:'200', au:'uL' }
   ]};
 }
 
