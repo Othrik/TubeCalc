@@ -8,7 +8,7 @@ const { title, desc = '', active = 'index', note = '', lic = '' } = Astro.props;
 // 导航清单：唯一事实来源（绝对路径 + active 短名）
 const NAV = [
   ['/', '首页', 'index'],
-  ['/tools/mix/', '溶液配制计算器', 'mix'],
+  ['/tools/mix/', '配制计算', 'mix'],
   ['/tools/dil/', '简单稀释', 'dil'],
   ['/tools/protein/', '蛋白质工具', 'protein'],
   ['/tools/mw/', '分子量', 'mw'],
@@ -140,7 +140,7 @@ const NAV = [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=10').catch(function () {}); }); }
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=11').catch(function () {}); }); }
 </script>
 
 </body>
