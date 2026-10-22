@@ -58,11 +58,13 @@ const NAV = [
         }
         var it = document.createElement('button'); it.type = 'button'; it.className = 'dd-it'; it.setAttribute('role', 'option');
         it.textContent = o.textContent; it.dataset.v = o.value;
+        if (o.disabled) { it.disabled = true; if (o.title) it.title = o.title; }   // 禁用项置灰 + 悬停显示原因
         if (o.selected) it.classList.add('cur');
         panel.appendChild(it);
       });
       label();
     }
+    sel.addEventListener('dd:sync', function () { build(); });   // 页面程序化改 option 的 disabled/title 后，派发此事件重建菜单
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       var open = dd.classList.contains('open');
@@ -71,7 +73,7 @@ const NAV = [
     });
     panel.addEventListener('click', function (e) {
       e.stopPropagation();
-      var it = e.target.closest('.dd-it'); if (!it) return;
+      var it = e.target.closest('.dd-it'); if (!it || it.disabled) return;   // 禁用项不可选
       sel.value = it.dataset.v;
       panel.querySelectorAll('.dd-it').forEach(function (x) { x.classList.toggle('cur', x === it); });
       label(); dd.classList.remove('open');
