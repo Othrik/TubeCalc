@@ -305,3 +305,8 @@ footer .foot-ver { color: var(--muted); font-size: 12.5px; }
 .dd-it:hover { background:var(--accent-soft); }
 .dd-it.cur { color:var(--accent); font-weight:600; background:var(--accent-soft); }
 .dd-it.cur::after { content:'✓'; float:right; font-size:13px; font-weight:700; }
+
+/* number 输入框取消上下加减箭头（全站统一，步进由键盘/输入控制） */
+input[type="number"] { -moz-appearance:textfield; appearance:textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
