@@ -10,7 +10,10 @@ import Layout from '../../layouts/Layout.astro';
 
 .mix-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin:14px 0 6px; }
 .mix-controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
+/* 总体积框：蓝色（与稀释页终体积同色，代表"体系规模"） */
+.mix-total input, .mix-total .dd-btn { background:rgba(0,113,227,.07); border-color:rgba(0,113,227,.30); }
 .mix-total { display:flex; gap:8px; }
+.dil-entry a { color:var(--accent, #0a84ff); font-weight:600; }
 .mix-row { display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; align-items:center;
   padding:10px 12px; border:1px solid var(--border); border-radius:11px; margin-top:10px; background:var(--card); }
 .mix-row.water { background:var(--card); box-shadow: inset 3px 0 0 var(--accent); }   /* 同底色融入卡片流，仅左侧细蓝条标记溶剂身份 */
@@ -53,7 +56,6 @@ import Layout from '../../layouts/Layout.astro';
 .vol-out { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
 /* 统一所有框高度为 42px（输入框/单位下拉/用量展示/删除键/稀释面板） */
 .ig input, .ig .dd-btn, .vol-out, .mix-total input, .mix-total .dd-btn, .del { height:42px; box-sizing:border-box; }
-.dil-grid input, .dil-grid select { height:42px; box-sizing:border-box; padding-top:0; padding-bottom:0; }
 /* 数字来源标注：框内左侧图标（铅笔=手动输入，ƒx=自动计算）；数字右对齐与单位贴近 */
 .ibox { position:relative; display:inline-flex; }
 .ig .ibox { flex:1; min-width:0; }
@@ -77,33 +79,13 @@ import Layout from '../../layouts/Layout.astro';
   .cell.name::before{color:var(--text);} .cell.c2::before{color:#7d7ce0;} .cell.c3::before{color:#1a97a8;} .cell.c4::before{color:#d97f06;} }
 #mixWarn { margin-top:14px; }
 .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
-/* 简化稀释面板 */
-.dil-box { margin-top:22px; padding:16px 18px; border:1px solid var(--border); border-radius:14px; background:var(--card, rgba(255,255,255,.55)); }
-.dil-title { font-weight:600; font-size:15px; }
-.dil-sub { font-weight:400; font-size:12.5px; color:var(--muted); margin-left:6px; }
-.dil-grid { display:grid; grid-template-columns:1fr 14px 1fr 14px 1fr 14px 1fr; gap:10px 4px; margin-top:12px; }
-.dil-grid label { font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0; }
-.dil-op { align-self:center; color:var(--muted); font-size:14px; text-align:center; padding-top:21px; }   /* 与 42px 框行对齐 */
-.dig { display:flex; align-items:center; gap:6px; min-width:0; }
-.dig .ibox { flex:1; min-width:0; }
-.dil-grid input { width:100%; height:42px; box-sizing:border-box; padding:7px 8px 7px 30px; border:1px solid var(--border); border-radius:10px; background:var(--bg2, #fff); color:var(--text); font:inherit; font-size:14px; text-align:right; }
-.dil-grid .dd-btn { height:42px; }
-.dil-tag { flex:none; font-size:12.5px; color:var(--muted); }
-/* 列语义色与配方表一致：C₁=储液紫，V₁=取用琥珀（同用量列），C₂=目标青，V₂=中性（同总体积框，不另着色） */
-.f-c1 .ibox input, .f-c1 .dd-btn { background:rgba(94,92,230,.07); border-color:rgba(94,92,230,.30); }
-.f-v1 .ibox input, .f-v1 .dd-btn { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
-.f-c2 .ibox input { background:rgba(34,165,180,.08); border-color:rgba(34,165,180,.32); }
-.dil-grid input:focus { outline:2px solid rgba(10,132,255,.35); border-color:var(--accent, #0a84ff); }
-.dil-out { margin-top:12px; font-size:14px; color:var(--text); line-height:1.6; }
-.dil-out b { color:var(--accent, #0a84ff); }
-@media (max-width:640px){ .dil-grid { grid-template-columns:1fr 1fr; } .dil-op { display:none; } }
 
     </style>
   </Fragment>
 
 <main class="container">
   <h1 class="page-title">配方计算器</h1>
-  <p class="page-desc">反应体系 / 母液配制：填"储液 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液、% v/v、% w/v 与粉末称量；浓度留空直接填用量即手动模式。溶剂自动补齐，数据自动保存在本浏览器。页底附单组分简化稀释（C₁V₁=C₂V₂）。</p>
+  <p class="page-desc">反应体系 / 母液配制：填"储液 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液、% v/v、% w/v 与粉末称量；浓度留空直接填用量即手动模式。溶剂自动补齐，数据自动保存在本浏览器。</p>
 
   <div class="mix-controls">
     <label>总体积
@@ -119,19 +101,7 @@ import Layout from '../../layouts/Layout.astro';
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
-  <div class="dil-box">
-    <div class="dil-title">简化稀释 <span class="dil-sub">C₁V₁ = C₂V₂ · 留空一项自动求解</span></div>
-    <div class="dil-grid">
-      <label class="f-c1">储液浓度 C₁<span class="dig"><span class="ibox"><input type="number" id="dilC1" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><select id="dilCU"><option value="1">M</option><option value="0.001" selected>mM</option><option value="1e-6">μM</option><option value="1e-9">nM</option></select></span></label>
-      <span class="dil-op" aria-hidden="true">×</span>
-      <label class="f-v1">取用体积 V₁<span class="dig"><span class="ibox"><input type="number" id="dilV1" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><select id="dilVU"><option value="1" selected>μL</option><option value="1000">mL</option></select></span></label>
-      <span class="dil-op" aria-hidden="true">=</span>
-      <label class="f-c2">终浓度 C₂<span class="dig"><span class="ibox"><input type="number" id="dilC2" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><span class="dil-tag" id="dilCUtag">mM</span></span></label>
-      <span class="dil-op" aria-hidden="true">×</span>
-      <label class="f-v2">终体积 V₂<span class="dig"><span class="ibox"><input type="number" id="dilV2" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><span class="dil-tag" id="dilVUtag">μL</span></span></label>
-    </div>
-    <div class="dil-out" id="dilOut">填好任意三项，剩下一项自动填入并锁定（ƒx，可换单位）；清空任意一项即可重新填写。四项全填则按公式核对。</div>
-  </div>
+  <div class="hint dil-entry" style="margin-top:12px">只想快速做一次<b>单组分简单稀释</b>（C₁V₁ = C₂V₂，浓度、体积单位任意搭配自动换算）？<a href="/tools/dil/">前往简单稀释计算器 →</a></div>
 
   <div class="hint" style="margin-top:12px">三列怎么填都行：<b>算体积</b> — 填储液浓度 + 终浓度（同量纲单位），用量自动算出；<b>算称量</b> — 第二列单位选 g/mol 填分子量、终浓度用 mol/L，或终浓度直接选 % w/v / mg/mL 等质量单位（无需分子量），用量列自动给出质量；<b>手动</b> — 浓度留空，直接在用量列填体积（μL/mL）或质量（mg/μg/g）。常用场景：× 倍液（储液选 × 后，终浓度单位自动限定为 ×，5×→1× 即取 V总/5）；乙醇等纯液（第二列选"纯液体"，浓度固定 100%、终浓度自动为 % v/v，70% 即取 0.7×V总；从 95% 母液稀释则储液选 % v/v 填 95）；琼脂糖/SDS 等（终浓度选 % w/v，1% = 10 g/L）；酶活性（U 系）— 储液与终浓度均选 U/μL、U/mL，如 20 U/μL 储液配成 5 U/mL。改浓度会重新自动计算；<b>同时填了储液与终浓度（或用质量浓度单位）时，用量数字自动算出并锁定，只允许调整单位；反之填了储液与用量时，终浓度自动折算并锁定，可换显示单位</b>；手动填用量请清空终浓度，手动填终浓度请清空用量。粉末/质量用量不占体积（溶解后定容）：涉及分子量/称量的配方直接显示"定容至总体积"，其余配方显示溶剂所需体积（= 总体积 − 各液态用量之和）。</div>
 </main>
@@ -506,85 +476,6 @@ $('#copyTsv').addEventListener('click', function () {
 document.addEventListener('click', () => document.querySelectorAll('.dd.open').forEach(x => x.classList.remove('open')));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.dd.open').forEach(x => x.classList.remove('open')); });
 
-/* ===== 简化稀释 C1V1=C2V2 ===== */
-(function () {
-  const $ = (t) => document.querySelector(t);
-  const DIL_KEY = 'tubecalc_mix_dil_v1';
-  const ids = ['dilC1', 'dilV1', 'dilC2', 'dilV2', 'dilCU', 'dilVU'];
-  const FIDS = ['dilC1', 'dilV1', 'dilC2', 'dilV2'];
-  const num = (id) => { const v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : null; };
-  function fmt(x) {
-    if (!isFinite(x) || x <= 0) return '—';
-    if (x >= 1e6 || x < 1e-4) return x.toExponential(2).replace('e+', '×10^');
-    return String(parseFloat(x.toPrecision(4)));
-  }
-  const fmtN = (x) => String(parseFloat(x.toPrecision(4)));   // 写入输入框的安全数字（type=number 可解析，不带 ×10^）
-  let dilAuto = null;   // 当前自动求解并锁定的字段
-  function lockField(id, txt) {
-    const inp = $('#' + id);
-    if (inp.value !== txt) inp.value = txt;
-    inp.readOnly = true;
-    const p = inp.parentNode.querySelector('.src-tag.pencil'), f = inp.parentNode.querySelector('.src-tag.fx');
-    if (p) p.hidden = true;
-    if (f) f.hidden = false;
-  }
-  function unlockAll(clearAuto) {
-    FIDS.forEach((id) => {
-      const inp = $('#' + id);
-      inp.readOnly = false;
-      const p = inp.parentNode.querySelector('.src-tag.pencil'), f = inp.parentNode.querySelector('.src-tag.fx');
-      if (p) p.hidden = false;
-      if (f) f.hidden = true;
-      if (clearAuto && id === dilAuto && inp.value !== '') inp.value = '';   // 清掉上一次的自动值，回到可手填
-    });
-    if (clearAuto) dilAuto = null;
-  }
-  function calc() {
-    const cf = parseFloat($('#dilCU').value), vf = parseFloat($('#dilVU').value);
-    const c1 = num('#dilC1'), v1 = num('#dilV1'), c2 = num('#dilC2'), v2 = num('#dilV2');
-    const C1 = c1 === null ? null : c1 * cf, V1 = v1 === null ? null : v1 * vf;
-    const C2 = c2 === null ? null : c2 * cf, V2 = v2 === null ? null : v2 * vf;
-    const out = $('#dilOut'), cu = $('#dilCU').selectedOptions[0].textContent, vu = $('#dilVU').selectedOptions[0].textContent;
-    $('#dilCUtag').textContent = cu;   // C₂/V₂ 的单位跟随 C₁/V₁ 显示
-    $('#dilVUtag').textContent = vu;
-    const blanks = [C1, V1, C2, V2].filter((x) => x === null).length;
-    if (blanks >= 2) { unlockAll(true); out.innerHTML = '填好任意三项，剩下一项自动填入并锁定（ƒx，可换单位）；清空任意一项即可重新填写。四项全填则按公式核对。'; return; }
-    if (blanks === 0) {
-      unlockAll(true);
-      const exp = C2 * V2 / C1;
-      const diff = Math.abs(V1 - exp) / exp;
-      out.innerHTML = diff <= 0.005 ? '✓ 四项与 C₁V₁ = C₂V₂ 一致。' : '⚠ 数值与公式不符：按 C₁V₁ = C₂V₂，V₁ 应为 <b>' + fmt(exp / vf) + ' ' + vu + '</b>（当前填 ' + fmt(V1 / vf) + ' ' + vu + '）。';
-      return;
-    }
-    let solvedId, solvedVal;
-    if (v1 === null) {
-      solvedVal = C2 * V2 / C1 / vf; solvedId = 'dilV1';
-      out.innerHTML = '取 <b>' + fmt(solvedVal) + ' ' + vu + '</b> 储液，加稀释液补至 <b>' + fmt(V2 / vf) + ' ' + vu + '</b>。';
-    } else if (c1 === null) {
-      solvedVal = C2 * V2 / V1 / cf; solvedId = 'dilC1';
-      out.innerHTML = '所需储液浓度 C₁ = <b>' + fmt(solvedVal) + ' ' + cu + '</b>（取 ' + fmt(V1 / vf) + ' ' + vu + ' 补至 ' + fmt(V2 / vf) + ' ' + vu + '）。';
-    } else if (v2 === null) {
-      solvedVal = C1 * V1 / C2 / vf; solvedId = 'dilV2';
-      out.innerHTML = '可配制终体积 V₂ = <b>' + fmt(solvedVal) + ' ' + vu + '</b>（其中储液 ' + fmt(V1 / vf) + ' ' + vu + '，余为稀释液）。';
-    } else {
-      solvedVal = C1 * V1 / V2 / cf; solvedId = 'dilC2';
-      out.innerHTML = '终浓度 C₂ = <b>' + fmt(solvedVal) + ' ' + cu + '</b>（' + fmt(V1 / vf) + ' ' + vu + ' 储液定容至 ' + fmt(V2 / vf) + ' ' + vu + '）。';
-    }
-    if (dilAuto && dilAuto !== solvedId) { const old = $('#' + dilAuto); if (old.value !== '') old.value = ''; }   // 求解对象切换：清旧自动值
-    FIDS.forEach((id) => { if (id !== solvedId) { const inp = $('#' + id); inp.readOnly = false; const p = inp.parentNode.querySelector('.src-tag.pencil'), f = inp.parentNode.querySelector('.src-tag.fx'); if (p) p.hidden = false; if (f) f.hidden = true; } });
-    lockField(solvedId, fmtN(solvedVal));
-    dilAuto = solvedId;
-  }
-  function save() {
-    try { localStorage.setItem(DIL_KEY, JSON.stringify(Object.fromEntries(ids.map((i) => [i, $('#' + i).value])))); } catch (e) {}
-  }
-  try {
-    const d = JSON.parse(localStorage.getItem(DIL_KEY) || '{}');
-    ids.forEach((i) => { if (d[i] !== undefined) $('#' + i).value = d[i]; });
-  } catch (e) {}
-  ['input', 'change'].forEach((ev) => ids.forEach((i) => $('#' + i).addEventListener(ev, () => { calc(); save(); })));   // select 换单位引擎只派发 change，必须双绑
-  calc();
-})();
 
 if (!restore()) rows = [{ name:'', sv:'', su:'1', fv:'', fu:'1', amt:'', au:'uL' }];
 render();
