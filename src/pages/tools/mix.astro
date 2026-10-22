@@ -51,8 +51,11 @@ import Layout from '../../layouts/Layout.astro';
 /* 定容模式：用量格只留一个框（隐藏溶剂单位框，类打在稳定的 #waterRow 上，防行重建时序问题；溶剂名下拉不受影响） */
 #waterRow.mw .cell.c4 .dd { display:none; }
 .vol-out { font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; }
+/* 统一所有框高度为 42px（输入框/单位下拉/用量展示/删除键/稀释面板） */
+.ig input, .ig .dd-btn, .vol-out, .mix-total input, .mix-total .dd-btn, .del { height:42px; box-sizing:border-box; }
+.dil-grid input, .dil-grid select { height:42px; box-sizing:border-box; padding-top:0; padding-bottom:0; }
 .row-warn { color:var(--danger); font-size:12px; grid-column:1/-1; }
-.del { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:8px; cursor:pointer; height:38px; }
+.del { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:8px; cursor:pointer; }
 .del:hover { color:var(--danger); border-color:var(--danger); }
 @media (max-width:760px){ .mix-head{display:none;} .mix-row{grid-template-columns:1fr 1fr;} .mix-row .cell.name{grid-column:1/3;} .mix-row .del{grid-column:2; justify-self:end;} .mix-row .row-warn{grid-column:1/3;}
   .cell{flex-direction:column; align-items:stretch; gap:4px;}
@@ -338,7 +341,6 @@ function updateOutputs() {
   const wv = $('#waterVol'), wm = $('#waterMass');
   useMWNow = useMW;
   $('#waterRow').classList.toggle('mw', useMW);
-  $('#solvU').style.display = useMW ? 'none' : '';
   if (water >= 0) {
     const totalStr = (($('#total').value || '0') + ' ' + (parseFloat($('#totalUnit').value) === 1000 ? 'mL' : 'μL')).replace(/^0+(\d)/, '$1');
     wv.textContent = useMW ? '定容至 ' + totalStr : fmtVol(water / (solvU === 'ml' ? 1000 : 1));
