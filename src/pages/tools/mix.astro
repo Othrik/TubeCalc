@@ -41,8 +41,9 @@ import Layout from '../../layouts/Layout.astro';
 .c4 .ig input, .c4 .ig select, .c4 .ig .dd-btn { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
 .c4 .ig input { font-weight:600; }
 .c4 .ig input[readonly] { cursor:default; opacity:.9; }
-/* 单位框统一宽度：所有下拉按钮定宽，标签左、箭头右，纵向对齐 */
-.dd .dd-btn { width:104px; justify-content:space-between; }
+/* 单位框统一宽度：定宽 104px，单位文字水平居中，三角贴右 */
+.dd .dd-btn { width:104px; justify-content:center; position:relative; }
+.dd .dd-btn .dd-ar { position:absolute; right:9px; top:50%; transform:translateY(-50%); margin-top:0; }
 .mix-row.water .vol-out { display:inline-block; padding:9px 12px; border-radius:10px; background:rgba(255,159,10,.10); border:1px solid rgba(255,159,10,.40); }
 .vol-out { font-weight:600; font-variant-numeric:tabular-nums; }
 .row-warn { color:var(--danger); font-size:12px; grid-column:1/-1; }
