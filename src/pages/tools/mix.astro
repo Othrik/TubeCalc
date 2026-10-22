@@ -35,24 +35,6 @@ import Layout from '../../layouts/Layout.astro';
 .ig { flex:1; display:flex; gap:6px; align-items:center; min-width:0; }
 .ig input[type=text], .ig input[type=number], .ig select { min-width:0; flex:1; }
 .ig select { flex:0 0 auto; max-width:92px; }
-/* 自绘储液单位下拉：小标题（小字灰）→ 选项 → 当前选中（蓝+勾），三层视觉层次 */
-.dd { position:relative; flex:0 0 auto; max-width:104px; }
-.dd-btn { display:inline-flex; align-items:center; gap:5px; padding:11px 12px; font-size:16px; font-family:inherit;
-  color:var(--text); background:var(--glass-strong); border:1px solid var(--border); border-radius:12px; outline:none;
-  cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease; white-space:nowrap; }
-.dd-btn:focus-visible { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
-.dd-ar { font-size:10px; color:var(--muted); }
-.dd-panel { display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:40; min-width:172px; padding:6px;
-  background:var(--card); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5);
-  border:1px solid var(--border); border-radius:13px; box-shadow:0 14px 36px rgba(0,0,0,.17); }
-.dd.open .dd-panel { display:block; }
-.dd-sec { font-size:10.5px; font-weight:600; letter-spacing:.14em; color:var(--muted); padding:7px 10px 3px; }
-.dd-sec:not(:first-child) { margin-top:5px; padding-top:9px; border-top:1px solid var(--border); }
-.dd-it { display:block; width:100%; padding:7px 10px; border:0; border-radius:9px; background:none;
-  font-size:14px; font-family:inherit; color:var(--text); text-align:left; cursor:pointer; }
-.dd-it:hover { background:var(--accent-soft); }
-.dd-it.cur { color:var(--accent); font-weight:600; background:var(--accent-soft); }
-.dd-it.cur::after { content:'✓'; float:right; font-size:13px; font-weight:700; }
 /* 列语义色：储液=紫（投入），终浓度=青（目标），用量=琥珀（结果） */
 .c2 .ig input, .c2 .ig select, .c2 .ig .dd-btn { background:rgba(94,92,230,.07); border-color:rgba(94,92,230,.30); }
 .c3 .ig input, .c3 .ig select { background:rgba(34,165,180,.08); border-color:rgba(34,165,180,.32); }
@@ -70,12 +52,25 @@ import Layout from '../../layouts/Layout.astro';
   .cell.name::before{color:var(--text);} .cell.c2::before{color:#7d7ce0;} .cell.c3::before{color:#1a97a8;} .cell.c4::before{color:#d97f06;} }
 #mixWarn { margin-top:14px; }
 .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
+/* 简化稀释面板 */
+.dil-box { margin-top:22px; padding:16px 18px; border:1px solid var(--border); border-radius:14px; background:var(--card, rgba(255,255,255,.55)); }
+.dil-title { font-weight:600; font-size:15px; }
+.dil-sub { font-weight:400; font-size:12.5px; color:var(--muted); margin-left:6px; }
+.dil-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px 14px; margin-top:12px; }
+.dil-grid label { font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:5px; }
+.dil-grid input { width:100%; box-sizing:border-box; padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--bg2, #fff); color:var(--text); font:inherit; font-size:14px; }
+.dil-grid select { margin-top:5px; padding:5px 6px; border:1px solid var(--border); border-radius:8px; background:var(--bg2, #fff); color:var(--text); font:inherit; font-size:13px; align-self:flex-start; }
+.dil-grid input:focus, .dil-grid select:focus { outline:2px solid rgba(10,132,255,.35); border-color:var(--accent, #0a84ff); }
+.dil-out { margin-top:12px; font-size:14px; color:var(--text); line-height:1.6; }
+.dil-out b { color:var(--accent, #0a84ff); }
+@media (max-width:640px){ .dil-grid { grid-template-columns:1fr 1fr; } }
+
     </style>
   </Fragment>
 
 <main class="container">
   <h1 class="page-title">配方计算器</h1>
-  <p class="page-desc">反应体系 / 母液配制：填"储液 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液、% v/v、% w/v 与粉末称量；浓度留空直接填用量即手动模式。溶剂自动补齐，数据自动保存在本浏览器。</p>
+  <p class="page-desc">反应体系 / 母液配制：填"储液 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液、% v/v、% w/v 与粉末称量；浓度留空直接填用量即手动模式。溶剂自动补齐，数据自动保存在本浏览器。页底附单组分简化稀释（C₁V₁=C₂V₂）。</p>
 
   <div class="mix-controls">
     <label>总体积
@@ -91,6 +86,17 @@ import Layout from '../../layouts/Layout.astro';
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
+  <div class="dil-box">
+    <div class="dil-title">简化稀释 <span class="dil-sub">C₁V₁ = C₂V₂ · 留空一项自动求解</span></div>
+    <div class="dil-grid">
+      <label>储液浓度 C₁<input type="number" id="dilC1" min="0" step="any"><select id="dilCU"><option value="1">M</option><option value="0.001" selected>mM</option><option value="1e-6">μM</option><option value="1e-9">nM</option></select></label>
+      <label>取用体积 V₁<input type="number" id="dilV1" min="0" step="any"><select id="dilVU"><option value="1" selected>μL</option><option value="1000">mL</option></select></label>
+      <label>终浓度 C₂<input type="number" id="dilC2" min="0" step="any"></label>
+      <label>终体积 V₂<input type="number" id="dilV2" min="0" step="any"></label>
+    </div>
+    <div class="dil-out" id="dilOut">留空一项（浓度或体积），其余三项填好后自动求解；四项全填则按公式核对。</div>
+  </div>
+
   <div class="hint" style="margin-top:12px">三列怎么填都行：<b>算体积</b> — 填储液浓度 + 终浓度（同量纲单位），用量自动算出；<b>算称量</b> — 第二列单位选 g/mol 填分子量、终浓度用 mol/L，或终浓度直接选 % w/v / mg/mL 等质量单位（无需分子量），用量列自动给出质量；<b>手动</b> — 浓度留空，直接在用量列填体积（μL/mL）或质量（mg/μg/g）。常用场景：× 倍液（储液选 × 后，终浓度单位自动限定为 ×，5×→1× 即取 V总/5）；乙醇等纯液（终浓度选 % v/v、储液不填按 100% 算，70% 即取 0.7×V总；从 95% 母液稀释则储液也选 % v/v 填 95）；琼脂糖/SDS 等（终浓度选 % w/v，1% = 10 g/L）。改浓度会重新自动计算；<b>同时填了储液与终浓度（或用质量浓度单位）时，用量数字自动算出并锁定，只允许调整单位</b>；手动填用量请清空终浓度。粉末/质量用量不占体积（溶解后定容）：涉及分子量/称量的配方直接显示"定容至总体积"，其余配方显示溶剂所需体积（= 总体积 − 各液态用量之和）。</div>
 </main>
 
@@ -388,6 +394,53 @@ $('#copyTsv').addEventListener('click', function () {
 
 document.addEventListener('click', () => document.querySelectorAll('.dd.open').forEach(x => x.classList.remove('open')));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.dd.open').forEach(x => x.classList.remove('open')); });
+
+/* ===== 简化稀释 C1V1=C2V2 ===== */
+(function () {
+  const $ = (t) => document.querySelector(t);
+  const DIL_KEY = 'tubecalc_mix_dil_v1';
+  const ids = ['dilC1', 'dilV1', 'dilC2', 'dilV2', 'dilCU', 'dilVU'];
+  const num = (id) => { const v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : null; };
+  function fmt(x) {
+    if (!isFinite(x) || x <= 0) return '—';
+    if (x >= 1e6 || x < 1e-4) return x.toExponential(2).replace('e+', '×10^');
+    return String(parseFloat(x.toPrecision(4)));
+  }
+  function calc() {
+    const cf = parseFloat($('#dilCU').value), vf = parseFloat($('#dilVU').value);
+    const c1 = num('#dilC1'), v1 = num('#dilV1'), c2 = num('#dilC2'), v2 = num('#dilV2');
+    const C1 = c1 === null ? null : c1 * cf, V1 = v1 === null ? null : v1 * vf;
+    const C2 = c2 === null ? null : c2 * cf, V2 = v2 === null ? null : v2 * vf;
+    const out = $('#dilOut'), cu = $('#dilCU').selectedOptions[0].textContent, vu = $('#dilVU').selectedOptions[0].textContent;
+    const blanks = [C1, V1, C2, V2].filter((x) => x === null).length;
+    if (blanks >= 2) { out.innerHTML = '留空一项（浓度或体积），其余三项填好后自动求解；四项全填则按公式核对。'; return; }
+    if (blanks === 0) {
+      const exp = C2 * V2 / C1;
+      const diff = Math.abs(V1 - exp) / exp;
+      out.innerHTML = diff <= 0.005 ? '✓ 四项与 C₁V₁ = C₂V₂ 一致。' : '⚠ 数值与公式不符：按 C₁V₁ = C₂V₂，V₁ 应为 <b>' + fmt(exp / vf) + ' ' + vu + '</b>（当前填 ' + fmt(V1 / vf) + ' ' + vu + '）。';
+      return;
+    }
+    if (v1 === null) {
+      out.innerHTML = '取 <b>' + fmt(C2 * V2 / C1 / vf) + ' ' + vu + '</b> 储液，加稀释液补至 <b>' + fmt(V2 / vf) + ' ' + vu + '</b>。';
+    } else if (c1 === null) {
+      out.innerHTML = '所需储液浓度 C₁ = <b>' + fmt(C2 * V2 / V1 / cf) + ' ' + cu + '</b>（取 ' + fmt(V1 / vf) + ' ' + vu + ' 补至 ' + fmt(V2 / vf) + ' ' + vu + '）。';
+    } else if (v2 === null) {
+      out.innerHTML = '可配制终体积 V₂ = <b>' + fmt(C1 * V1 / C2 / vf) + ' ' + vu + '</b>（其中储液 ' + fmt(V1 / vf) + ' ' + vu + '，余为稀释液）。';
+    } else {
+      out.innerHTML = '终浓度 C₂ = <b>' + fmt(C1 * V1 / V2 / cf) + ' ' + cu + '</b>（' + fmt(V1 / vf) + ' ' + vu + ' 储液定容至 ' + fmt(V2 / vf) + ' ' + vu + '）。';
+    }
+  }
+  function save() {
+    try { localStorage.setItem(DIL_KEY, JSON.stringify(Object.fromEntries(ids.map((i) => [i, $('#' + i).value])))); } catch (e) {}
+  }
+  try {
+    const d = JSON.parse(localStorage.getItem(DIL_KEY) || '{}');
+    ids.forEach((i) => { if (d[i] !== undefined) $('#' + i).value = d[i]; });
+  } catch (e) {}
+  ids.forEach((i) => $('#' + i).addEventListener('input', () => { calc(); save(); }));
+  calc();
+})();
+
 if (!restore()) rows = [{ name:'', sv:'', su:'1', fv:'', fu:'1', amt:'', au:'uL' }];
 render();
 </script>

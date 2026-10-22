@@ -282,3 +282,23 @@ footer .foot-ver { color: var(--muted); font-size: 12.5px; }
   * { transition: none !important; }
   .tool-card:hover { transform: none; }
 }
+
+/* ===== 自绘下拉组件（全站统一，源出配方计算储液单位下拉）===== */
+.dd { position:relative; display:inline-block; }
+.dd-btn { display:inline-flex; align-items:center; gap:5px; padding:11px 12px; font-size:16px; font-family:inherit;
+  color:var(--text); background:var(--glass-strong); border:1px solid var(--border); border-radius:12px; outline:none;
+  cursor:pointer; transition:border-color .15s ease, box-shadow .15s ease; white-space:nowrap; }
+.dd-btn:focus-visible { border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft); }
+.dd-ar { font-size:10px; color:var(--muted); }
+.dd-panel { display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:40; min-width:172px; max-width:78vw;
+  max-height:300px; overflow:auto; padding:6px;
+  background:var(--card); backdrop-filter:blur(22px) saturate(1.5); -webkit-backdrop-filter:blur(22px) saturate(1.5);
+  border:1px solid var(--border); border-radius:13px; box-shadow:0 14px 36px rgba(0,0,0,.17); }
+.dd.open .dd-panel { display:block; }
+.dd-sec { font-size:10.5px; font-weight:600; letter-spacing:.14em; color:var(--muted); padding:7px 10px 3px; }
+.dd-sec:not(:first-child) { margin-top:5px; padding-top:9px; border-top:1px solid var(--border); }
+.dd-it { display:block; width:100%; padding:7px 10px; border:0; border-radius:9px; background:none;
+  font-size:14px; font-family:inherit; color:var(--text); text-align:left; cursor:pointer; }
+.dd-it:hover { background:var(--accent-soft); }
+.dd-it.cur { color:var(--accent); font-weight:600; background:var(--accent-soft); }
+.dd-it.cur::after { content:'✓'; float:right; font-size:13px; font-weight:700; }

@@ -5,7 +5,7 @@
 <a id="english"></a>
 ## English
 
-A collection of free online science tools for the lab bench: **recipe calculator** (stock/final concentration → volumes, with solvent & weighing support), **protein sequence analysis**, **molecular weight**, **sequence tools**, **statistics**, **dilution** and **unit conversion**.
+A collection of free online science tools for the lab bench: **recipe calculator** (stock/final concentration → volumes, solvent make-up, weighing support, plus a built-in simplified dilution solver C₁V₁=C₂V₂), **protein sequence analysis**, **molecular weight** and **unit conversion**.
 
 Pure front-end — every computation runs locally in your browser. No backend, no tracking.
 
@@ -39,7 +39,7 @@ The version lives in `package.json` and is shown in the site footer. Notable cha
 <a id="中文"></a>
 ## 中文
 
-面向实验台的免费在线科研小工具集：**配方计算器**（储液/终浓度自动算加样量，支持多溶剂与称量）、**蛋白质序列分析**、**分子量**、**序列工具**、**统计计算**、**稀释计算** 与 **单位换算**。
+面向实验台的免费在线科研小工具集：**配方计算器**（储液/终浓度自动算加样量，支持多溶剂与称量，内置简化稀释 C₁V₁=C₂V₂）、**蛋白质序列分析**、**分子量** 与 **单位换算**。
 
 纯前端运行——所有计算都在浏览器本地完成，无后端、无追踪。
 
