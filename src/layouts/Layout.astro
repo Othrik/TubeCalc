@@ -1,23 +1,21 @@
 ---
 // 全站统一骨架：<head> + 导航 + 页脚。
-// 每页只声明 title / desc / active / note（页脚方法注释）/ root（''=根目录页，'../'=tools 子目录页），其余内容走 slot。
-const { title, desc = '', active = '', note = '', root = '' } = Astro.props;
+// 每页只声明 title / desc / active（短名：index/mix/protein/…）/ note（页脚方法注释），其余内容走 slot。全站链接用绝对路径。
+import '../styles/style.css';
+import pkg from '../../package.json';
+const { title, desc = '', active = 'index', note = '' } = Astro.props;
 
-// 导航清单：唯一事实来源（href 以站点根计）
+// 导航清单：唯一事实来源（绝对路径 + active 短名）
 const NAV = [
-  ['index.html', '首页'],
-  ['tools/mix.html', '配方计算'],
-  ['tools/protein.html', '蛋白质工具'],
-  ['tools/mw.html', '分子量'],
-  ['tools/seq.html', '序列工具'],
-  ['tools/stats.html', '统计计算'],
-  ['tools/dilution.html', '稀释计算'],
-  ['tools/unit.html', '单位换算'],
+  ['/', '首页', 'index'],
+  ['/tools/mix/', '配方计算', 'mix'],
+  ['/tools/protein/', '蛋白质工具', 'protein'],
+  ['/tools/mw/', '分子量', 'mw'],
+  ['/tools/seq/', '序列工具', 'seq'],
+  ['/tools/stats/', '统计计算', 'stats'],
+  ['/tools/dilution/', '稀释计算', 'dilution'],
+  ['/tools/unit/', '单位换算', 'unit'],
 ];
-const toolPage = root !== '';
-const idxHref = toolPage ? '../index.html' : 'index.html';
-const navHref = (h) => (toolPage ? (h === 'index.html' ? '../index.html' : h.replace(/^tools\//, '')) : h);
-const isActive = (h) => (toolPage ? h === 'tools/' + active : h === 'index.html');
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -27,22 +25,21 @@ const isActive = (h) => (toolPage ? h === 'tools/' + active : h === 'index.html'
 <title>{title}</title>
 {desc ? <meta name="description" content={desc} /> : null}
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
-<link rel="stylesheet" href={root + 'assets/style.css?v=20261023a'}>
 <slot name="head" />
 </head>
 <body>
 <nav class="nav"><div class="nav-inner">
-  <a class="brand" href={idxHref}><span class="brand-ic">🧪</span>TubeCalc</a>
+  <a class="brand" href="/"><span class="brand-ic">🧪</span>TubeCalc</a>
   <div class="nav-links">
-    {NAV.map(([href, label]) => (
-      <a href={navHref(href)} class={isActive(href) ? 'active' : null}>{label}</a>
+    {NAV.map(([href, label, key]) => (
+      <a href={href} class={key === active ? 'active' : null}>{label}</a>
     ))}
   </div>
 </div></nav>
 <slot />
 <footer>
   <span class="foot-note">{note}
-</span><br>© 2026 <a href={idxHref}>TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+</span><br>© 2026 <a href="/">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a> · <span class="foot-ver">v{pkg.version}</span>
 </footer>
 </body>
 </html>

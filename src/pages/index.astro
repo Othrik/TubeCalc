@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="TubeCalc · 配方计算器与在线科研小工具" active="index.html" root=""
+<Layout title="TubeCalc · 配方计算器与在线科研小工具"
   desc="主打配方计算器：储液/终浓度自动算加样量，多溶剂与称量支持；另有分子量、序列、统计、稀释、单位换算等免费在线工具，全部在浏览器本地完成。"
   note="静态构建，无追踪 · 计算全部在浏览器本地进行"
 >
@@ -13,12 +13,12 @@ import Layout from '../layouts/Layout.astro';
     <p>主打工具 · 配方计算器：储液与终浓度进去，每个组分的加样量自动出来 — 溶剂可选、称量直读、TSV 进表格。</p>
     <p>轻量、免费、无需注册 — 为实验室日常计算而建，所有计算均在你的浏览器本地完成，数据不上传。</p>
     <div class="hero-cta">
-      <a class="btn hero-btn" href="tools/mix.html">打开配方计算器 →</a>
+      <a class="btn hero-btn" href="/tools/mix/">打开配方计算器 →</a>
       <a class="hero-more" href="#tools">浏览全部工具</a>
     </div>
   </div>
 
-  <a class="tool-card featured" href="tools/mix.html">
+  <a class="tool-card featured" href="/tools/mix/">
     <span class="featured-tag">主打工具</span>
     <h3>配方计算器</h3>
     <p>整张反应体系一次算清：按"储液 → 终浓度"自动给出每个组分的加样量，溶剂自动补齐，改任何数字即时重算。</p>
@@ -31,41 +31,36 @@ import Layout from '../layouts/Layout.astro';
   </a>
   <h2 class="sec-title" id="tools">全部工具</h2>
   <div class="grid">
-    <a class="tool-card" href="tools/protein.html">
+    <a class="tool-card" href="/tools/protein/">
       <h3>蛋白质序列分析</h3>
       <p>分子量、理论 pI、消光系数 ε280、A280 与氨基酸组成、GRAVY 疏水指数。</p>
       <span class="open">打开 →</span>
     </a>
-    <a class="tool-card" href="tools/mw.html">
+    <a class="tool-card" href="/tools/mw/">
       <h3>分子量计算器</h3>
       <p>输入化学式（支持括号与水合物，如 CuSO4·5H2O），得到摩尔质量与元素组成。</p>
       <span class="open">打开 →</span>
     </a>
-    <a class="tool-card" href="tools/seq.html">
+    <a class="tool-card" href="/tools/seq/">
       <h3>序列处理工具</h3>
       <p>DNA/RNA 反向互补、转录，碱基组成、GC 含量与 Tm 估算，一键复制。</p>
       <span class="open">打开 →</span>
     </a>
-    <a class="tool-card" href="tools/stats.html">
+    <a class="tool-card" href="/tools/stats/">
       <h3>统计计算器</h3>
       <p>两组数据的描述统计与 Welch t 检验，直接给出 t 值、自由度与双尾 p 值。</p>
       <span class="open">打开 →</span>
     </a>
-    <a class="tool-card" href="tools/dilution.html">
+    <a class="tool-card" href="/tools/dilution/">
       <h3>溶液稀释计算</h3>
       <p>基于 C1V1=C2V2，输入任意三项求解第四项，并给出配制操作量。</p>
       <span class="open">打开 →</span>
     </a>
-    <a class="tool-card" href="tools/unit.html">
+    <a class="tool-card" href="/tools/unit/">
       <h3>单位换算</h3>
       <p>长度、质量、体积、摩尔浓度与摩尔数换算，覆盖实验常用量程。</p>
       <span class="open">打开 →</span>
     </a>
   </div>
 </main>
-
-<footer>
-  <span class="foot-note">静态构建，无追踪 · 计算全部在浏览器本地进行
-</span><br>© 2026 <a href="index.html">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a></footer>
-
 </Layout>
