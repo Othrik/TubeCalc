@@ -216,6 +216,8 @@ textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace
 .demo-link { font-size: 12.5px; color: var(--muted); background: none; border: none; padding: 8px 2px; cursor: pointer;
   text-decoration: underline dotted 1px; text-underline-offset: 4px; }
 .demo-link:hover { color: var(--text); }
+.field-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.field-head .demo-link { margin-left: auto; }
 .row { display: flex; gap: 14px; flex-wrap: wrap; }
 .row > * { flex: 1; min-width: 150px; }
 .hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; }

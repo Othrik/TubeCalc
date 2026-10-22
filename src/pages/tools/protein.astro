@@ -43,7 +43,10 @@ canvas.plot { width: 100%; display: block; }
   <p class="page-desc">粘贴蛋白质序列（单字母码，可带 FASTA 头部），计算分子量、理论 pI、消光系数 ε280、电荷曲线与氨基酸组成。</p>
 
   <div class="panel">
-    <label for="protIn">输入序列（20 种标准氨基酸，单字母码）</label>
+    <div class="field-head">
+      <label for="protIn">输入序列（20 种标准氨基酸，单字母码）</label>
+      <button type="button" class="demo-link" id="exBtn" title="填入人泛素 Ub（76 aa）示例序列演示用法">载入示例序列</button>
+    </div>
     <textarea id="protIn" rows="6" placeholder="直接粘贴氨基酸序列或 FASTA（&gt;头部行自动剥离）&#10;例如：MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
@@ -51,7 +54,6 @@ canvas.plot { width: 100%; display: block; }
       <button class="btn btn-ghost" id="copyBtn">复制结果</button>
       <button class="btn btn-ghost" id="clearBtn">清空</button>
     </div>
-    <button type="button" class="demo-link" id="exBtn" title="填入人泛素 Ub（76 aa）示例序列演示用法">载入示例序列</button>
     <div class="error" id="err"></div>
   </div>
 
