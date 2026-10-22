@@ -33,18 +33,6 @@
 canvas.plot { width: 100%; display: block; }
 .plot-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
 .kd-win { display: inline-block; margin-left: 10px; font-weight: 400; font-size: 12.5px; }
-/* 变体计算器（融合 / 片段 / 突变） */
-.var-grid { display: grid; gap: 10px 12px; margin-top: 2px; }
-.var-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.var-lb { flex: 0 0 68px; font-size: 13px; font-weight: 500; }
-.var-row input[type="number"] { width: 92px; }
-.var-sep { color: var(--muted); }
-.var-unit { font-size: 12px; color: var(--muted); }
-#varMut, #varNseq, #varCseq { flex: 1 1 200px; }
-#varRes table.tbl td, #varRes table.tbl th { text-align: right; font-variant-numeric: tabular-nums; }
-#varRes table.tbl td:first-child, #varRes table.tbl th:first-child { text-align: left; }
-.var-note { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
-@media (max-width: 560px) { .var-lb { flex: 1 1 100%; } #varMut, #varNseq, #varCseq { flex: 1 1 100%; } }
 </style>
 </head>
 <body>
@@ -109,32 +97,6 @@ canvas.plot { width: 100%; display: block; }
     <div class="plot-hint">滑动窗口平均疏水值；虚线 1.6 为跨膜倾向经验参考（窗口 19 时最有效）。高分区段倾向位于疏水核心 / 跨膜区。悬停查看每个残基的数值。</div>
   </div>
 
-  <div class="panel" id="varPanel" style="display:none">
-    <label>融合 / 片段 / 突变计算器</label>
-    <div class="var-grid">
-      <div class="var-row"><span class="var-lb">片段区间</span>
-        <input type="number" id="varStart" min="1" step="1" placeholder="起始">
-        <span class="var-sep">–</span>
-        <input type="number" id="varEnd" min="1" step="1" placeholder="止（空＝全长）">
-        <span class="var-unit">按原始序列编号，1 起</span>
-      </div>
-      <div class="var-row"><span class="var-lb">N 端融合</span>
-        <select id="varNsel"></select><input type="text" id="varNseq" placeholder="融合序列（单字母，可编辑）">
-      </div>
-      <div class="var-row"><span class="var-lb">C 端融合</span>
-        <select id="varCsel"></select><input type="text" id="varCseq" placeholder="融合序列（单字母，可编辑）">
-      </div>
-      <div class="var-row"><span class="var-lb">突变</span>
-        <input type="text" id="varMut" placeholder="如 F123A, K30R（按原始序列编号，可多个）">
-      </div>
-    </div>
-    <div class="row">
-      <button class="btn" id="varBtn">生成变体</button>
-      <button class="btn btn-ghost" id="varCopyBtn" style="display:none">复制变体序列</button>
-    </div>
-    <div class="error" id="varErr"></div>
-    <div id="varRes"></div>
-  </div>
 </main>
 
 <footer>
@@ -520,119 +482,7 @@ function drawHyd() {
   draw(null);
 }
 
-// ===== 变体计算器：片段 + 融合 tag + 突变（编号按原始序列） =====
-const TAG_PRESETS = [
-  ['无', ''], ['His6', 'HHHHHH'], ['His8', 'HHHHHHHH'], ['FLAG', 'DYKDDDDK'], ['HA', 'YPYDVPDYA'],
-  ['Myc', 'EQKLISEEDL'], ['Strep-tag II', 'WSHPQFEK'], ['AviTag', 'GLNDIFEAQKIEWHE'],
-  ['TEV 切点', 'ENLYFQG'], ['凝血酶切点', 'LVPRGS'], ['Sortase LPETG', 'LPETG'], ['自定义…', '']
-];
-function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-function initTagSel(selId, inpId) {
-  const sel = document.getElementById(selId), inp = document.getElementById(inpId);
-  sel.innerHTML = TAG_PRESETS.map((t, i) => '<option value="' + i + '">' + t[0] + '</option>').join('');
-  sel.value = '0';
-  sel.addEventListener('change', () => {
-    if (sel.value === String(TAG_PRESETS.length - 1)) { inp.value = ''; inp.focus(); }
-    else inp.value = TAG_PRESETS[+sel.value][1];
-  });
-}
-initTagSel('varNsel', 'varNseq');
-initTagSel('varCsel', 'varCseq');
-function normTag(v, label, errs) {
-  const t = v.toUpperCase().replace(/[\s\-]/g, '');
-  if (!t) return '';
-  const bad = [...new Set(t.split('').filter(c => !AA.includes(c)))];
-  if (bad.length) { errs.push(label + '序列含非标准字符：' + bad.join(' ')); return null; }
-  return t;
-}
-function resetVariant() {
-  varSeq = '';
-  ['varNseq', 'varCseq', 'varMut', 'varStart', 'varEnd'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('varNsel').value = '0';
-  document.getElementById('varCsel').value = '0';
-  document.getElementById('varErr').textContent = '';
-  document.getElementById('varRes').innerHTML = '';
-  document.getElementById('varCopyBtn').style.display = 'none';
-}
-let varSeq = '';
-document.getElementById('varBtn').addEventListener('click', () => {
-  const errBox = document.getElementById('varErr');
-  errBox.textContent = '';
-  document.getElementById('varRes').innerHTML = '';
-  document.getElementById('varCopyBtn').style.display = 'none';
-  varSeq = '';
-  if (!lastSeq) { errBox.textContent = '请先在上方分析序列'; return; }
-  const n = lastSeq.length, errs = [], notes = [];
-  // ① 突变（按原始序列编号）
-  const muts = [], seen = {};
-  const raw = document.getElementById('varMut').value.trim();
-  if (raw) {
-    for (const tk of raw.split(/[,;\s]+/).filter(Boolean)) {
-      const u = tk.toUpperCase();
-      const m = u.match(/^([ARNDCEQGHILKMFPSTWY])(\d+)([ARNDCEQGHILKMFPSTWY])$/);
-      if (!m) { errs.push('无法解析「' + tk + '」，格式应为 F123A'); continue; }
-      const pos = +m[2];
-      if (pos < 1 || pos > n) { errs.push(tk + '：位置超出 1–' + n); continue; }
-      if (lastSeq[pos - 1] !== m[1]) { errs.push(tk + '：位置 ' + pos + ' 是 ' + AA3[lastSeq[pos - 1]] + '（' + lastSeq[pos - 1] + '），不是 ' + AA3[m[1]]); continue; }
-      if (seen[pos]) { errs.push('位置 ' + pos + ' 出现多个突变'); continue; }
-      seen[pos] = 1;
-      muts.push({ pos, to: m[3], tk: u });
-    }
-  }
-  // ② 片段区间
-  let start = 1, end = n;
-  const sV = document.getElementById('varStart').value.trim(), eV = document.getElementById('varEnd').value.trim();
-  if (sV !== '') { start = Math.floor(+sV); if (!(start >= 1 && start <= n)) errs.push('片段起点需在 1–' + n + ' 之间'); }
-  if (eV !== '') { end = Math.floor(+eV); if (!(end >= 1 && end <= n)) errs.push('片段终点需在 1–' + n + ' 之间'); }
-  if (start > end) errs.push('片段起点不能大于终点');
-  // ③ 融合序列
-  const nTag = normTag(document.getElementById('varNseq').value, 'N 端融合', errs);
-  const cTag = normTag(document.getElementById('varCseq').value, 'C 端融合', errs);
-  if (errs.length) { errBox.textContent = errs[0]; return; }
-  // 组装：先突变（原始编号）→ 截片段 → 两端接融合序列
-  const seqArr = lastSeq.split('');
-  for (const mu of muts) seqArr[mu.pos - 1] = mu.to;
-  const frag = seqArr.slice(start - 1, end).join('');
-  varSeq = nTag + frag + cTag;
-  const st2 = analyze(varSeq);
-  if (start !== 1 || end !== n) notes.push('片段 ' + start + '–' + end + '（原始编号）');
-  if (muts.length) {
-    const out = muts.filter(m => m.pos < start || m.pos > end).map(m => m.tk);
-    notes.push('突变 ' + muts.map(m => m.tk).join('、') + (out.length ? '（其中 ' + out.join('、') + ' 在片段外，未包含）' : ''));
-  }
-  if (nTag) notes.push('N 端 +' + nTag);
-  if (cTag) notes.push('C 端 +' + cTag);
-  if (!notes.length) notes.push('未做任何修改，变体与原始序列一致');
-  const d = (a, b, f) => (b - a >= 0 ? '+' : '') + fmt(b - a, f);
-  let html = '<table class="tbl"><tr><th>指标</th><th>原始</th><th>变体</th><th>Δ</th></tr>';
-  html += '<tr><td>长度</td><td>' + lastSt.n + ' aa</td><td>' + st2.n + ' aa</td><td>' + (st2.n - lastSt.n >= 0 ? '+' : '') + (st2.n - lastSt.n) + '</td></tr>';
-  html += '<tr><td>分子量</td><td>' + fmt(lastSt.mw, 2) + '</td><td>' + fmt(st2.mw, 2) + '</td><td>' + d(lastSt.mw, st2.mw, 2) + '</td></tr>';
-  html += '<tr><td>理论 pI</td><td>' + fmt(lastSt.pI, 2) + '</td><td>' + fmt(st2.pI, 2) + '</td><td>' + d(lastSt.pI, st2.pI, 2) + '</td></tr>';
-  html += '<tr><td>ε280（还原）</td><td>' + lastSt.eRed.toLocaleString() + '</td><td>' + st2.eRed.toLocaleString() + '</td><td>' + (st2.eRed - lastSt.eRed >= 0 ? '+' : '') + (st2.eRed - lastSt.eRed) + '</td></tr>';
-  html += '<tr><td>ε280（二硫键）</td><td>' + lastSt.eOx.toLocaleString() + '</td><td>' + st2.eOx.toLocaleString() + '</td><td>' + (st2.eOx - lastSt.eOx >= 0 ? '+' : '') + (st2.eOx - lastSt.eOx) + '</td></tr>';
-  html += '<tr><td>A280 @1 mg/mL（还原）</td><td>' + fmt(lastSt.absRed, 3) + '</td><td>' + fmt(st2.absRed, 3) + '</td><td>' + d(lastSt.absRed, st2.absRed, 3) + '</td></tr>';
-  html += '<tr><td>GRAVY</td><td>' + fmt(lastSt.gravy, 3) + '</td><td>' + fmt(st2.gravy, 3) + '</td><td>' + d(lastSt.gravy, st2.gravy, 3) + '</td></tr>';
-  html += '</table>';
-  html += '<div class="var-note">' + esc(notes.join('；')) + '。变体长度 ' + st2.n + ' aa。</div>';
-  document.getElementById('varRes').innerHTML = html;
-  document.getElementById('varCopyBtn').style.display = '';
-});
-document.getElementById('varCopyBtn').addEventListener('click', function () {
-  if (!varSeq) return;
-  const self = this;
-  (navigator.clipboard ? navigator.clipboard.writeText(varSeq) : Promise.reject())
-    .catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = varSeq; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-    })
-    .finally(() => {
-      const old = self.textContent; self.textContent = '已复制';
-      setTimeout(() => { self.textContent = old; }, 1200);
-    });
-});
-
-const HIDE_IDS = ['sumPanel', 'compPanel', 'seqPanel', 'chargePanel', 'hydPanel', 'varPanel'];
+const HIDE_IDS = ['sumPanel', 'compPanel', 'seqPanel', 'chargePanel', 'hydPanel'];
 document.getElementById('runBtn').addEventListener('click', () => {
   const err = document.getElementById('err');
   err.textContent = '';
@@ -662,11 +512,9 @@ document.getElementById('runBtn').addEventListener('click', () => {
   document.getElementById('seqPanel').style.display = '';
   document.getElementById('chargePanel').style.display = '';
   document.getElementById('hydPanel').style.display = '';
-  document.getElementById('varPanel').style.display = '';
   afLayout(s);
   drawCharge();
   drawHyd();
-  resetVariant();
 });
 document.getElementById('exBtn').addEventListener('click', () => {
   document.getElementById('protIn').value = 'MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG';
