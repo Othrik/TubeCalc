@@ -29,6 +29,22 @@
 .aa-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
 .aa-val b { color: var(--text); font-weight: 600; }
 @media (max-width: 560px) { .aa-row { grid-template-columns: 24px 64px 1fr 76px; gap: 6px; font-size: 12.5px; } .aa-chip { width: 20px; height: 20px; border-radius: 6px; } }
+/* 电荷 / 疏水性曲线画布 */
+canvas.plot { width: 100%; display: block; }
+.plot-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.kd-win { display: inline-block; margin-left: 10px; font-weight: 400; font-size: 12.5px; }
+/* 变体计算器（融合 / 片段 / 突变） */
+.var-grid { display: grid; gap: 10px 12px; margin-top: 2px; }
+.var-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.var-lb { flex: 0 0 68px; font-size: 13px; font-weight: 500; }
+.var-row input[type="number"] { width: 92px; }
+.var-sep { color: var(--muted); }
+.var-unit { font-size: 12px; color: var(--muted); }
+#varMut, #varNseq, #varCseq { flex: 1 1 200px; }
+#varRes table.tbl td, #varRes table.tbl th { text-align: right; font-variant-numeric: tabular-nums; }
+#varRes table.tbl td:first-child, #varRes table.tbl th:first-child { text-align: left; }
+.var-note { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.6; }
+@media (max-width: 560px) { .var-lb { flex: 1 1 100%; } #varMut, #varNseq, #varCseq { flex: 1 1 100%; } }
 </style>
 </head>
 <body>
@@ -48,11 +64,12 @@
 
 <main class="container">
   <h1 class="page-title">蛋白质序列分析</h1>
-  <p class="page-desc">粘贴蛋白质序列（单字母码），计算分子量、理论 pI、消光系数 ε280、吸光度与氨基酸组成。输入会自动去除空白与数字。</p>
+  <p class="page-desc">粘贴蛋白质序列（单字母码，可带 FASTA 头部），计算分子量、理论 pI、消光系数 ε280、电荷曲线与氨基酸组成。</p>
 
   <div class="panel">
     <label for="protIn">输入序列（20 种标准氨基酸，单字母码）</label>
-    <textarea id="protIn" rows="6" placeholder="例如：MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <textarea id="protIn" rows="6" placeholder="直接粘贴氨基酸序列或 FASTA（&gt;头部行自动剥离）&#10;例如：MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">分析</button>
       <button class="btn btn-ghost" id="exBtn">示例序列</button>
@@ -76,6 +93,48 @@
     <label>氨基酸组成</label>
     <div id="compBody"></div>
   </div>
+
+  <div class="panel" id="chargePanel" style="display:none">
+    <label>电荷–pH 曲线</label>
+    <canvas id="chargeCv" class="plot"></canvas>
+    <div class="plot-hint">净电荷（Bjellqvist pKa）随 pH 变化；虚线为理论 pI（净电荷＝0）。pH 高于 pI 时蛋白带负电，适合阴离子交换；低于 pI 带正电，适合阳离子交换。悬停查看数值。</div>
+  </div>
+
+  <div class="panel" id="hydPanel" style="display:none">
+    <label>Kyte-Doolittle 疏水性图谱<span class="kd-win">窗口 <select id="kdWin">
+      <option value="7">7</option><option value="9" selected>9</option><option value="11">11</option>
+      <option value="13">13</option><option value="15">15</option><option value="19">19</option>
+    </select> 残基</span></label>
+    <canvas id="hydCv" class="plot"></canvas>
+    <div class="plot-hint">滑动窗口平均疏水值；虚线 1.6 为跨膜倾向经验参考（窗口 19 时最有效）。高分区段倾向位于疏水核心 / 跨膜区。悬停查看每个残基的数值。</div>
+  </div>
+
+  <div class="panel" id="varPanel" style="display:none">
+    <label>融合 / 片段 / 突变计算器</label>
+    <div class="var-grid">
+      <div class="var-row"><span class="var-lb">片段区间</span>
+        <input type="number" id="varStart" min="1" step="1" placeholder="起始">
+        <span class="var-sep">–</span>
+        <input type="number" id="varEnd" min="1" step="1" placeholder="止（空＝全长）">
+        <span class="var-unit">按原始序列编号，1 起</span>
+      </div>
+      <div class="var-row"><span class="var-lb">N 端融合</span>
+        <select id="varNsel"></select><input type="text" id="varNseq" placeholder="融合序列（单字母，可编辑）">
+      </div>
+      <div class="var-row"><span class="var-lb">C 端融合</span>
+        <select id="varCsel"></select><input type="text" id="varCseq" placeholder="融合序列（单字母，可编辑）">
+      </div>
+      <div class="var-row"><span class="var-lb">突变</span>
+        <input type="text" id="varMut" placeholder="如 F123A, K30R（按原始序列编号，可多个）">
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="varBtn">生成变体</button>
+      <button class="btn btn-ghost" id="varCopyBtn" style="display:none">复制变体序列</button>
+    </div>
+    <div class="error" id="varErr"></div>
+    <div id="varRes"></div>
+  </div>
 </main>
 
 <footer>
@@ -96,7 +155,16 @@ const PKA = {nTerm:7.50,cTerm:3.55,K:10.00,R:12.00,H:5.98,D:4.05,E:4.45,C:9.00,Y
 const AA_NAME = {A:'Ala 丙氨酸',R:'Arg 精氨酸',N:'Asn 天冬酰胺',D:'Asp 天冬氨酸',C:'Cys 半胱氨酸',E:'Glu 谷氨酸',Q:'Gln 谷氨酰胺',G:'Gly 甘氨酸',H:'His 组氨酸',I:'Ile 异亮氨酸',L:'Leu 亮氨酸',K:'Lys 赖氨酸',M:'Met 甲硫氨酸',F:'Phe 苯丙氨酸',P:'Pro 脯氨酸',S:'Ser 丝氨酸',T:'Thr 苏氨酸',W:'Trp 色氨酸',Y:'Tyr 酪氨酸',V:'Val 缬氨酸'};
 
 function cleanSeq(s) {
-  return s.toUpperCase().replace(/[^A-Z]/g, '');
+  const lines = s.split(/\r?\n/);
+  const hasFasta = lines.some(l => l.trim().charAt(0) === '>');
+  const body = hasFasta ? lines.filter(l => l.trim().charAt(0) !== '>').join('') : s;
+  return body.toUpperCase().replace(/[^A-Z]/g, '');
+}
+function fastaHeader(s) {
+  for (const l of s.split(/\r?\n/)) {
+    if (l.trim().charAt(0) === '>') return l.trim().replace(/^>\s*/, '');
+  }
+  return '';
 }
 function checkSeq(s) {
   if (!s) return '请输入序列';
@@ -127,25 +195,27 @@ function analyze(s) {
   for (const c of s) gravy += KD[c];
   gravy /= n;
   // 理论 pI：电荷函数 + 二分
-  const charge = pH => {
-    const pos = cnt.K / (1 + Math.pow(10, pH - PKA.K))
-              + cnt.R / (1 + Math.pow(10, pH - PKA.R))
-              + cnt.H / (1 + Math.pow(10, pH - PKA.H))
-              + 1 / (1 + Math.pow(10, pH - PKA.nTerm));
-    const neg = cnt.D / (1 + Math.pow(10, PKA.D - pH))
-              + cnt.E / (1 + Math.pow(10, PKA.E - pH))
-              + cnt.C / (1 + Math.pow(10, PKA.C - pH))
-              + cnt.Y / (1 + Math.pow(10, PKA.Y - pH))
-              + 1 / (1 + Math.pow(10, PKA.cTerm - pH));
-    return pos - neg;
-  };
   let lo = 0, hi = 14;
   for (let i = 0; i < 60; i++) {
     const mid = (lo + hi) / 2;
-    if (charge(mid) > 0) lo = mid; else hi = mid;
+    if (chargeAt(cnt, mid) > 0) lo = mid; else hi = mid;
   }
   const pI = (lo + hi) / 2;
   return { cnt, n, mw, eRed, eOx, absRed, absOx, gravy, pI, ssNum };
+}
+
+// 净电荷（Bjellqvist pKa，含 N/C 末端）
+function chargeAt(cnt, pH) {
+  const pos = cnt.K / (1 + Math.pow(10, pH - PKA.K))
+            + cnt.R / (1 + Math.pow(10, pH - PKA.R))
+            + cnt.H / (1 + Math.pow(10, pH - PKA.H))
+            + 1 / (1 + Math.pow(10, pH - PKA.nTerm));
+  const neg = cnt.D / (1 + Math.pow(10, PKA.D - pH))
+            + cnt.E / (1 + Math.pow(10, PKA.E - pH))
+            + cnt.C / (1 + Math.pow(10, PKA.C - pH))
+            + cnt.Y / (1 + Math.pow(10, PKA.Y - pH))
+            + 1 / (1 + Math.pow(10, PKA.cTerm - pH));
+  return pos - neg;
 }
 
 // 化学类别（Lehninger 四分类）
@@ -261,30 +331,342 @@ function afLayout(seq) {
   box.innerHTML = html;
 }
 window.addEventListener('resize', () => {
-  if (!afSeqData) return;
   clearTimeout(afResizeTimer);
-  afResizeTimer = setTimeout(() => afLayout(afSeqData), 150);
+  afResizeTimer = setTimeout(() => {
+    if (afSeqData) afLayout(afSeqData);
+    drawCharge(); drawHyd();
+  }, 150);
 });
 
+// ===== 画布绘图引擎（电荷曲线 / 疏水性图谱） =====
+let lastSt = null, lastSeq = '';
+const PLOT_M = { l: 46, r: 14, t: 16, b: 30 }, PLOT_H = 190;
+const C_MUT = '#86868b', C_GRID = 'rgba(0,0,0,0.07)';
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function drawPlot(cv, cfg) {
+  const w = cv.clientWidth;
+  if (!w || w < 80) return;                       // 面板隐藏时跳过
+  const h = PLOT_H, dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const M = PLOT_M, pw = w - M.l - M.r, ph = h - M.t - M.b;
+  const X = v => M.l + (v - cfg.xMin) / (cfg.xMax - cfg.xMin) * pw;
+  const Y = v => M.t + (1 - (v - cfg.yMin) / (cfg.yMax - cfg.yMin)) * ph;
+  cv._map = { M, w, cfg };
+  ctx.font = '11px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  // 网格 + 刻度
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const t of cfg.yTicks) {
+    ctx.strokeStyle = C_GRID; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(M.l, Y(t)); ctx.lineTo(w - M.r, Y(t)); ctx.stroke();
+    ctx.fillStyle = C_MUT; ctx.fillText(cfg.yFmt ? cfg.yFmt(t) : t, M.l - 6, Y(t));
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const t of cfg.xTicks) {
+    ctx.strokeStyle = C_GRID; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X(t), M.t); ctx.lineTo(X(t), h - M.b); ctx.stroke();
+    ctx.fillStyle = C_MUT; ctx.fillText(cfg.xFmt ? cfg.xFmt(t) : t, X(t), h - M.b + 6);
+  }
+  // 参考水平线
+  for (const hl of (cfg.hLines || [])) {
+    ctx.strokeStyle = hl.color || C_MUT; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(M.l, Y(hl.y)); ctx.lineTo(w - M.r, Y(hl.y)); ctx.stroke();
+    ctx.setLineDash([]);
+    if (hl.label) {
+      ctx.fillStyle = hl.color || C_MUT; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+      ctx.fillText(hl.label, w - M.r - 3, Y(hl.y) - 2);
+    }
+  }
+  // 参考垂直线
+  for (const vm of (cfg.vMarks || [])) {
+    ctx.strokeStyle = vm.color || '#ff453a'; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(X(vm.x), M.t); ctx.lineTo(X(vm.x), h - M.b); ctx.stroke();
+    ctx.setLineDash([]);
+    if (vm.label) {
+      ctx.fillStyle = vm.color || '#ff453a'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(vm.label, X(vm.x) + 5, M.t + 2);
+    }
+  }
+  // 曲线
+  for (const c of cfg.curves) {
+    ctx.strokeStyle = c.color || '#0a84ff'; ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < c.xs.length; i++) {
+      const px = X(c.xs[i]), py = Y(c.ys[i]);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  // 悬停标记
+  if (cfg.hover && cfg.hover.i >= 0) {
+    const hv = cfg.hover, c = cfg.curves[0];
+    const px = X(c.xs[hv.i]), py = Y(c.ys[hv.i]);
+    ctx.strokeStyle = 'rgba(10,132,255,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(px, M.t); ctx.lineTo(px, h - M.b); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#0a84ff';
+    ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+    ctx.font = '11.5px -apple-system, "Helvetica Neue", Arial, sans-serif';
+    const tw = ctx.measureText(hv.text).width + 14;
+    let bx = px + 10; if (bx + tw > w - M.r) bx = px - tw - 10;
+    const by = Math.max(M.t + 2, Math.min(py - 24, h - M.b - 22));
+    ctx.fillStyle = 'rgba(0,0,0,0.74)';
+    roundRect(ctx, bx, by, tw, 20, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(hv.text, bx + 7, by + 10);
+  }
+}
+// 悬停：最近点查找 + 重绘
+function nearIdx(cv, mx) {
+  const m = cv._map, xs = cv._pts.xs;
+  const px = Math.min(Math.max(mx, m.M.l), m.w - m.M.r);
+  const v = m.cfg.xMin + (px - m.M.l) / (m.w - m.M.l - m.M.r) * (m.cfg.xMax - m.cfg.xMin);
+  let lo = 0, hi = xs.length - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (xs[mid] < v) lo = mid; else hi = mid; }
+  return Math.abs(xs[lo] - v) <= Math.abs(xs[hi] - v) ? lo : hi;
+}
+function bindPlotHover(cv) {
+  cv.addEventListener('mousemove', e => {
+    if (!cv._map || !cv._pts || !cv._redraw) return;
+    const i = nearIdx(cv, e.clientX - cv.getBoundingClientRect().left);
+    if (i === cv._pts.hi) return;
+    cv._pts.hi = i;
+    cv._redraw({ i, text: cv._pts.text(i) });
+  });
+  cv.addEventListener('mouseleave', () => {
+    if (cv._pts) { cv._pts.hi = null; if (cv._redraw) cv._redraw(null); }
+  });
+}
+bindPlotHover(document.getElementById('chargeCv'));
+bindPlotHover(document.getElementById('hydCv'));
+
+// —— 电荷–pH 曲线 ——
+function drawCharge() {
+  if (!lastSt) return;
+  const cv = document.getElementById('chargeCv');
+  const xs = [], ys = [];
+  for (let pH = 0; pH <= 14.0001; pH += 0.1) { xs.push(+(pH.toFixed(1))); ys.push(chargeAt(lastSt.cnt, pH)); }
+  const lo = Math.min(-1, Math.floor(Math.min.apply(null, ys)) - 1);
+  const up = Math.max(1, Math.ceil(Math.max.apply(null, ys)) + 1);
+  const step = up - lo > 16 ? 5 : up - lo > 8 ? 2 : 1;
+  const yTicks = [];
+  for (let t = Math.ceil(lo / step) * step; t <= up; t += step) yTicks.push(t);
+  const draw = hover => drawPlot(cv, {
+    xMin: 0, xMax: 14, xTicks: [0, 2, 4, 6, 8, 10, 12, 14], xFmt: v => '' + v,
+    yMin: lo, yMax: up, yTicks, yFmt: v => (v > 0 ? '+' + v : '' + v),
+    hLines: [{ y: 0, color: 'rgba(0,0,0,0.35)' }],
+    vMarks: [{ x: lastSt.pI, color: '#ff453a', label: 'pI ' + fmt(lastSt.pI, 2) }],
+    curves: [{ xs, ys, color: '#0a84ff' }],
+    hover
+  });
+  cv._redraw = draw;
+  cv._pts = { xs, ys, hi: null, text: i => 'pH ' + xs[i].toFixed(1) + ' · ' + (ys[i] >= 0 ? '+' : '') + ys[i].toFixed(2) };
+  draw(null);
+}
+
+// —— Kyte-Doolittle 疏水性图谱 ——
+let kdWindow = 9;
+document.getElementById('kdWin').addEventListener('change', function () {
+  kdWindow = +this.value;
+  drawHyd();
+});
+function kdScores(seq, w) {
+  const n = seq.length, half = w >> 1, out = [];
+  for (let i = 0; i < n; i++) {
+    let s = 0, c = 0;
+    for (let j = Math.max(0, i - half); j <= Math.min(n - 1, i + half); j++) { s += KD[seq[j]]; c++; }
+    out.push(s / c);
+  }
+  return out;
+}
+function drawHyd() {
+  if (!lastSeq) return;
+  const cv = document.getElementById('hydCv');
+  const ys = kdScores(lastSeq, kdWindow);
+  const xs = ys.map((_, i) => i + 1);
+  const n = xs.length;
+  let lo = Math.floor((Math.min.apply(null, ys) - 0.25) * 10) / 10;
+  let up = Math.ceil((Math.max.apply(null, ys) + 0.25) * 10) / 10;
+  const show16 = up >= 1.3;                 // 上界够高才画 1.6 参考线
+  if (!show16) up = Math.max(up, 0.5);
+  const yStep = up - lo > 8 ? 2 : 1;
+  const yTicks = [];
+  for (let t = Math.ceil(lo / yStep) * yStep; t <= up; t += yStep) yTicks.push(+t.toFixed(1));
+  const xStep = [1, 2, 5, 10, 20, 50, 100, 200, 500].find(s => n / s <= 9) || 1000;
+  const xTicks = [];
+  for (let t = 1; t <= n; t += xStep) xTicks.push(t);
+  const hLines = [{ y: 0, color: 'rgba(0,0,0,0.35)' }];
+  if (show16) hLines.push({ y: 1.6, color: '#e8890c', label: '跨膜参考 1.6' });
+  const draw = hover => drawPlot(cv, {
+    xMin: 1, xMax: Math.max(n, 2), xTicks, xFmt: v => '' + v,
+    yMin: lo, yMax: up, yTicks, yFmt: v => '' + (+v).toFixed(1),
+    hLines,
+    curves: [{ xs, ys, color: '#5e5ce6' }],
+    hover
+  });
+  cv._redraw = draw;
+  cv._pts = { xs, ys, hi: null, text: i => '残基 ' + xs[i] + ' · ' + AA3[lastSeq[i]] + ' · ' + ys[i].toFixed(2) };
+  draw(null);
+}
+
+// ===== 变体计算器：片段 + 融合 tag + 突变（编号按原始序列） =====
+const TAG_PRESETS = [
+  ['无', ''], ['His6', 'HHHHHH'], ['His8', 'HHHHHHHH'], ['FLAG', 'DYKDDDDK'], ['HA', 'YPYDVPDYA'],
+  ['Myc', 'EQKLISEEDL'], ['Strep-tag II', 'WSHPQFEK'], ['AviTag', 'GLNDIFEAQKIEWHE'],
+  ['TEV 切点', 'ENLYFQG'], ['凝血酶切点', 'LVPRGS'], ['Sortase LPETG', 'LPETG'], ['自定义…', '']
+];
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function initTagSel(selId, inpId) {
+  const sel = document.getElementById(selId), inp = document.getElementById(inpId);
+  sel.innerHTML = TAG_PRESETS.map((t, i) => '<option value="' + i + '">' + t[0] + '</option>').join('');
+  sel.value = '0';
+  sel.addEventListener('change', () => {
+    if (sel.value === String(TAG_PRESETS.length - 1)) { inp.value = ''; inp.focus(); }
+    else inp.value = TAG_PRESETS[+sel.value][1];
+  });
+}
+initTagSel('varNsel', 'varNseq');
+initTagSel('varCsel', 'varCseq');
+function normTag(v, label, errs) {
+  const t = v.toUpperCase().replace(/[\s\-]/g, '');
+  if (!t) return '';
+  const bad = [...new Set(t.split('').filter(c => !AA.includes(c)))];
+  if (bad.length) { errs.push(label + '序列含非标准字符：' + bad.join(' ')); return null; }
+  return t;
+}
+function resetVariant() {
+  varSeq = '';
+  ['varNseq', 'varCseq', 'varMut', 'varStart', 'varEnd'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('varNsel').value = '0';
+  document.getElementById('varCsel').value = '0';
+  document.getElementById('varErr').textContent = '';
+  document.getElementById('varRes').innerHTML = '';
+  document.getElementById('varCopyBtn').style.display = 'none';
+}
+let varSeq = '';
+document.getElementById('varBtn').addEventListener('click', () => {
+  const errBox = document.getElementById('varErr');
+  errBox.textContent = '';
+  document.getElementById('varRes').innerHTML = '';
+  document.getElementById('varCopyBtn').style.display = 'none';
+  varSeq = '';
+  if (!lastSeq) { errBox.textContent = '请先在上方分析序列'; return; }
+  const n = lastSeq.length, errs = [], notes = [];
+  // ① 突变（按原始序列编号）
+  const muts = [], seen = {};
+  const raw = document.getElementById('varMut').value.trim();
+  if (raw) {
+    for (const tk of raw.split(/[,;\s]+/).filter(Boolean)) {
+      const u = tk.toUpperCase();
+      const m = u.match(/^([ARNDCEQGHILKMFPSTWY])(\d+)([ARNDCEQGHILKMFPSTWY])$/);
+      if (!m) { errs.push('无法解析「' + tk + '」，格式应为 F123A'); continue; }
+      const pos = +m[2];
+      if (pos < 1 || pos > n) { errs.push(tk + '：位置超出 1–' + n); continue; }
+      if (lastSeq[pos - 1] !== m[1]) { errs.push(tk + '：位置 ' + pos + ' 是 ' + AA3[lastSeq[pos - 1]] + '（' + lastSeq[pos - 1] + '），不是 ' + AA3[m[1]]); continue; }
+      if (seen[pos]) { errs.push('位置 ' + pos + ' 出现多个突变'); continue; }
+      seen[pos] = 1;
+      muts.push({ pos, to: m[3], tk: u });
+    }
+  }
+  // ② 片段区间
+  let start = 1, end = n;
+  const sV = document.getElementById('varStart').value.trim(), eV = document.getElementById('varEnd').value.trim();
+  if (sV !== '') { start = Math.floor(+sV); if (!(start >= 1 && start <= n)) errs.push('片段起点需在 1–' + n + ' 之间'); }
+  if (eV !== '') { end = Math.floor(+eV); if (!(end >= 1 && end <= n)) errs.push('片段终点需在 1–' + n + ' 之间'); }
+  if (start > end) errs.push('片段起点不能大于终点');
+  // ③ 融合序列
+  const nTag = normTag(document.getElementById('varNseq').value, 'N 端融合', errs);
+  const cTag = normTag(document.getElementById('varCseq').value, 'C 端融合', errs);
+  if (errs.length) { errBox.textContent = errs[0]; return; }
+  // 组装：先突变（原始编号）→ 截片段 → 两端接融合序列
+  const seqArr = lastSeq.split('');
+  for (const mu of muts) seqArr[mu.pos - 1] = mu.to;
+  const frag = seqArr.slice(start - 1, end).join('');
+  varSeq = nTag + frag + cTag;
+  const st2 = analyze(varSeq);
+  if (start !== 1 || end !== n) notes.push('片段 ' + start + '–' + end + '（原始编号）');
+  if (muts.length) {
+    const out = muts.filter(m => m.pos < start || m.pos > end).map(m => m.tk);
+    notes.push('突变 ' + muts.map(m => m.tk).join('、') + (out.length ? '（其中 ' + out.join('、') + ' 在片段外，未包含）' : ''));
+  }
+  if (nTag) notes.push('N 端 +' + nTag);
+  if (cTag) notes.push('C 端 +' + cTag);
+  if (!notes.length) notes.push('未做任何修改，变体与原始序列一致');
+  const d = (a, b, f) => (b - a >= 0 ? '+' : '') + fmt(b - a, f);
+  let html = '<table class="tbl"><tr><th>指标</th><th>原始</th><th>变体</th><th>Δ</th></tr>';
+  html += '<tr><td>长度</td><td>' + lastSt.n + ' aa</td><td>' + st2.n + ' aa</td><td>' + (st2.n - lastSt.n >= 0 ? '+' : '') + (st2.n - lastSt.n) + '</td></tr>';
+  html += '<tr><td>分子量</td><td>' + fmt(lastSt.mw, 2) + '</td><td>' + fmt(st2.mw, 2) + '</td><td>' + d(lastSt.mw, st2.mw, 2) + '</td></tr>';
+  html += '<tr><td>理论 pI</td><td>' + fmt(lastSt.pI, 2) + '</td><td>' + fmt(st2.pI, 2) + '</td><td>' + d(lastSt.pI, st2.pI, 2) + '</td></tr>';
+  html += '<tr><td>ε280（还原）</td><td>' + lastSt.eRed.toLocaleString() + '</td><td>' + st2.eRed.toLocaleString() + '</td><td>' + (st2.eRed - lastSt.eRed >= 0 ? '+' : '') + (st2.eRed - lastSt.eRed) + '</td></tr>';
+  html += '<tr><td>ε280（二硫键）</td><td>' + lastSt.eOx.toLocaleString() + '</td><td>' + st2.eOx.toLocaleString() + '</td><td>' + (st2.eOx - lastSt.eOx >= 0 ? '+' : '') + (st2.eOx - lastSt.eOx) + '</td></tr>';
+  html += '<tr><td>A280 @1 mg/mL（还原）</td><td>' + fmt(lastSt.absRed, 3) + '</td><td>' + fmt(st2.absRed, 3) + '</td><td>' + d(lastSt.absRed, st2.absRed, 3) + '</td></tr>';
+  html += '<tr><td>GRAVY</td><td>' + fmt(lastSt.gravy, 3) + '</td><td>' + fmt(st2.gravy, 3) + '</td><td>' + d(lastSt.gravy, st2.gravy, 3) + '</td></tr>';
+  html += '</table>';
+  html += '<div class="var-note">' + esc(notes.join('；')) + '。变体长度 ' + st2.n + ' aa。</div>';
+  document.getElementById('varRes').innerHTML = html;
+  document.getElementById('varCopyBtn').style.display = '';
+});
+document.getElementById('varCopyBtn').addEventListener('click', function () {
+  if (!varSeq) return;
+  const self = this;
+  (navigator.clipboard ? navigator.clipboard.writeText(varSeq) : Promise.reject())
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = varSeq; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    })
+    .finally(() => {
+      const old = self.textContent; self.textContent = '已复制';
+      setTimeout(() => { self.textContent = old; }, 1200);
+    });
+});
+
+const HIDE_IDS = ['sumPanel', 'compPanel', 'seqPanel', 'chargePanel', 'hydPanel', 'varPanel'];
 document.getElementById('runBtn').addEventListener('click', () => {
   const err = document.getElementById('err');
   err.textContent = '';
-  const s = cleanSeq(document.getElementById('protIn').value);
+  const raw = document.getElementById('protIn').value;
+  const s = cleanSeq(raw);
   const problem = checkSeq(s);
+  const fastaNote = document.getElementById('fastaNote');
   if (problem) {
     err.textContent = problem;
-    document.getElementById('sumPanel').style.display = 'none';
-    document.getElementById('compPanel').style.display = 'none';
-    document.getElementById('seqPanel').style.display = 'none';
+    HIDE_IDS.forEach(id => document.getElementById(id).style.display = 'none');
+    fastaNote.style.display = 'none';
     afSeqData = '';
+    lastSt = null; lastSeq = '';
     return;
   }
-  const st = analyze(s);
-  render(st);
-  lastText = summaryText(st);
+  lastSt = analyze(s);
+  lastSeq = s;
+  render(lastSt);
+  lastText = summaryText(lastSt);
   afSeqData = s;
+  // FASTA 头部提示
+  const fh = fastaHeader(raw);
+  if (fh) {
+    fastaNote.textContent = '已识别 FASTA 头部：「' + fh + '」，分析时已剥离';
+    fastaNote.style.display = '';
+  } else fastaNote.style.display = 'none';
   document.getElementById('seqPanel').style.display = '';
+  document.getElementById('chargePanel').style.display = '';
+  document.getElementById('hydPanel').style.display = '';
+  document.getElementById('varPanel').style.display = '';
   afLayout(s);
+  drawCharge();
+  drawHyd();
+  resetVariant();
 });
 document.getElementById('exBtn').addEventListener('click', () => {
   document.getElementById('protIn').value = 'MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG';
@@ -292,12 +674,12 @@ document.getElementById('exBtn').addEventListener('click', () => {
 });
 document.getElementById('clearBtn').addEventListener('click', () => {
   document.getElementById('protIn').value = '';
-  document.getElementById('sumPanel').style.display = 'none';
-  document.getElementById('compPanel').style.display = 'none';
-  document.getElementById('seqPanel').style.display = 'none';
+  HIDE_IDS.forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('fastaNote').style.display = 'none';
   document.getElementById('err').textContent = '';
   afSeqData = '';
   lastText = '';
+  lastSt = null; lastSeq = '';
 });
 document.getElementById('copyBtn').addEventListener('click', function () {
   if (!lastText) return;
