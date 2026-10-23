@@ -1,7 +1,7 @@
 {
   "name": "tubecalc-site",
   "type": "module",
-  "version": "1.2.24",
+  "version": "1.2.25",
   "private": true,
   "scripts": {
     "dev": "astro dev",

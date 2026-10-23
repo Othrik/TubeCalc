@@ -126,7 +126,7 @@ a:hover { text-decoration: underline; }
 
 /* 右上角语言切换：🌐 标志 + 原生 select（data-dd-done 跳过自绘 dd），桌面 nav 右端，手机吸附右上角 */
 .lang-wrap { margin-left: auto; display: inline-flex; align-items: center; gap: 1px; }
-.lang-ic { width: 18px; height: 18px; margin-right: 3px; color: var(--muted); flex: 0 0 auto; }
+.lang-ic { width: 18px; height: 18px; margin-right: 3px; color: var(--muted); flex: 0 0 auto; transform: translateY(-1px); }
 .lang-wrap:hover .lang-ic { color: var(--text); }
 /* 无框融入导航：与 .nav-links a 同款悬停底色（--accent-soft），保留 dd-ar 三角箭头与 focus 光圈 */
 .lang-sel {
