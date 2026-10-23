@@ -45,6 +45,36 @@ import Layout from '../../../layouts/Layout.astro';
     </div>
     <div class="big-number" id="convOut" style="font-size:20px"></div>
   </div>
+
+  <style is:inline>
+.struct-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px;margin-top:14px;display:flex;justify-content:center}
+.struct-wrap svg{max-width:100%;height:auto}
+  </style>
+
+  <div class="panel" id="smilesPanel">
+    <label for="smiles">SMILES — dibuja la estructura 2D y calcula la masa molar</label>
+    <input type="text" id="smiles" placeholder="p. ej. CC(=O)Oc1ccccc1C(=O)O (aspirina) o «cafeína»" autocomplete="off" spellcheck="false">
+    <div class="hint">Pega una cadena SMILES o el nombre del compuesto. Los nombres se resuelven vía PubChem; el dibujo se hace íntegramente en tu navegador.</div>
+    <button class="btn" id="drawBtn">Dibujar y calcular</button>
+    <span class="hint" style="display:inline-block;margin-left:10px">
+      Prueba:
+      <a href="#" class="eg-s" data-s="CC(=O)Oc1ccccc1C(=O)O">Aspirina</a> ·
+      <a href="#" class="eg-s" data-s="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Cafeína</a> ·
+      <a href="#" class="eg-s" data-s="OC[C@H]1O[C@H](O)[C@H](O)[C@H](O)[C@H]1O">Glucosa</a> ·
+      <a href="#" class="eg-s" data-s="NC(CO)(CO)CO">Tris</a> ·
+      <a href="#" class="eg-s" data-s="OC(=O)CN(CCN(CC(=O)O)CC(=O)O)CC(=O)O">EDTA</a>
+    </span>
+    <div class="error" id="serr"></div>
+    <div id="sres" style="display:none">
+      <div class="struct-wrap"><div id="structSvg"></div></div>
+      <div class="hint" id="sVia" style="display:none;margin-top:8px"></div>
+      <label style="margin-top:12px">Masa molar</label>
+      <div class="big-number"><span id="sMwVal"></span><small>g/mol</small></div>
+      <div class="hint" id="sFormula" style="margin-top:8px"></div>
+      <div id="sCompTable"></div>
+      <button class="btn" id="dlSvg" style="margin-top:10px">Descargar SVG</button>
+    </div>
+  </div>
 </main>
 
 
@@ -94,7 +124,7 @@ function parseSegment(seg) {
       top[sym] = (top[sym] || 0) + n;
       i = j;
     }
-    else if (/[a-z]/.test(ch)) { throw 'Letra minúscula ( + ch + ') donde empieza un símbolo de elemento; revisa mayúsculas y minúsculas'; }
+    else if (/[a-z]/.test(ch)) { throw 'Letra minúscula (' + ch + ') donde empieza un símbolo de elemento; revisa mayúsculas y minúsculas'; }
     else { throw 'Carácter no reconocido: ' + ch; }
   }
   if (stackTop !== 0) throw 'Paréntesis sin emparejar';
@@ -166,6 +196,218 @@ function convertMassMol() {
 }
 document.getElementById('massIn').addEventListener('input', convertMassMol);
 document.getElementById('molIn').addEventListener('input', convertMassMol);
+</script>
+
+<script is:inline src="/js/smiles-drawer.min.js" defer></script>
+<script is:inline>
+(function () {
+  'use strict';
+  const L = { empty: 'Introduce una cadena SMILES o el nombre del compuesto.', invalid: 'SMILES no válido: ', pub: 'No se pudo resolver el nombre vía PubChem (sin red o no encontrado). Comprueba el nombre o pega directamente una cadena SMILES.', via: 'Estructura y fórmula resueltas vía PubChem', hill: 'Fórmula molecular (Hill): ' };
+  const TH = ['Elemento', 'Átomos', 'Peso atómico', 'Contribución (g/mol)'];
+  const $ = (id) => document.getElementById(id);
+  const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
+Ne:20.180,Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.06,Cl:35.45,Ar:39.948,
+K:39.098,Ca:40.078,Sc:44.956,Ti:47.867,V:50.942,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,
+Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.630,As:74.922,Se:78.971,Br:79.904,Kr:83.798,
+Rb:85.468,Sr:87.62,Y:88.906,Zr:91.224,Nb:92.906,Mo:95.95,Tc:98,Ru:101.07,Rh:102.91,
+Pd:106.42,Ag:107.87,Cd:112.41,In:114.82,Sn:118.71,Sb:121.76,Te:127.60,I:126.90,Xe:131.29,
+Cs:132.91,Ba:137.33,La:138.91,Ce:140.12,Pr:140.91,Nd:144.24,Pm:145,Sm:150.36,Eu:151.96,
+Gd:157.25,Tb:158.93,Dy:162.50,Ho:164.93,Er:167.26,Tm:168.93,Yb:173.05,Lu:174.97,Hf:178.49,
+Ta:180.95,W:183.84,Re:186.21,Os:190.23,Ir:192.22,Pt:195.08,Au:196.97,Hg:200.59,Tl:204.38,
+Pb:207.2,Bi:208.98,Po:209,At:210,Rn:222,Fr:223,Ra:226,Ac:227,Th:232.04,Pa:231.04,U:238.03,
+Np:237,Pu:244};   // 自包含原子量表（IUPAC 2013）
+  const tfmt = (x) => String(Math.round(x * 100000) / 100000);
+  const serr = (t) => { $('serr').textContent = t; };
+// SMILES → 元素计数（含隐式氢）。纯函数、无 DOM，可 node 测试，亦可注入页面。
+function smilesCounts(input) {
+  const s = String(input || '').trim();
+  if (!s) throw 'Empty input';
+  const MASS_OK = /^[A-Z][a-z]?$/;
+  const ARO = { b:'B', c:'C', n:'N', o:'O', p:'P', s:'S' };
+  const ORG1 = { B:1, C:1, N:1, O:1, P:1, S:1, F:1, I:1 };
+  const ORG2 = { Cl:1, Br:1 };
+  const VALENCE = { B:[3], C:[4], N:[3], O:[2], P:[3,5], S:[2,4,6], F:[1], Cl:[1], Br:[1], I:[1] };
+  const A = [];            // {el, bs(键级和), h(括号原子显式H), aro}
+  const rings = {};        // 开环表
+  let prev = -1, pend = null;
+  const stack = [];
+  const bondAdd = (a, b, o) => { A[a].bs += o; A[b].bs += o; };
+  const newAtom = (el, aro, h) => {
+    const a = { el, bs: 0, h: (h === undefined ? null : h), aro: !!aro };
+    A.push(a);
+    const cur = A.length - 1;
+    if (prev >= 0) bondAdd(prev, cur, (pend != null) ? pend : ((a.aro && A[prev].aro) ? 1.5 : 1));
+    pend = null; prev = cur;
+    return cur;
+  };
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (ch === '(') { stack.push(prev); i++; continue; }
+    if (ch === ')') { if (!stack.length) throw 'Unbalanced parentheses'; prev = stack.pop(); i++; continue; }
+    if (ch === '.') { prev = -1; pend = null; i++; continue; }
+    if (ch === '-' || ch === '/' || ch === '\\') { pend = 1; i++; continue; }
+    if (ch === '=') { pend = 2; i++; continue; }
+    if (ch === '#') { pend = 3; i++; continue; }
+    if (ch === ':') { pend = 1.5; i++; continue; }
+    if (ch === '%') {
+      const m = s.slice(i + 1).match(/^(\d{2})/);
+      if (!m) throw 'Bad ring closure (%nn)';
+      const r = m[1];
+      if (rings[r] !== undefined) { const o = rings[r]; delete rings[r]; bondAdd(o.atom, prev, (pend != null) ? pend : ((o.aro && A[prev].aro) ? 1.5 : 1)); }
+      else { rings[r] = { atom: prev, aro: A[prev].aro, order: pend }; if (pend != null) pend = null; }
+      pend = null; i += 1 + m[1].length; continue;
+    }
+    if (/\d/.test(ch)) {
+      const r = ch;
+      if (rings[r] !== undefined) { const o = rings[r]; delete rings[r]; bondAdd(o.atom, prev, (pend != null) ? pend : ((o.aro && A[prev].aro) ? 1.5 : ((o.order != null) ? o.order : 1))); }
+      else { rings[r] = { atom: prev, aro: A[prev].aro, order: pend }; if (pend != null) pend = null; }
+      pend = null; i++; continue;
+    }
+    if (ch === '[') {
+      const j = s.indexOf(']', i);
+      if (j < 0) throw 'Unclosed bracket atom';
+      const body = s.slice(i + 1, j);
+      let k = 0;
+      while (k < body.length && /\d/.test(body[k])) k++;                     // 同位素（忽略，按天然丰度计）
+      if (k >= body.length) throw 'Empty bracket atom';
+      let sym = body[k]; k++;
+      if (k < body.length && /[a-z]/.test(body[k])) { sym += body[k]; k++; } // 两字母符号
+      let aro = false;
+      if (sym[0] >= 'a' && sym[0] <= 'z') { aro = true; sym = (ARO[sym] !== undefined) ? ARO[sym] : sym[0].toUpperCase() + sym.slice(1); }
+      if (!MASS_OK.test(sym)) throw 'Unknown element in brackets: ' + sym;
+      if (body[k] === '@') { k++; if (body[k] === '@') k++; else { const m2 = body.slice(k).match(/^(TH|AL|SP|TB|OH)\d+/); if (m2) k += m2[1].length + 1; } }
+      let h = 0;
+      if (body[k] === 'H') { k++; let d = ''; while (k < body.length && /\d/.test(body[k])) { d += body[k]; k++; } h = d ? parseInt(d, 10) : 1; }
+      let charge = 0;
+      if (body[k] === '+' || body[k] === '-') {
+        const sign = body[k] === '+' ? 1 : -1; k++;
+        let d = ''; while (k < body.length && body[k] === body[k - 1] && (body[k] === '+' || body[k] === '-')) { d += body[k]; k++; }
+        let n = ''; while (k < body.length && /\d/.test(body[k])) { n += body[k]; k++; }
+        charge = n ? sign * parseInt(n, 10) : sign * (1 + d.length);
+      }
+      if (body[k] === ':') { k++; while (k < body.length && /\d/.test(body[k])) k++; }
+      if (k !== body.length) throw 'Cannot parse bracket atom [' + body + ']';
+      if (charge !== 0 && !aro) { /* 带电括号原子：H 已显式给出 */ }
+      newAtom(sym, aro, h);
+      i = j + 1; continue;
+    }
+    if (ORG2[ch] !== undefined && /[a-z]/.test(s[i + 1] || '')) { newAtom(ch, false, null); i += 2; continue; }
+    if (ORG1[ch]) { newAtom(ch, false, null); i++; continue; }
+    if (ARO[ch]) { newAtom(ARO[ch], true, null); i++; continue; }
+    throw 'Unrecognized character: ' + ch;
+  }
+  if (stack.length) throw 'Unbalanced parentheses';
+  if (!A.length) throw 'No atoms found';
+  for (const r in rings) throw 'Unclosed ring bond: ' + r;
+  // 隐式氢：非括号原子 = 最小可容纳价态 − 键级和；括号原子 = 显式 H
+  const counts = {};
+  for (const a of A) {
+    let H;
+    if (a.h !== null) H = a.h;
+    else {
+      const vl = VALENCE[a.el] || [];
+      let v = null;
+      for (const x of vl) if (x >= a.bs - 1e-9) { v = x; break; }
+      H = (v === null) ? 0 : Math.round(v - a.bs);
+    }
+    if (H < 0) H = 0;
+    counts[a.el] = (counts[a.el] || 0) + 1;
+    if (H > 0) counts.H = (counts.H || 0) + H;
+  }
+  return counts;
+}
+// 显示式：有碳按 Hill（C,H,余字母序）；无碳 H 最前（符合 NH3/H2SO4/SO2 惯例）
+function hillFormula(c) {
+  const parts = [];
+  const push = (el, n) => parts.push(el + (n > 1 ? n : ''));
+  const rest = Object.keys(c).filter((el) => el !== 'C' && el !== 'H').sort();
+  if (c.C) { push('C', c.C); if (c.H) push('H', c.H); rest.forEach((el) => push(el, c[el])); }
+  else { if (c.H) push('H', c.H); rest.forEach((el) => push(el, c[el])); }
+  return parts.join('') || '—';
+}
+  function renderCounts(counts) {
+    let mw = 0; const rows = [];
+    for (const el in counts) { const sub = TC_MASS[el] * counts[el]; mw += sub; rows.push([el, counts[el], TC_MASS[el], sub]); }
+    rows.sort((a, b) => b[3] - a[3]);
+    $('sMwVal').textContent = tfmt(Math.round(mw * 100000) / 100000);
+    let html = '<table class="tbl"><tr><th>' + TH[0] + '</th><th>' + TH[1] + '</th><th>' + TH[2] + '</th><th>' + TH[3] + '</th></tr>';
+    for (const r of rows) html += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + tfmt(r[3]) + '</td></tr>';
+    html += '</table>';
+    $('sCompTable').innerHTML = html;
+    $('sFormula').textContent = L.hill + hillFormula(counts);
+    $('sVia').style.display = 'none';
+  }
+  function draw(smiles) {
+    if (!window.SmilesDrawer || !window.SmilesDrawer.SmiDrawer) { serr(L.pub); return; }
+    try {
+      const d = new window.SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false });
+      d.draw(smiles, 'svg', 'light', function (svg) { const host = $('structSvg'); host.innerHTML = ''; host.appendChild(svg); $('sres').style.display = ''; }, function (e) { serr(L.invalid + (e && e.message ? e.message : e)); });
+    } catch (e) { serr(L.invalid + e); }
+  }
+  const looksSmiles = (t) => /[\(\)\[\]=#$%@\\/\.:0-9]/.test(t);
+  async function pubchem(name) {
+    const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/' + encodeURIComponent(name) + '/property/IsomericSMILES/JSON';
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 9000);
+    try {
+      const r = await fetch(url, { signal: ctl.signal });
+      if (!r.ok) return null;
+      const j = await r.json();
+      const p = j.PropertyTable && j.PropertyTable.Properties && j.PropertyTable.Properties[0];
+      return (p && (p.IsomericSMILES || p.SMILES)) || null;
+    } catch (e) { return null; } finally { clearTimeout(tm); }
+  }
+  async function go() {
+    const raw = $('smiles').value.trim();
+    serr('');
+    $('sres').style.display = 'none';
+    $('structSvg').innerHTML = '';
+    if (!raw) { serr(L.empty); return; }
+    if (looksSmiles(raw)) {
+      let ok = true, msg = '';
+      try { smilesCounts(raw); } catch (e) { ok = false; msg = String(e); }
+      if (ok) { renderCounts(smilesCounts(raw)); draw(raw); return; }
+      const smi = await pubchem(raw);   // 像 SMILES 但解析失败（如 1,2-dichloroethane）→ 兜底查名
+      if (smi) {
+        try { smilesCounts(smi); } catch (e) { serr(L.invalid + msg); return; }
+        renderCounts(smilesCounts(smi)); draw(smi);
+        $('sVia').textContent = L.via; $('sVia').style.display = '';
+        return;
+      }
+      serr(L.invalid + msg); return;
+    }
+    const smi = await pubchem(raw);     // 名称 → PubChem
+    if (smi) {
+      let ok = true, msg = '';
+      try { smilesCounts(smi); } catch (e) { ok = false; msg = String(e); }
+      if (ok) { renderCounts(smilesCounts(smi)); draw(smi); $('sVia').textContent = L.via; $('sVia').style.display = ''; return; }
+      serr(L.invalid + msg); return;
+    }
+    let ok2 = true, msg2 = '';
+    try { smilesCounts(raw); } catch (e) { ok2 = false; msg2 = String(e); }
+    if (ok2) { renderCounts(smilesCounts(raw)); draw(raw); return; }
+    serr(L.pub);
+  }
+  $('drawBtn').addEventListener('click', go);
+  $('smiles').addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  document.querySelectorAll('.eg-s').forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    $('smiles').value = a.dataset.s;
+    go();
+  }));
+  $('dlSvg').addEventListener('click', function () {
+    const svg = document.querySelector('#structSvg svg');
+    if (!svg) return;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'tubecalc-structure.svg';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 500);
+  });
+})();
 </script>
 
 </Layout>

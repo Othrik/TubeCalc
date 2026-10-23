@@ -67,7 +67,8 @@ import Layout from '../../../layouts/Layout.astro';
   const KEY = 'tubecalc_dil_v2';
   const CFAC = { '1':1, '0.001':1e-3, '0.000001':1e-6, '1e-9':1e-9, 'gl':1, 'mgml':1, 'mgl':1e-3, 'ugml':1e-6, 'ngml':1e-6, 'pwv':10, 'pvv':0.01, 'uul':1000, 'uml':1 };   // 各族基准因子（M系→mol/L；质量→g/L；U→U/mL）
   const CFAM = { '1':'M', '0.001':'M', '0.000001':'M', '1e-9':'M', 'gl':'GL', 'mgml':'GL', 'mgl':'GL', 'ugml':'GL', 'ngml':'GL', 'pwv':'GL', 'pvv':'RV', 'uul':'U', 'uml':'U' };
-  const VFAC = { uL:1e-6, ml:1e-3, l:1 };   // 升每单位
+  const VFAC = { uL:1e-6, ml:1e-3, l:1 };
+  const MSG_V = 'A diluição exige V₂ &gt; V₁: o volume final ({v2}) tem de ser maior que o volume de stock retirado ({v1}). Com V₂ ≤ V₁ tratar-se-ia de uma concentração, impossível de obter adicionando diluente.';   // V₂≤V₁ 校验文案   // 升每单位
   const ids = ['dilC1', 'dilV1', 'dilC2', 'dilV2', 'dilCU', 'dilVU', 'dilC2U', 'dilV2U'];
   const FIDS = ['dilC1', 'dilV1', 'dilC2', 'dilV2'];
   const num = (id) => { const v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : null; };
@@ -136,6 +137,7 @@ import Layout from '../../../layouts/Layout.astro';
     if (blanks === 0) {
       unlockAll(true);
       if (CFAM[c1u] !== CFAM[c2u]) { out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
+      if (v2 * VFAC[v2u] <= v1 * VFAC[v1u]) { out.innerHTML = '<span class="warn">' + MSG_V.replace('{v1}', fmt(v1) + ' ' + cuLabel('#dilVU')).replace('{v2}', fmt(v2) + ' ' + cuLabel('#dilV2U')) + '</span>'; filterConc(); return; }
       const L = c1 * CFAC[c1u] * v1 * VFAC[v1u], R = c2 * CFAC[c2u] * v2 * VFAC[v2u];
       const diff = Math.abs(L - R) / R;
       out.innerHTML = diff <= 0.005 ? '✓ Os quatro valores satisfazem C₁V₁ = C₂V₂.' : '⚠ Os valores não satisfazem a fórmula: por C₁V₁ = C₂V₂, V₁ deveria ser <b>' + fmt(R / (c1 * CFAC[c1u]) / VFAC[v1u]) + ' ' + cuLabel('#dilVU') + '</b> (atualmente ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ').';
@@ -160,6 +162,13 @@ import Layout from '../../../layouts/Layout.astro';
       if (CFAM[c1u] !== CFAM[c2u]) { $('#dilC2U').value = c1u; $('#dilC2U').dispatchEvent(new Event('dd:sync')); }   // 归位到 C₁ 同族单位
       solvedVal = vals.dilC1 * CFAC[c1u] * vals.dilV1 * VFAC[v1u] / (vals.dilV2 * VFAC[v2u]) / CFAC[$('#dilC2U').value]; solvedId = 'dilC2';
       out.innerHTML = 'Concentração final C₂ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilC2U') + '</b> (' + fmt(v1) + ' ' + cuLabel('#dilVU') + ' de stock levado a ' + fmt(v2) + ' ' + cuLabel('#dilV2U') + ').';
+    }
+    const sv1 = (solvedId === 'dilV1') ? solvedVal : v1, sv2 = (solvedId === 'dilV2') ? solvedVal : v2;
+    if (sv1 != null && sv2 != null && sv2 * VFAC[v2u] <= sv1 * VFAC[v1u]) {
+      unlockAll(true);
+      out.innerHTML = '<span class="warn">' + MSG_V.replace('{v1}', fmt(sv1) + ' ' + cuLabel('#dilVU')).replace('{v2}', fmt(sv2) + ' ' + cuLabel('#dilV2U')) + '</span>';
+      filterConc();
+      return;
     }
     if (dilAuto && dilAuto !== solvedId) { const old = $('#' + dilAuto); if (old.value !== '') old.value = ''; }   // 求解对象切换：清旧自动值
     FIDS.forEach((id) => { if (id !== solvedId) { const inp = $('#' + id); inp.readOnly = false; setIcons(inp, false); } });
