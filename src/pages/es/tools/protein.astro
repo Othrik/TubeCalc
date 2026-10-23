@@ -40,14 +40,14 @@ canvas.plot { width: 100%; display: block; }
 
 <main class="container">
   <h1 class="page-title">Análisis de secuencia de proteínas</h1>
-  <p class="page-desc">粘贴蛋白质序列（单字母码，可带 FASTA 头部），计算分子量、理论 pI、消光系数 ε280、电荷曲线与氨基酸组成。</p>
+  <p class="page-desc">Pega una secuencia de proteína (código de una letra, cabecera FASTA admitida) y obtén el peso molecular, el pI teórico, el coeficiente de extinción ε280, la curva carga–pH y la composición de aminoácidos.</p>
 
   <div class="panel">
     <div class="field-head">
       <label for="protIn">Secuencia (20 aminoácidos estándar, código de una letra)</label>
       <button type="button" class="demo-link" id="exBtn" title="Rellena la secuencia de ejemplo de ubiquitina humana (76 aa)">Cargar secuencia de ejemplo</button>
     </div>
-    <textarea id="protIn" rows="6" placeholder="直接粘贴氨基酸序列或 FASTA（&gt;头部行自动剥离）&#10;例如：MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <textarea id="protIn" rows="6" placeholder="Pega la secuencia de aminoácidos o FASTA (la línea de cabecera &gt; se elimina automáticamente)&#10;ej.: MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">Analizar</button>
@@ -75,7 +75,7 @@ canvas.plot { width: 100%; display: block; }
   <div class="panel" id="chargePanel" style="display:none">
     <label>Carga neta frente a pH</label>
     <canvas id="chargeCv" class="plot"></canvas>
-    <div class="plot-hint">净电荷（Bjellqvist pKa）随 pH 变化；虚线为理论 pI（净电荷＝0）。pH 高于 pI 时蛋白带负电，适合阴离子交换；低于 pI 带正电，适合阳离子交换。悬停查看数值。</div>
+    <div class="plot-hint">Carga neta (pKa de Bjellqvist) frente al pH; la línea discontinua marca el pI teórico (carga neta = 0). Por encima de su pI la proteína se carga negativamente — apta para intercambio aniónico; por debajo, positivamente — apto para intercambio catiónico. Pasa el cursor para ver valores.</div>
   </div>
 
   <div class="panel" id="hydPanel" style="display:none">
@@ -84,7 +84,7 @@ canvas.plot { width: 100%; display: block; }
       <option value="13">13</option><option value="15">15</option><option value="19">19</option>
     </select> residuos</span></label>
     <canvas id="hydCv" class="plot"></canvas>
-    <div class="plot-hint">滑动窗口平均疏水值；虚线 1.6 为跨膜倾向经验参考（窗口 19 时最有效）。高分区段倾向位于疏水核心 / 跨膜区。悬停查看每个残基的数值。</div>
+    <div class="plot-hint">Hidropatía media en ventana deslizante; la línea discontinua en 1.6 es una referencia empírica de tendencia transmembrana (la ventana de 19 es la más eficaz). Los tramos con puntuación alta tienden a situarse en núcleos hidrófobos / regiones transmembrana. Pasa el cursor para ver el valor por residuo.</div>
   </div>
 
 </main>

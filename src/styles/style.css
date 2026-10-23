@@ -126,9 +126,27 @@ a:hover { text-decoration: underline; }
 
 /* 右上角语言切换：🌐 标志 + 原生 select（data-dd-done 跳过自绘 dd），桌面 nav 右端，手机吸附右上角 */
 .lang-wrap { margin-left: auto; display: inline-flex; align-items: center; gap: 1px; }
-.lang-ic { width: 18px; height: 18px; margin-right: 3px; color: var(--muted); flex: 0 0 auto; transform: translateY(-1px); }
+/* 无 JS 回退态（globe 为 .lang-wrap 直接子元素、旁挂原生 select）：-1px 补 select line-height 造成的字形上浮；
+   自绘态 globe 位于 .dd-btn-lang 内（flex 居中），不加偏移 */
+.lang-ic { width: 18px; height: 18px; margin-right: 3px; color: var(--muted); flex: 0 0 auto; }
+.lang-wrap > .lang-ic { transform: translateY(-1px); }
 .lang-wrap:hover .lang-ic { color: var(--text); }
 /* 无框融入导航：与 .nav-links a 同款悬停底色（--accent-soft），保留 dd-ar 三角箭头与 focus 光圈 */
+/* 自绘语言下拉：触发器无框胶囊（globe+语言名+dd-ar 同款三角，悬停 --accent-soft）；弹层=body 级 .dd-panel.dd-panel-fx */
+.dd-btn-lang {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 10px 0 8px;
+  border: 1px solid transparent; border-radius: 12px;
+  background-color: transparent; color: var(--text);
+  font-family: inherit; font-size: 14.5px; cursor: pointer;
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+.dd-btn-lang:hover { background-color: var(--accent-soft); }
+.dd-btn-lang:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); outline: none; }
+.dd-btn-lang .lang-ic { width: 18px; height: 18px; color: var(--muted); transform: translateY(-0.4px); transition: color .15s ease; }
+.dd-btn-lang:hover .lang-ic { color: var(--text); }
+.dd-btn-lang .dd-ar { margin-top: 0; }
+.dd-panel.dd-panel-fx { position: fixed; z-index: 120; }
+.dd-panel-fx.open { display: block; }
 .lang-sel {
   height: 34px; max-width: 128px; padding: 0 22px 0 8px;
   border: 1px solid transparent; border-radius: 12px;
@@ -148,6 +166,7 @@ a:hover { text-decoration: underline; }
 @media (max-width: 768px) {
   .lang-wrap { position: absolute; top: 12px; right: 16px; margin-left: 0; }
   .lang-sel { height: 30px; line-height: 28px; font-size: 13.5px; max-width: 112px; padding: 0 20px 0 6px; background-size: 11px 9px; background-position: right 6px center; }
+  .dd-btn-lang { height: 30px; font-size: 13.5px; padding: 0 8px 0 6px; }
 }
 @media (display-mode: standalone) and (min-width: 700px) {
   html.ios .lang-wrap { top: calc(var(--sb-top, 64px) + 12px); }

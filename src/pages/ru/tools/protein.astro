@@ -40,14 +40,14 @@ canvas.plot { width: 100%; display: block; }
 
 <main class="container">
   <h1 class="page-title">Анализ последовательности белка</h1>
-  <p class="page-desc">粘贴蛋白质序列（单字母码，可带 FASTA 头部），计算分子量、理论 pI、消光系数 ε280、电荷曲线与氨基酸组成。</p>
+  <p class="page-desc">Вставьте последовательность белка (однобуквенный код, заголовок FASTA допускается) — получите молекулярную массу, теоретический pI, коэффициент экстинкции ε280, кривую заряда по pH и аминокислотный состав.</p>
 
   <div class="panel">
     <div class="field-head">
       <label for="protIn">Последовательность (20 стандартных аминокислот, однобуквенный код)</label>
       <button type="button" class="demo-link" id="exBtn" title="Заполнить пример последовательности убиквитина человека (76 а. о.)">Загрузить пример</button>
     </div>
-    <textarea id="protIn" rows="6" placeholder="直接粘贴氨基酸序列或 FASTA（&gt;头部行自动剥离）&#10;例如：MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <textarea id="protIn" rows="6" placeholder="Вставьте последовательность аминокислот или FASTA (строка заголовка &gt; удаляется автоматически)&#10;напр.: MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">Анализировать</button>
@@ -75,7 +75,7 @@ canvas.plot { width: 100%; display: block; }
   <div class="panel" id="chargePanel" style="display:none">
     <label>Суммарный заряд от pH</label>
     <canvas id="chargeCv" class="plot"></canvas>
-    <div class="plot-hint">净电荷（Bjellqvist pKa）随 pH 变化；虚线为理论 pI（净电荷＝0）。pH 高于 pI 时蛋白带负电，适合阴离子交换；低于 pI 带正电，适合阳离子交换。悬停查看数值。</div>
+    <div class="plot-hint">Суммарный заряд (pKa Бьеллквиста) в зависимости от pH; пунктирная линия — теоретический pI (заряд = 0). Выше pI белок заряжен отрицательно — подходит для анионообменной хроматографии; ниже — положительно, для катионообменной. Наведите курсор для значений.</div>
   </div>
 
   <div class="panel" id="hydPanel" style="display:none">
@@ -84,7 +84,7 @@ canvas.plot { width: 100%; display: block; }
       <option value="13">13</option><option value="15">15</option><option value="19">19</option>
     </select> остатков</span></label>
     <canvas id="hydCv" class="plot"></canvas>
-    <div class="plot-hint">滑动窗口平均疏水值；虚线 1.6 为跨膜倾向经验参考（窗口 19 时最有效）。高分区段倾向位于疏水核心 / 跨膜区。悬停查看每个残基的数值。</div>
+    <div class="plot-hint">Средняя гидропатичность скользящим окном; пунктир на уровне 1.6 — эмпирический ориентир трансмембранной склонности (окно 19 наиболее эффективно). Участки с высокими значениями обычно находятся в гидрофобных ядрах / трансмембранных областях. Наведите курсор для значений по каждому остатку.</div>
   </div>
 
 </main>
