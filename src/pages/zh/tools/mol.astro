@@ -25,7 +25,7 @@ import Layout from '../../../layouts/Layout.astro';
   <div class="panel result" id="resultPanel" style="display:none">
     <div class="res-head"><div class="hint" id="modeBadge" style="display:none"></div><div class="dl-wrap" id="dlWrap" style="display:none"><button class="btn" id="dlBtn">下载 &#9662;</button><div class="dl-menu" id="dlMenu"><button class="dl-item" data-fmt="svg">SVG</button><button class="dl-item" data-fmt="png">PNG</button><button class="dl-item" data-fmt="jpeg">JPEG</button><button class="dl-item" data-fmt="webp">WebP</button></div></div></div>
 
-    <div class="eng-sw" id="engSw"><span class="eng-lb">绘制引擎</span><button type="button" class="eng-opt" data-e="rdkit">RDKit</button><button type="button" class="eng-opt" data-e="sd">SmilesDrawer</button></div>
+    <div class="eng-sw" id="engSw"><span class="eng-lb">绘制引擎</span><div class="eng-dd" id="engDd"><button type="button" class="eng-cur" id="engCur">RDKit <span class="eng-car">&#9662;</span></button><div class="eng-menu" id="engMenu" style="display:none"><button type="button" class="eng-item" data-e="rdkit">RDKit</button><button type="button" class="eng-item" data-e="sd">SmilesDrawer</button><button type="button" class="eng-item" data-e="cdk">CDK</button><button type="button" class="eng-item" data-e="indigo">Indigo</button><button type="button" class="eng-item" data-e="chematic">Chematic</button></div></div></div>
 <div class="struct-wrap" id="structWrap" style="display:none"><div id="structSvg"></div></div>
     
     <div id="mwBlock"><label style="margin-top:12px">摩尔质量</label>
@@ -308,18 +308,24 @@ function hillFormula(c) {
     if (window.renderKtx) window.renderKtx($('resultPanel'));
   }
   function getEngPref() {
-    try { var v = localStorage.getItem('tubecalc_eng'); return (v === 'rdkit' || v === 'sd') ? v : 'auto'; } catch (e2) { return 'auto'; }
+    try { var v = localStorage.getItem('tubecalc_eng'); return (v === 'rdkit' || v === 'sd' || v === 'cdk' || v === 'indigo' || v === 'chematic') ? v : 'auto'; } catch (e2) { return 'auto'; }
   }
   function initEngSw(redraw) {
     var box = document.getElementById('engSw');
     if (!box || box.dataset.done) return;
     box.dataset.done = '1';
-    var cur = getEngPref(); if (cur !== 'sd') cur = 'rdkit';
-    [].forEach.call(box.querySelectorAll('.eng-opt'), function (b) {
-      b.classList.toggle('cur', b.dataset.e === cur);
+    var NAMES = { rdkit: 'RDKit', sd: 'SmilesDrawer', cdk: 'CDK', indigo: 'Indigo', chematic: 'Chematic' };
+    var cur = getEngPref(); if (!NAMES[cur]) cur = 'rdkit';
+    var curB = document.getElementById('engCur'), menu = document.getElementById('engMenu'), dd = document.getElementById('engDd');
+    if (!curB || !menu) return;
+    curB.innerHTML = NAMES[cur] + ' <span class="eng-car">&#9662;</span>';
+    curB.addEventListener('click', function (ev) { ev.stopPropagation(); menu.style.display = menu.style.display === 'none' ? '' : 'none'; });
+    document.addEventListener('click', function (ev) { if (dd && !dd.contains(ev.target)) menu.style.display = 'none'; });
+    [].forEach.call(menu.querySelectorAll('.eng-item'), function (b) {
       b.addEventListener('click', function () {
         try { localStorage.setItem('tubecalc_eng', b.dataset.e); } catch (e3) {}
-        [].forEach.call(box.querySelectorAll('.eng-opt'), function (x) { x.classList.toggle('cur', x === b); });
+        curB.innerHTML = NAMES[b.dataset.e] + ' <span class="eng-car">&#9662;</span>';
+        menu.style.display = 'none';
         redraw();
       });
     });
@@ -340,6 +346,9 @@ function hillFormula(c) {
     frags.forEach((f) => {
       const cell = document.createElement('span'); cell.className = 'frag'; host.appendChild(cell);
       const smi = f === 'O' ? '[H]O[H]' : f;      /* bare O (water) -> explicit H-O-H */
+      if (ENG === 'cdk') { cdkCell(d, cell, smi, w, h); return; }
+      if (ENG === 'indigo') { indigoCell(d, cell, smi, w, h); return; }
+      if (ENG === 'chematic') { chemCell(d, cell, smi, w, h); return; }
       if (ENG === 'sd') { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); return; }
       if (RDK) {
         if (!rdkitDrawOne(cell, smi, w, h)) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); }
@@ -353,6 +362,47 @@ function hillFormula(c) {
     try {
       d.draw(f, 'svg', 'light', function (svg) { if (svg) cell.appendChild(svg); }, function () { cell.textContent = '·'; });
     } catch (e) { cell.textContent = '·'; }
+  }
+  let indigoPromise = null;
+  function loadIndigo() {
+    if (indigoPromise) return indigoPromise;
+    indigoPromise = import('https://unpkg.com/indigo-ketcher@1.46.0/indigo-ketcher-separate-wasm.js')
+      .then(function (m) { const init = m.default || m; return init({ locateFile: function (f) { return 'https://unpkg.com/indigo-ketcher@1.46.0/' + f; } }); })
+      .then(function (mod) { return mod.indigo ? mod.indigo(mod) : mod; });
+    return indigoPromise;
+  }
+  function cdkCell(d, cell, smi, w, h) {
+    cell.dataset.eng = 'cdk'; cell.textContent = '…';
+    const img = document.createElement('img');
+    img.alt = 'CDK 2D structure';
+    img.style.maxWidth = '100%'; img.style.height = h + 'px';
+    img.src = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + w + '&h=' + (h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
+    img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
+    img.onerror = function () { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); };
+  }
+  async function indigoCell(d, cell, smi, w, h) {
+    cell.dataset.eng = 'indigo'; cell.textContent = '…';
+    try {
+      const eng = await loadIndigo();
+      const mol = eng.loadMolecule(smi);
+      const svg = eng.render(mol, '{"render-output-format":"svg","render-padding":10,"render-background-color":"1,1,1,0"}');
+      const tmp = document.createElement('div'); tmp.innerHTML = svg;
+      const el = tmp.querySelector('svg');
+      if (!el) throw new Error('no svg');
+      el.style.maxWidth = '100%'; el.style.height = h + 'px';
+      cell.textContent = ''; cell.appendChild(el);
+    } catch (e) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); }
+  }
+  function chemCell(d, cell, smi, w, h) {
+    cell.dataset.eng = 'chematic';
+    cell.textContent = '…';
+    const img = document.createElement('img');
+    img.alt = '2D structure';
+    img.style.maxWidth = '100%';
+    img.style.height = h + 'px';
+    img.src = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/' + encodeURIComponent(smi) + '/PNG?image_size=' + (w * 1.6 | 0) + 'x' + (h * 1.6 | 0);
+    img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
+    img.onerror = function () { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); };
   }
   async function pubchemData(kind, value) {   // kind: name|fastformula|cid|inchikey|inchi → SMILES + 性质一次取回
     const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/' + kind + '/' + encodeURIComponent(value) +
@@ -394,7 +444,6 @@ function hillFormula(c) {
     if (!items) { const r = await fetch('/data/np_shards/' + best.f, { cache: 'default' }); if (!r.ok) return null; items = window.__npShards[best.k] = (await r.json()).items; }
     let hit = null;
     for (const it of items) { if (it[1] && it[1].toLowerCase() === ql) { hit = it; break; } }
-    if (!hit) for (const it of items) { if (it[1] && it[1].toLowerCase().indexOf(ql) === 0) { hit = it; break; } }
     return hit;
   } catch (e) { return null; }
   }
@@ -504,11 +553,10 @@ function hillFormula(c) {
     const brands = syns.filter(function (w) { return /^[A-Z]{3,}$/.test(w); }).slice(0, 4);
     const rest = syns.filter(function (w) { return brands.indexOf(w) < 0; });
     let cn = (DB.np.st === 'hit' && DB.np.name) || (DB.pub.props && DB.pub.props.Title) || (DB.chebl.st === 'hit' && DB.chebl.mo && DB.chebl.mo.pref_name) || null;
-    if (DB._zhcn) cn = cn ? DB._zhcn + '（' + cn + '）' : DB._zhcn;
+    if (window._zhCnName && (window._zhCnGen === curGen || window._zhCnGen === null)) cn = cn ? window._zhCnName + '（' + cn + '）' : window._zhCnName;
     if (cn) r += '<div class="mi mi-key"><b>' + L.common + '</b>' + cn + '</div>';
     const iu = DB.pub.props && DB.pub.props.IUPACName;
     if (iu) r += '<div class="mi"><b>' + L.iupac + '</b><span class="iupac-v">' + iu + '</span></div>';
-    if (brands.length) r += '<div class="mi"><b>' + L.brand + '</b>' + brands.map(chip).join('') + '</div>';
     if (rest.length) r += '<div class="mi"><b>' + L.syns + '</b>' + rest.map(chip).join('') + '</div>';
     const ids = [];
     if (DB.cir.st === 'hit' && DB.cir.cas) ids.push(chip(link('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(DB.cir.id || ''), 'CAS ' + (DB.cir.cas || '—'))));
@@ -620,8 +668,9 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
   }
   let curGen = 0;
   function setVia(t) { $('sVia').textContent = t; $('sVia').style.display = ''; }
-  async function go() {
-    const raw0 = $('q').value.trim(); let raw = raw0;
+  async function go(force) {
+    const raw0 = (typeof force === 'string' ? force : $('q').value).trim(); let raw = raw0;
+    if (typeof force !== 'string') { window._zhCnName = null; window._zhCnGen = null; }
     const myGen = ++curGen;
     $('err').textContent = '';
     $('resultPanel').style.display = 'none';
@@ -714,11 +763,12 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
 initDb();
     if (/[\u4e00-\u9fff]/.test(raw)) {               // 中文名 → 本地词典翻译
       let dict0 = null;
-      try { const r0 = await fetch('/zhdict.json'); if (r0.ok) dict0 = await r0.json(); } catch (e0) {}
+      try { const r0 = await fetch('/zhdict.json?t=' + Date.now()); if (r0.ok) dict0 = await r0.json(); } catch (e0) {}
       const en0 = dict0 && dict0[raw];
       if (!en0) { ['np', 'pub', 'chebl', 'rx', 'cir'].forEach(function (k) { if (DB[k].st === 'pending') dbSet(k, 'miss', {}); }); $('err').textContent = L.noZh; return; }
-      DB._zhcn = raw;
+      window._zhCnName = raw; window._zhCnGen = myGen;
       raw = en0;
+      if (/^cid:[0-9]+$/.test(en0)) { window._zhCnGen = null; go(en0.slice(4)); return; }
     }
     bridge(null, raw, myGen);   // RxNorm 名称桥
     let npHit = await npFirst(raw);   // ⑤a COCONUT 本地库先行
