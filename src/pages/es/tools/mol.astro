@@ -156,7 +156,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: 'Peligros principales', hzSig: 'Señal', hzPict: 'Pictogramas', hzP: "Consejos de prudencia", npName: 'Nombre', npVia: 'vía COCONUT', iupac: 'Nombre IUPAC', hbd: 'Donantes de puentes H', hba: 'Aceptores de puentes H', rot: 'Enlaces rotatorios', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estructura: coincidencia más cercana de PubChem para esta fórmula', pubHdr: 'Datos de PubChem', rdkHdr: 'RDKit (cálculo local)', viaSmi: 'Compuesto coincidente en PubChem', prefName: 'Nombre preferente', maxPhase: 'Fase máx.', molType: 'Tipo', therapeutic: 'Terapéutico', bioact: 'Actividad', cheblErr: 'Error de ChEMBL: comprueba el ID (p. ej. CHEMBL25)', viaCir: 'Número CAS resuelto vía NCI CIR', casErr: 'No se pudo resolver el CAS: prueba con el nombre o revisa el número', exM: 'Masa exacta', rings: 'N.º de anillos', arom: 'Anillos aromáticos', empty: 'Introduce una fórmula, una cadena SMILES o el nombre del compuesto', invalid: 'SMILES no válido: ', pub: 'No se pudo resolver el nombre vía PubChem (sin red o no encontrado). Comprueba el nombre o pega directamente una cadena SMILES.', via: 'Estructura y fórmula resueltas vía PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Estructura 2D' };
+  const L = { hzHdr: 'Peligros principales', hzSig: 'Señal', hzPict: 'Pictogramas', hzP: "Consejos de prudencia", common: 'Nombre común', brand: 'Nombres comerciales', npName: 'Nombre', npVia: 'vía COCONUT', iupac: 'Nombre IUPAC', hbd: 'Donantes de puentes H', hba: 'Aceptores de puentes H', rot: 'Enlaces rotatorios', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estructura: coincidencia más cercana de PubChem para esta fórmula', pubHdr: 'Datos de PubChem', rdkHdr: 'RDKit (cálculo local)', viaSmi: 'Compuesto coincidente en PubChem', prefName: 'Nombre preferente', maxPhase: 'Fase máx.', molType: 'Tipo', therapeutic: 'Terapéutico', bioact: 'Actividad', cheblErr: 'Error de ChEMBL: comprueba el ID (p. ej. CHEMBL25)', viaCir: 'Número CAS resuelto vía NCI CIR', casErr: 'No se pudo resolver el CAS: prueba con el nombre o revisa el número', exM: 'Masa exacta', rings: 'N.º de anillos', arom: 'Anillos aromáticos', empty: 'Introduce una fórmula, una cadena SMILES o el nombre del compuesto', invalid: 'SMILES no válido: ', pub: 'No se pudo resolver el nombre vía PubChem (sin red o no encontrado). Comprueba el nombre o pega directamente una cadena SMILES.', via: 'Estructura y fórmula resueltas vía PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Estructura 2D' };
   const TH = ['Elemento', 'Átomos', 'Peso atómico', 'Contribución (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -356,7 +356,7 @@ function hillFormula(c) {
   }
   async function pubchemData(kind, value) {   // kind: name|fastformula|cid|inchikey|inchi → SMILES + 性质一次取回
     const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/' + kind + '/' + encodeURIComponent(value) +
-      '/property/IsomericSMILES,SMILES,IUPACName,InChIKey,XLogP,HBondDonorCount,HBondAcceptorCount,TPSA,RotatableBondCount,Charge,HeavyAtomCount/JSON';
+      '/property/Title,IsomericSMILES,SMILES,IUPACName,InChIKey,XLogP,HBondDonorCount,HBondAcceptorCount,TPSA,RotatableBondCount,Charge,HeavyAtomCount/JSON';
     const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
     try {
       const r = await fetch(url, { signal: ctl.signal });
@@ -500,7 +500,15 @@ function hillFormula(c) {
     const sec = (n, t) => '<div class="sec-h">' + t + '</div>';
     let r = '';
     r += sec(1, L.sec1);
-    if (DB.pub.syn && DB.pub.syn.length) r += '<div class="mi"><b>' + L.syns + '</b>' + DB.pub.syn.map(chip).join('') + '</div>';
+    const syns = (DB.pub.syn || []);
+    const brands = syns.filter(function (w) { return /^[A-Z]{3,}$/.test(w); }).slice(0, 4);
+    const rest = syns.filter(function (w) { return brands.indexOf(w) < 0; });
+    const cn = (DB.np.st === 'hit' && DB.np.name) || (DB.pub.props && DB.pub.props.Title) || (DB.chebl.st === 'hit' && DB.chebl.mo && DB.chebl.mo.pref_name) || null;
+    if (cn) r += '<div class="mi mi-key"><b>' + L.common + '</b>' + cn + '</div>';
+    const iu = DB.pub.props && DB.pub.props.IUPACName;
+    if (iu) r += '<div class="mi"><b>' + L.iupac + '</b><span class="iupac-v">' + iu + '</span></div>';
+    if (brands.length) r += '<div class="mi"><b>' + L.brand + '</b>' + brands.map(chip).join('') + '</div>';
+    if (rest.length) r += '<div class="mi"><b>' + L.syns + '</b>' + rest.map(chip).join('') + '</div>';
     const ids = [];
     if (DB.cir.st === 'hit' && DB.cir.cas) ids.push(chip(link('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(DB.cir.id || ''), 'CAS ' + (DB.cir.cas || '—'))));
     if (DB.pub.cid) ids.push(chip(link('https://pubchem.ncbi.nlm.nih.gov/compound/' + DB.pub.cid, 'CID ' + DB.pub.cid)));
@@ -508,8 +516,6 @@ function hillFormula(c) {
     if (DB.rx.st === 'hit') ids.push(chip(link('https://mor.nlm.nih.gov/RxNav/search?searchBy=rxcui&searchTerm=' + encodeURIComponent(DB.rx.rxcui), 'RxCUI ' + DB.rx.rxcui)));
     if (DB.np.st === 'hit' && DB.np.id) ids.push(chip(link('https://coconut.naturalproducts.net/?query=' + encodeURIComponent(DB.np.id), 'COCONUT ' + DB.np.id)));
     if (ids.length) r += '<div class="mi"><b>' + L.ids + '</b>' + ids.join('') + '</div>';
-    if (DB.np.st === 'hit' && DB.np.name) r += '<div class="mi"><b>' + L.npName + '</b>' + DB.np.name + '</div>';
-    if (DB.chebl.st === 'hit' && DB.chebl.mo && DB.chebl.mo.pref_name) r += '<div class="mi"><b>' + L.prefName + '</b>' + DB.chebl.mo.pref_name + '</div>';
     const fp = DB.pub.props;
     let cat = null;
     if (DB.np.st === 'hit') cat = L.catNP; else if (DB.rx.st === 'hit') cat = L.catDrug; else if (DB.chebl.st === 'hit') cat = L.catBio; else if (DB.pub.st === 'hit') cat = L.catSm;
