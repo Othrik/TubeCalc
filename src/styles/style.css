@@ -422,3 +422,9 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 #structSvg .frag:not(:only-child) svg { height:118px; width:auto; max-width:180px; }
 .frag-plus { color:var(--muted, #6e6e73); font-size:24px; font-weight:300; margin:0 2px; }
 .frag-mul { color:var(--muted, #6e6e73); font-size:15px; align-self:flex-end; padding-bottom:10px; }
+
+/* v1.4.3 PubChem 分子信息块 */
+.mol-info { margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; }
+.mol-info .mi { font-size:14.5px; overflow-wrap:anywhere; }
+.mol-info .mi b { display:block; color:var(--muted, #6e6e73); font-weight:600; font-size:12.5px; margin-bottom:1px; }
+@media (max-width: 560px) { .mol-info { grid-template-columns:1fr; } }
