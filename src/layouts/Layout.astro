@@ -3,10 +3,19 @@
 // 每页只声明 title / desc / active（短名：index/mix/protein/…）/ note（页脚方法注释）/ lic（页脚图标署名，可选，首页用），其余内容走 slot。全站链接用绝对路径。
 import '../styles/style.css';
 import pkg from '../../package.json';
-const { title, desc = '', active = 'index', note = '', lic = '' } = Astro.props;
+const { title, desc = '', active = 'index', note = '', lic = '', lang = 'zh' } = Astro.props;
+const isEn = Astro.url.pathname.startsWith('/en/');
+const zhPath = isEn ? Astro.url.pathname.slice(3) : Astro.url.pathname;
+const enPath = isEn ? Astro.url.pathname : '/en' + Astro.url.pathname;
 
 // 导航清单：唯一事实来源（绝对路径 + active 短名）
-const NAV = [
+const NAV = lang === 'en' ? [
+  ['/en/', 'Home', 'index'],
+  ['/en/tools/mix/', 'Solution prep', 'mix'],
+  ['/en/tools/dil/', 'Dilution', 'dil'],
+  ['/en/tools/protein/', 'Protein', 'protein'],
+  ['/en/tools/mw/', 'MW', 'mw'],
+] : [
   ['/', '首页', 'index'],
   ['/tools/mix/', '配制计算', 'mix'],
   ['/tools/dil/', '简单稀释', 'dil'],
@@ -15,7 +24,7 @@ const NAV = [
 ];
 ---
 <!doctype html>
-<html lang="zh-CN">
+<html lang={lang === 'en' ? 'en' : 'zh-CN'}>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -35,12 +44,20 @@ const NAV = [
 </head>
 <body>
 <nav class="nav"><div class="nav-inner">
-  <a class="brand" href="/"><img class="brand-ic" src="/icons/icon-192.png?v=6" alt="TubeCalc 图标" width="27" height="27">TubeCalc</a>
+  <a class="brand" href={lang === 'en' ? '/en/' : '/'}><img class="brand-ic" src="/icons/icon-192.png?v=6" alt={lang === 'en' ? 'TubeCalc icon' : 'TubeCalc 图标'} width="27" height="27">TubeCalc</a>
   <div class="nav-links">
     {NAV.map(([href, label, key]) => (
       <a href={href} class={key === active ? 'active' : null}>{label}</a>
     ))}
   </div>
+  <select class="lang-sel" data-dd-done="1" aria-label="Language / 语言" onchange="location.href=this.value">
+    <option value={zhPath} selected={!isEn}>中文</option>
+    <option value={enPath} selected={isEn}>English</option>
+  </select>
+  <select class="lang-sel" data-dd-done="1" aria-label="Language / 语言" onchange="location.href=this.value">
+    <option value={zhPath} selected={!isEn}>中文</option>
+    <option value={enPath} selected={isEn}>English</option>
+  </select>
 </div></nav>
 <slot />
 <footer>
@@ -141,7 +158,7 @@ const NAV = [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=17').catch(function () {}); }); }
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=18').catch(function () {}); }); }
 </script>
 
 </body>

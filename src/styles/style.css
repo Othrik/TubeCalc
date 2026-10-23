@@ -123,6 +123,42 @@ a:hover { text-decoration: underline; }
 }
 .nav-links a:hover { color: var(--text); background: var(--accent-soft); text-decoration: none; }
 .nav-links a.active { color: #fff; background: var(--accent); font-weight: 600; }
+/* 右上角语言切换：原生 select（data-dd-done="1" 跳过全局自绘 dd），桌面在 nav 右端，手机吸附右上角 */
+.lang-sel {
+  margin-left: auto; height: 30px; padding: 0 24px 0 12px;
+  border: 1px solid var(--border); border-radius: 980px;
+  background-color: var(--card, rgba(255, 255, 255, .6)); color: var(--text);
+  font: inherit; font-size: 13px; line-height: 28px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2386868b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+}
+.lang-sel:hover { color: var(--text); border-color: var(--accent, #0a84ff); }
+.lang-sel:focus-visible { outline: 2px solid rgba(10, 132, 255, .4); outline-offset: 1px; }
+@media (max-width: 768px) {
+  .lang-sel { position: absolute; top: 12px; right: 16px; margin-left: 0; height: 28px; line-height: 26px; font-size: 12.5px; }
+}
+@media (display-mode: standalone) and (min-width: 700px) {
+  html.ios .lang-sel { top: calc(var(--sb-top, 64px) + 12px); }
+}
+/* 右上角语言切换：原生 select（data-dd-done="1" 跳过全局自绘 dd），桌面在 nav 右端，手机吸附右上角 */
+.lang-sel {
+  margin-left: auto; height: 30px; padding: 0 24px 0 12px;
+  border: 1px solid var(--border); border-radius: 980px;
+  background-color: var(--card, rgba(255, 255, 255, .6)); color: var(--text);
+  font: inherit; font-size: 13px; line-height: 28px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2386868b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+}
+.lang-sel:hover { color: var(--text); border-color: var(--accent, #0a84ff); }
+.lang-sel:focus-visible { outline: 2px solid rgba(10, 132, 255, .4); outline-offset: 1px; }
+@media (max-width: 768px) {
+  .lang-sel { position: absolute; top: 12px; right: 16px; margin-left: 0; height: 28px; line-height: 26px; font-size: 12.5px; }
+}
+@media (display-mode: standalone) and (min-width: 700px) {
+  html.ios .lang-sel { top: calc(var(--sb-top, 64px) + 12px); }
+}
 
 /* 主体 */
 .container { max-width: 1024px; margin: 0 auto; padding: 36px 20px; width: 100%; flex: 1; }
