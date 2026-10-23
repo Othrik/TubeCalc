@@ -50,14 +50,11 @@ const NAV = lang === 'en' ? [
       <a href={href} class={key === active ? 'active' : null}>{label}</a>
     ))}
   </div>
-  <select class="lang-sel" data-dd-done="1" aria-label="Language / 语言" onchange="location.href=this.value">
-    <option value={zhPath} selected={!isEn}>中文</option>
-    <option value={enPath} selected={isEn}>English</option>
-  </select>
-  <select class="lang-sel" data-dd-done="1" aria-label="Language / 语言" onchange="location.href=this.value">
-    <option value={zhPath} selected={!isEn}>中文</option>
-    <option value={enPath} selected={isEn}>English</option>
-  </select>
+  <div class="lang-sw" role="group" aria-label="Language / 语言">
+    <svg class="lang-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 4 5.8 4 9s-1.4 6.3-4 9c-2.6-2.7-4-5.8-4-9s1.4-6.3 4-9z"/></svg>
+    <a class={!isEn ? 'cur' : null} href={zhPath} hreflang="zh" lang="zh">中文</a>
+    <a class={isEn ? 'cur' : null} href={enPath} hreflang="en" lang="en">EN</a>
+  </div>
 </div></nav>
 <slot />
 <footer>
@@ -158,7 +155,7 @@ const NAV = lang === 'en' ? [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=18').catch(function () {}); }); }
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=19').catch(function () {}); }); }
 </script>
 
 </body>
