@@ -1,15 +1,15 @@
 /* TubeCalc Service Worker：预缓存核心页 + stale-while-revalidate 运行时缓存 → 全站可离线。
    发新版时递增 VER 即可；旧缓存随 activate 自动清理。 */
 'use strict';
-const VER = 'tubecalc-v1.4.1';
+const VER = 'tubecalc-v1.4.2';
 const CORE = [
-  '/', '/tools/mix/', '/tools/dil/', '/tools/protein/', '/tools/mw/',
-  '/zh/', '/zh/tools/mix/', '/zh/tools/dil/', '/zh/tools/protein/', '/zh/tools/mw/',
-  '/es/', '/es/tools/mix/', '/es/tools/dil/', '/es/tools/protein/', '/es/tools/mw/',
-  '/pt/', '/pt/tools/mix/', '/pt/tools/dil/', '/pt/tools/protein/', '/pt/tools/mw/',
-  '/ru/', '/ru/tools/mix/', '/ru/tools/dil/', '/ru/tools/protein/', '/ru/tools/mw/',
-  '/fr/', '/fr/tools/mix/', '/fr/tools/dil/', '/fr/tools/protein/', '/fr/tools/mw/',
-  '/en/', '/en/tools/mix/', '/en/tools/dil/', '/en/tools/protein/', '/en/tools/mw/',
+  '/', '/tools/mix/', '/tools/dil/', '/tools/protein/', '/tools/mol/',
+  '/zh/', '/zh/tools/mix/', '/zh/tools/dil/', '/zh/tools/protein/', '/zh/tools/mol/',
+  '/es/', '/es/tools/mix/', '/es/tools/dil/', '/es/tools/protein/', '/es/tools/mol/',
+  '/pt/', '/pt/tools/mix/', '/pt/tools/dil/', '/pt/tools/protein/', '/pt/tools/mol/',
+  '/ru/', '/ru/tools/mix/', '/ru/tools/dil/', '/ru/tools/protein/', '/ru/tools/mol/',
+  '/fr/', '/fr/tools/mix/', '/fr/tools/dil/', '/fr/tools/protein/', '/fr/tools/mol/',
+  '/en/', '/en/tools/mix/', '/en/tools/dil/', '/en/tools/protein/', '/en/tools/mol/',
   '/js/smiles-drawer.min.js',
   '/katex/katex.min.css', '/katex/katex.min.js', '/katex/mhchem.min.js',
   '/mw.js?v=2', '/manifest.webmanifest?v=12',

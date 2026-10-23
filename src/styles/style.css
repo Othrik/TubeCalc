@@ -414,3 +414,11 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 .dl-menu.open { display: block; }
 .dl-item { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text); cursor: pointer; }
 .dl-item:hover { background: rgba(0,113,227,.10); }
+
+/* v1.4.2 结果头部（徽标左+下载右）/ 多片段结构绘制 */
+.res-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+#structSvg { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; }
+#structSvg .frag:only-child svg { height:auto; max-width:100%; }
+#structSvg .frag:not(:only-child) svg { height:118px; width:auto; max-width:180px; }
+.frag-plus { color:var(--muted, #6e6e73); font-size:24px; font-weight:300; margin:0 2px; }
+.frag-mul { color:var(--muted, #6e6e73); font-size:15px; align-self:flex-end; padding-bottom:10px; }

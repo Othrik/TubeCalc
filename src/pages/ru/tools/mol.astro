@@ -2,7 +2,7 @@
 import Layout from '../../../layouts/Layout.astro';
 ---
 
-<Layout active="mw" lang="ru" title="Молекулярные инструменты · TubeCalc"
+<Layout active="mol" lang="ru" title="Молекулярные инструменты · TubeCalc"
   note="Принцип: молярная масса = Σ(атомная масса × число атомов), поддерживаются скобки и гидраты; атомные массы — стандартные значения ИЮПАК. Литература: Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
 >
 
@@ -22,8 +22,8 @@ import Layout from '../../../layouts/Layout.astro';
   </div>
 
   <div class="panel result" id="resultPanel" style="display:none">
-    <div class="hint" id="modeBadge" style="margin-bottom:6px"></div>
-    <div class="struct-wrap" id="structWrap" style="display:none"><div id="structSvg"></div><div class="dl-wrap"><button class="btn" id="dlBtn">Скачать &#9662;</button><div class="dl-menu" id="dlMenu"><button class="dl-item" data-fmt="svg">SVG</button><button class="dl-item" data-fmt="png">PNG</button><button class="dl-item" data-fmt="jpeg">JPEG</button><button class="dl-item" data-fmt="webp">WebP</button></div></div></div>
+    <div class="res-head"><div class="hint" id="modeBadge"></div><div class="dl-wrap" id="dlWrap" style="display:none"><button class="btn" id="dlBtn">Скачать &#9662;</button><div class="dl-menu" id="dlMenu"><button class="dl-item" data-fmt="svg">SVG</button><button class="dl-item" data-fmt="png">PNG</button><button class="dl-item" data-fmt="jpeg">JPEG</button><button class="dl-item" data-fmt="webp">WebP</button></div></div></div>
+<div class="struct-wrap" id="structWrap" style="display:none"><div id="structSvg"></div></div>
     <div class="hint" id="sVia" style="display:none;margin-top:8px"></div>
     <label style="margin-top:12px">Молярная масса</label>
     <div class="big-number"><span id="mwVal"></span><small>g/mol</small></div>
@@ -145,7 +145,7 @@ document.getElementById('massIn').addEventListener('input', convertMassMol);
 document.getElementById('molIn').addEventListener('input', convertMassMol);
 </script>
 
-<script is:inline src="/js/smiles-drawer.min.js" defer></script>
+<script is:inline src="/js/smiles-drawer.min.js?v=2" defer></script>
 <script is:inline>
 (function () {
   'use strict';
@@ -287,6 +287,7 @@ function hillFormula(c) {
   function showResult(withStruct, badge, via) {
     $('resultPanel').style.display = '';
     $('structWrap').style.display = withStruct ? '' : 'none';
+    $('dlWrap').style.display = withStruct ? '' : 'none';
     if (!withStruct) $('structSvg').innerHTML = '';
     $('modeBadge').textContent = badge || '';
     if (via) { $('sVia').textContent = via; $('sVia').style.display = ''; } else { $('sVia').style.display = 'none'; }
@@ -295,8 +296,22 @@ function hillFormula(c) {
     if (window.renderKtx) window.renderKtx($('resultPanel'));
   }
   function draw(smiles) {
-    const d = new SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false });
-    d.draw(smiles, 'svg', 'light', function (svg) { const host = $('structSvg'); host.innerHTML = ''; host.appendChild(svg); }, function (e) { $('err').textContent = L.invalid + (e && e.message ? e.message : e); });
+    const d = new SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false, noCondense: true });
+    const host = $('structSvg');
+    host.innerHTML = '';
+    let frags = smiles.split('.');
+    if (frags.length > 1) frags = frags.filter((f) => f !== 'O').concat(frags.filter((f) => f === 'O'));   // 水排最后（教科书序）
+    const uniq = [];
+    frags.forEach((f) => { const hit = uniq.find((u) => u.f === f); if (hit) hit.n++; else uniq.push({ f, n: 1 }); });
+    uniq.forEach((u, idx) => {
+      if (idx > 0) { const plus = document.createElement('span'); plus.className = 'frag-plus'; plus.textContent = '+'; host.appendChild(plus); }
+      const cell = document.createElement('span'); cell.className = 'frag'; host.appendChild(cell);
+      if (u.n > 1) { const mul = document.createElement('span'); mul.className = 'frag-mul'; mul.textContent = '×' + u.n; host.appendChild(mul); }
+      const f = u.f === 'O' ? '[H]O[H]' : u.f;   // 裸 O（水）→ 显式 H-O-H
+      try {
+        d.draw(f, 'svg', 'light', function (svg) { if (svg) cell.appendChild(svg); }, function () { cell.textContent = '·'; });
+      } catch (e) { cell.textContent = '·'; }
+    });
   }
   async function pubchem(name) {
     const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/' + encodeURIComponent(name) + '/property/IsomericSMILES/JSON';
@@ -335,7 +350,7 @@ function hillFormula(c) {
       renderCounts(fCounts); showResult(false, L.modeF, null);
       const smi = await pubchemFormula(hillFormula(fCounts));   // 普通分子式 → PubChem 最近匹配结构（渐进式）
       if (myGen !== curGen) return;
-      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; setVia(L.viaF); } catch (e) {} }
+      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; $('dlWrap').style.display = ''; setVia(L.viaF); } catch (e) {} }
       return;
     }
     try {                               // ② SMILES
