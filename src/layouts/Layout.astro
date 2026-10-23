@@ -23,10 +23,10 @@ const hrefFor = (l) => l.pre + (base.startsWith('/') ? base : '/' + base);
 const NL = {
   en: ['Home', 'Mixing', 'Dilution', 'Protein', 'MW'],
   zh: ['首页', '配制计算', '简单稀释', '蛋白质工具', '分子量'],
-  es: ['Inicio', 'Mixing', 'Dilución', 'Proteínas', 'Masa molar'],
-  pt: ['Início', 'Mixing', 'Diluição', 'Proteínas', 'Massa molar'],
-  ru: ['Главная', 'Mixing', 'Разбавление', 'Белки', 'Мол. масса'],
-  fr: ['Accueil', 'Mixing', 'Dilution', 'Protéines', 'Masse molaire'],
+  es: ['Inicio', 'Preparación', 'Dilución', 'Proteínas', 'Masa molar'],
+  pt: ['Início', 'Preparação', 'Diluição', 'Proteínas', 'Massa molar'],
+  ru: ['Главная', 'Приготовление', 'Разбавление', 'Белки', 'Мол. масса'],
+  fr: ['Accueil', 'Préparation', 'Dilution', 'Protéines', 'Masse molaire'],
 }[lang] || ['Home', 'Mixing', 'Dilution', 'Protein', 'MW'];
 const P = cur.pre;
 const NAV = [
@@ -230,7 +230,7 @@ const NAV = [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=27').catch(function () {}); }); }
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=28').catch(function () {}); }); }
 </script>
 
 </body>
