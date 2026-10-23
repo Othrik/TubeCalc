@@ -126,17 +126,17 @@ a:hover { text-decoration: underline; }
 
 /* 右上角语言切换：🌐 标志 + 原生 select（data-dd-done 跳过自绘 dd），桌面 nav 右端，手机吸附右上角 */
 .lang-wrap { margin-left: auto; display: inline-flex; align-items: center; gap: 1px; }
-.lang-ic { width: 15px; height: 15px; margin-right: 2px; color: var(--muted); flex: 0 0 auto; }
+.lang-ic { width: 18px; height: 18px; margin-right: 3px; color: var(--muted); flex: 0 0 auto; }
 .lang-wrap:hover .lang-ic { color: var(--text); }
 /* 观感与单位菜单（.dd-btn）同步：glass-strong 底 / 12px 圆角 / dd-ar 同款三角箭头 / 同款 focus 光圈 */
 .lang-sel {
-  height: 36px; max-width: 128px; padding: 0 27px 0 12px;
+  height: 36px; max-width: 128px; padding: 0 26px 0 12px;
   border: 1px solid var(--border); border-radius: 12px;
   background: var(--glass-strong); color: var(--text);
   font-family: inherit; font-size: 14.5px; line-height: 34px; cursor: pointer;
   -webkit-appearance: none; appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 11'%3E%3Cpath d='M2.6 2.2 L6.5 8.4 L10.4 2.2 Z' fill='%236e6e73' stroke='%236e6e73' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat; background-position: right 9px center;
+  background-repeat: no-repeat; background-position: right 10px center; background-size: 12px 10px;
   text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
   transition: border-color .15s ease, box-shadow .15s ease;
 }
@@ -146,7 +146,7 @@ a:hover { text-decoration: underline; }
 }
 @media (max-width: 768px) {
   .lang-wrap { position: absolute; top: 12px; right: 16px; margin-left: 0; }
-  .lang-sel { height: 32px; line-height: 30px; font-size: 13.5px; max-width: 112px; padding: 0 24px 0 10px; }
+  .lang-sel { height: 32px; line-height: 30px; font-size: 13.5px; max-width: 112px; padding: 0 24px 0 10px; background-size: 11px 9px; }
 }
 @media (display-mode: standalone) and (min-width: 700px) {
   html.ios .lang-wrap { top: calc(var(--sb-top, 64px) + 12px); }
