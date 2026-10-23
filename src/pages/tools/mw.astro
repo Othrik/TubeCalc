@@ -2,21 +2,21 @@
 import Layout from '../../layouts/Layout.astro';
 ---
 
-<Layout active="mw" title="分子量计算器 · TubeCalc"
-  note="原理：分子量＝Σ(相对原子质量×原子数)，支持括号与水合物，相对原子质量取 IUPAC 标准值。文献：Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
+<Layout active="mw" lang="en" title="Molecular Weight Calculator · TubeCalc"
+  note="Principle: MW = Σ(atomic weight × count), with parentheses and hydrates supported; atomic weights are IUPAC standard values. Reference: Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
 >
 
 <main class="container">
-  <h1 class="page-title">分子量计算器</h1>
-  <p class="page-desc">输入化学式即可得到摩尔质量与元素组成。支持括号嵌套与水合物写法。</p>
+  <h1 class="page-title">Molecular Weight Calculator</h1>
+  <p class="page-desc">Type a chemical formula to get molar mass and elemental composition. Nested parentheses and hydrate notation are supported.</p>
 
   <div class="panel">
-    <label for="formula">化学式</label>
-    <input type="text" id="formula" placeholder="例如：C6H12O6 或 CuSO4·5H2O 或 (NH4)2SO4" autocomplete="off">
-    <div class="hint">分隔符支持 · 、. 、*（如 CuSO4·5H2O）；元素符号区分大小写。</div>
-    <button class="btn" id="calcBtn">计算</button>
+    <label for="formula">Formula</label>
+    <input type="text" id="formula" placeholder="e.g. C6H12O6 or CuSO4·5H2O or (NH4)2SO4" autocomplete="off">
+    <div class="hint">Separators: · . * (e.g. CuSO4·5H2O); element symbols are case-sensitive.</div>
+    <button class="btn" id="calcBtn">Calculate</button>
     <span class="hint" style="display:inline-block;margin-left:10px">
-      试一试：
+      Try:
       <a href="#" class="eg" data-f="C6H12O6">C6H12O6</a> ·
       <a href="#" class="eg" data-f="CuSO4·5H2O">CuSO4·5H2O</a> ·
       <a href="#" class="eg" data-f="(NH4)2SO4">(NH4)2SO4</a> ·
@@ -26,21 +26,21 @@ import Layout from '../../layouts/Layout.astro';
   </div>
 
   <div class="panel result" id="resultPanel" style="display:none">
-    <label>摩尔质量</label>
+    <label>Molar mass</label>
     <div class="big-number"><span id="mwVal"></span><small>g/mol</small></div>
     <div id="compTable"></div>
   </div>
 
   <div class="panel result" id="convPanel" style="display:none">
-    <label>质量 ⇌ 摩尔换算（使用上方摩尔质量）</label>
+    <label>Mass ⇌ moles conversion (uses the molar mass above)</label>
     <div class="row">
       <div>
-        <label for="massIn">质量 m (g)</label>
-        <input type="number" id="massIn" step="any" placeholder="留空则按摩尔计算质量">
+        <label for="massIn">Mass m (g)</label>
+        <input type="number" id="massIn" step="any" placeholder="Leave empty to compute mass from moles">
       </div>
       <div>
-        <label for="molIn">物质的量 n (mol)</label>
-        <input type="number" id="molIn" step="any" placeholder="留空则按质量计算摩尔">
+        <label for="molIn">Amount n (mol)</label>
+        <input type="number" id="molIn" step="any" placeholder="Leave empty to compute moles from mass">
       </div>
     </div>
     <div class="big-number" id="convOut" style="font-size:20px"></div>
@@ -74,7 +74,7 @@ function parseSegment(seg) {
     const ch = seg[i];
     if (ch === '(') { stack.push({}); stackTop++; i++; }
     else if (ch === ')') {
-      if (stackTop === 0) throw '括号不匹配';
+      if (stackTop === 0) throw 'Mismatched parentheses';
       i++;
       let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
       const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
@@ -86,7 +86,7 @@ function parseSegment(seg) {
     else if (/[A-Z]/.test(ch)) {
       let sym = ch;
       if (i + 1 < seg.length && /[a-z]/.test(seg[i + 1])) { sym += seg[i + 1]; }
-      if (!(sym in MASS)) throw '无法识别的元素符号：' + sym;
+      if (!(sym in MASS)) throw 'Unknown element symbol: ' + sym;
       i += sym.length;
       let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
       const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
@@ -94,12 +94,12 @@ function parseSegment(seg) {
       top[sym] = (top[sym] || 0) + n;
       i = j;
     }
-    else if (/[a-z]/.test(ch)) { throw '元素符号位置出现小写字母（' + ch + '），请检查大小写'; }
-    else { throw '无法识别的字符：' + ch; }
+    else if (/[a-z]/.test(ch)) { throw 'Lowercase letter ( + ch + ') where an element symbol starts — check capitalization'; }
+    else { throw 'Unrecognized character: ' + ch; }
   }
-  if (stackTop !== 0) throw '括号不匹配';
+  if (stackTop !== 0) throw 'Mismatched parentheses';
   if (mult > 1) for (const el in counts) counts[el] *= mult;
-  if (Object.keys(counts).length === 0) throw '存在空的片段';
+  if (Object.keys(counts).length === 0) throw 'Empty segment';
   return counts;
 }
 
@@ -107,7 +107,7 @@ function parseFormula(input) {
   const segs = input.split(/[·.\*]/);
   const total = {};
   for (const seg of segs) {
-    if (!seg.trim()) throw '存在空的片段（检查分隔符）';
+    if (!seg.trim()) throw 'Empty segment (check the separators)';
     const c = parseSegment(seg);
     for (const el in c) total[el] = (total[el] || 0) + c[el];
   }
@@ -122,7 +122,7 @@ function calc() {
   const input = document.getElementById('formula').value.trim();
   const err = document.getElementById('err');
   err.textContent = '';
-  if (!input) { err.textContent = '请输入化学式'; return; }
+  if (!input) { err.textContent = 'Please enter a formula'; return; }
   let counts;
   try { counts = parseFormula(input); } catch (e) { err.textContent = String(e); return; }
   let mw = 0; const rows = [];
@@ -130,7 +130,7 @@ function calc() {
     rows.push([el, counts[el], MASS[el], sub]); }
   rows.sort((a, b) => b[3] - a[3]);
   document.getElementById('mwVal').textContent = fmt(Math.round(mw * 100000) / 100000);
-  let html = '<table class="tbl"><tr><th>元素</th><th>原子数</th><th>相对原子质量</th><th>贡献 (g/mol)</th></tr>';
+  let html = '<table class="tbl"><tr><th>Element</th><th>Count</th><th>Atomic weight</th><th>Contribution (g/mol)</th></tr>';
   for (const r of rows) html += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + fmt(r[3]) + '</td></tr>';
   html += '</table>';
   document.getElementById('compTable').innerHTML = html;

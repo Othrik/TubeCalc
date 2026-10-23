@@ -124,29 +124,28 @@ a:hover { text-decoration: underline; }
 .nav-links a:hover { color: var(--text); background: var(--accent-soft); text-decoration: none; }
 .nav-links a.active { color: #fff; background: var(--accent); font-weight: 600; }
 
-/* 右上角语言切换：静态分段胶囊（中文 | EN），无 JS 无 select，任何浏览器确定性渲染 */
-.lang-sw {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 2px; flex: 0 0 auto;
-  border: 1px solid var(--border); border-radius: 980px; padding: 2px;
-  background: var(--card, rgba(255, 255, 255, .6));
+/* 右上角语言切换：🌐 标志 + 原生 select（data-dd-done 跳过自绘 dd），桌面 nav 右端，手机吸附右上角 */
+.lang-wrap { margin-left: auto; display: inline-flex; align-items: center; gap: 1px; }
+.lang-ic { width: 14px; height: 14px; margin-right: 2px; color: var(--muted); flex: 0 0 auto; }
+.lang-wrap:hover .lang-ic { color: var(--text); }
+.lang-sel {
+  height: 30px; max-width: 118px; padding: 0 20px 0 10px;
+  border: 1px solid var(--border); border-radius: 980px;
+  background: var(--card, rgba(255, 255, 255, .6)); color: var(--text);
+  font: inherit; font-size: 13px; line-height: 28px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2386868b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center;
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
 }
-.lang-sw a {
-  font-size: 12.5px; font-weight: 600; line-height: 1; padding: 6px 11px; border-radius: 980px;
-  color: var(--muted); text-decoration: none; white-space: nowrap;
-  transition: background .15s ease, color .15s ease;
-}
-.lang-sw a:hover { color: var(--text); }
-.lang-sw a.cur { background: var(--accent, #0a84ff); color: #fff; }
-.lang-ic { width: 14px; height: 14px; margin-left: 7px; color: var(--muted); flex: 0 0 auto; }
-.lang-sw:hover .lang-ic { color: var(--text); }
+.lang-sel:hover { border-color: var(--accent, #0a84ff); }
+.lang-sel:focus-visible { outline: 2px solid rgba(10, 132, 255, .4); outline-offset: 1px; }
 @media (max-width: 768px) {
-  .lang-sw { position: absolute; top: 12px; right: 16px; margin-left: 0; }
-  .lang-sw a { padding: 5px 9px; font-size: 12px; }
+  .lang-wrap { position: absolute; top: 12px; right: 16px; margin-left: 0; }
+  .lang-sel { height: 28px; line-height: 26px; font-size: 12.5px; max-width: 104px; }
 }
 @media (display-mode: standalone) and (min-width: 700px) {
-  html.ios .lang-sw { top: calc(var(--sb-top, 64px) + 12px); }
-}
-}
+  html.ios .lang-wrap { top: calc(var(--sb-top, 64px) + 12px); }
 }
 
 /* 主体 */

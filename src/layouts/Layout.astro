@@ -3,28 +3,42 @@
 // 每页只声明 title / desc / active（短名：index/mix/protein/…）/ note（页脚方法注释）/ lic（页脚图标署名，可选，首页用），其余内容走 slot。全站链接用绝对路径。
 import '../styles/style.css';
 import pkg from '../../package.json';
-const { title, desc = '', active = 'index', note = '', lic = '', lang = 'zh' } = Astro.props;
-const isEn = Astro.url.pathname.startsWith('/en/');
-const zhPath = isEn ? Astro.url.pathname.slice(3) : Astro.url.pathname;
-const enPath = isEn ? Astro.url.pathname : '/en' + Astro.url.pathname;
+const { title, desc = '', active = 'index', note = '', lic = '', lang = 'en' } = Astro.props;
 
-// 导航清单：唯一事实来源（绝对路径 + active 短名）
-const NAV = lang === 'en' ? [
-  ['/en/', 'Home', 'index'],
-  ['/en/tools/mix/', 'Solution prep', 'mix'],
-  ['/en/tools/dil/', 'Dilution', 'dil'],
-  ['/en/tools/protein/', 'Protein', 'protein'],
-  ['/en/tools/mw/', 'MW', 'mw'],
-] : [
-  ['/', '首页', 'index'],
-  ['/tools/mix/', '配制计算', 'mix'],
-  ['/tools/dil/', '简单稀释', 'dil'],
-  ['/tools/protein/', '蛋白质工具', 'protein'],
-  ['/tools/mw/', '分子量', 'mw'],
+// 语言清单：英文=默认（根路径），其余挂前缀
+const LANGS = [
+  { code: 'en', label: 'English', pre: '', html: 'en' },
+  { code: 'zh', label: '中文', pre: '/zh', html: 'zh-CN' },
+  { code: 'es', label: 'Español', pre: '/es', html: 'es' },
+  { code: 'pt', label: 'Português', pre: '/pt', html: 'pt' },
+  { code: 'ru', label: 'Русский', pre: '/ru', html: 'ru' },
+  { code: 'fr', label: 'Français', pre: '/fr', html: 'fr' },
+];
+const cur = LANGS.find((l) => l.code === lang) || LANGS[0];
+const path = Astro.url.pathname;
+const base = cur.pre && path.startsWith(cur.pre + '/') ? path.slice(cur.pre.length) : path;
+const hrefFor = (l) => l.pre + (base.startsWith('/') ? base : '/' + base);
+
+// 导航清单：标签按语言、路径按前缀
+const NL = {
+  en: ['Home', 'Mixing', 'Dilution', 'Protein', 'MW'],
+  zh: ['首页', '配制计算', '简单稀释', '蛋白质工具', '分子量'],
+  es: ['Inicio', 'Preparación', 'Dilución', 'Proteínas', 'Masa molar'],
+  pt: ['Início', 'Preparação', 'Diluição', 'Proteínas', 'Massa molar'],
+  ru: ['Главная', 'Приготовление', 'Разбавление', 'Белки', 'Мол. масса'],
+  fr: ['Accueil', 'Préparation', 'Dilution', 'Protéines', 'Masse molaire'],
+}[lang] || ['Home', 'Mixing', 'Dilution', 'Protein', 'MW'];
+const P = cur.pre;
+const NAV = [
+  [P ? P + '/' : '/', NL[0], 'index'],
+  [P + '/tools/mix/', NL[1], 'mix'],
+  [P + '/tools/dil/', NL[2], 'dil'],
+  [P + '/tools/protein/', NL[3], 'protein'],
+  [P + '/tools/mw/', NL[4], 'mw'],
 ];
 ---
 <!doctype html>
-<html lang={lang === 'en' ? 'en' : 'zh-CN'}>
+<html lang={cur.html}>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -44,16 +58,19 @@ const NAV = lang === 'en' ? [
 </head>
 <body>
 <nav class="nav"><div class="nav-inner">
-  <a class="brand" href={lang === 'en' ? '/en/' : '/'}><img class="brand-ic" src="/icons/icon-192.png?v=6" alt={lang === 'en' ? 'TubeCalc icon' : 'TubeCalc 图标'} width="27" height="27">TubeCalc</a>
+  <a class="brand" href={P ? P + '/' : '/'}><img class="brand-ic" src="/icons/icon-192.png?v=6" alt={lang === 'zh' ? 'TubeCalc 图标' : 'TubeCalc icon'} width="27" height="27">TubeCalc</a>
   <div class="nav-links">
     {NAV.map(([href, label, key]) => (
       <a href={href} class={key === active ? 'active' : null}>{label}</a>
     ))}
   </div>
-  <div class="lang-sw" role="group" aria-label="Language / 语言">
+  <div class="lang-wrap">
     <svg class="lang-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 4 5.8 4 9s-1.4 6.3-4 9c-2.6-2.7-4-5.8-4-9s1.4-6.3 4-9z"/></svg>
-    <a class={!isEn ? 'cur' : null} href={zhPath} hreflang="zh" lang="zh">中文</a>
-    <a class={isEn ? 'cur' : null} href={enPath} hreflang="en" lang="en">EN</a>
+    <select class="lang-sel" data-dd-done="1" aria-label="Language" onchange="location.href=this.value">
+      {LANGS.map((l) => (
+        <option value={hrefFor(l)} selected={l.code === lang}>{l.label}</option>
+      ))}
+    </select>
   </div>
 </div></nav>
 <slot />
@@ -155,7 +172,7 @@ const NAV = lang === 'en' ? [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=19').catch(function () {}); }); }
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=20').catch(function () {}); }); }
 </script>
 
 </body>

@@ -2,8 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 ---
 
-<Layout active="dil" title="简单稀释计算器 · TubeCalc"
-  note="原理：C₁V₁=C₂V₂，浓度与体积单位任意搭配自动换算。文献：Sambrook J, Russell DW. Molecular Cloning: A Laboratory Manual. 4th ed. CSHL Press, 2006."
+<Layout active="dil" lang="en" title="Simple Dilution Calculator · TubeCalc"
+  note="Principle: C₁V₁=C₂V₂ — fill any three fields, the fourth is solved; concentration and volume units convert automatically within their family. Reference: Sambrook J, Russell DW. Molecular Cloning: A Laboratory Manual. 4th ed. CSHL Press, 2006."
 >
   <Fragment slot="head">
     <style is:inline>
@@ -43,21 +43,21 @@ import Layout from '../../layouts/Layout.astro';
   </Fragment>
 
 <main class="container dil-wrap">
-  <h1 class="page-title">简单稀释计算器</h1>
-  <p class="page-desc pagedesc">C₁V₁ = C₂V₂：填任意三项，剩下一项自动求解。C₁ 与 C₂ 各自选浓度单位（摩尔、质量浓度、% w/v、% v/v、酶活性 U 系，同族自动换算），V₁ 与 V₂ 各自选体积单位；数据自动保存在本浏览器。要配多组分体系？<a href="/tools/mix/">前往溶液配制计算器 →</a></p>
+  <h1 class="page-title">Simple Dilution Calculator</h1>
+  <p class="page-desc pagedesc">C₁V₁ = C₂V₂: fill any three fields, the remaining one is solved automatically. C₁ and C₂ each pick their own concentration unit (molar, mass concentration, % w/v, % v/v, enzyme-activity U — same-family units convert automatically); V₁ and V₂ pick volume units; everything autosaves in this browser. Planning a multi-component setup?<a href="/tools/mix/">Open the solution preparation calculator →</a></p>
 
   <div class="dil-card">
-    <div class="dil-title">简单稀释 <span class="dil-sub">C₁V₁ = C₂V₂ · 单位任意搭配，同族自动换算</span></div>
+    <div class="dil-title">Simple dilution <span class="dil-sub">C₁V₁ = C₂V₂ · any units, same-family auto-conversion</span></div>
     <div class="dil-grid">
-      <label class="f-c1">储液浓度 C₁<span class="dig"><span class="ibox"><input type="number" id="dilC1" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><select id="dilCU"><optgroup label="摩尔浓度"><option value="1">M</option><option value="0.001" selected>mM</option><option value="0.000001">μM</option><option value="1e-9">nM</option></optgroup><optgroup label="质量浓度"><option value="gl">g/L</option><option value="mgml">mg/mL</option><option value="mgl">mg/L</option><option value="ugml">μg/mL</option><option value="ngml">ng/mL</option><option value="pwv">% w/v</option></optgroup><optgroup label="体积分数"><option value="pvv">% v/v</option></optgroup><optgroup label="酶活性"><option value="uul">U/μL</option><option value="uml">U/mL</option></optgroup></select></span></label>
+      <label class="f-c1">Stock conc. C₁<span class="dig"><span class="ibox"><input type="number" id="dilC1" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Auto-solved" hidden>ƒx</span></span><select id="dilCU"><optgroup label="Molar"><option value="1">M</option><option value="0.001" selected>mM</option><option value="0.000001">μM</option><option value="1e-9">nM</option></optgroup><optgroup label="Mass conc."><option value="gl">g/L</option><option value="mgml">mg/mL</option><option value="mgl">mg/L</option><option value="ugml">μg/mL</option><option value="ngml">ng/mL</option><option value="pwv">% w/v</option></optgroup><optgroup label="Volume fraction"><option value="pvv">% v/v</option></optgroup><optgroup label="Activity"><option value="uul">U/μL</option><option value="uml">U/mL</option></optgroup></select></span></label>
       <span class="dil-op" aria-hidden="true">×</span>
-      <label class="f-v1">取用体积 V₁<span class="dig"><span class="ibox"><input type="number" id="dilV1" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><select id="dilVU"><option value="uL" selected>μL</option><option value="ml">mL</option><option value="l">L</option></select></span></label>
+      <label class="f-v1">Volume V₁<span class="dig"><span class="ibox"><input type="number" id="dilV1" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Auto-solved" hidden>ƒx</span></span><select id="dilVU"><option value="uL" selected>μL</option><option value="ml">mL</option><option value="l">L</option></select></span></label>
       <span class="dil-op" aria-hidden="true">=</span>
-      <label class="f-c2">终浓度 C₂<span class="dig"><span class="ibox"><input type="number" id="dilC2" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><select id="dilC2U"><optgroup label="摩尔浓度"><option value="1">M</option><option value="0.001" selected>mM</option><option value="0.000001">μM</option><option value="1e-9">nM</option></optgroup><optgroup label="质量浓度"><option value="gl">g/L</option><option value="mgml">mg/mL</option><option value="mgl">mg/L</option><option value="ugml">μg/mL</option><option value="ngml">ng/mL</option><option value="pwv">% w/v</option></optgroup><optgroup label="体积分数"><option value="pvv">% v/v</option></optgroup><optgroup label="酶活性"><option value="uul">U/μL</option><option value="uml">U/mL</option></optgroup></select></span></label>
+      <label class="f-c2">Final conc. C₂<span class="dig"><span class="ibox"><input type="number" id="dilC2" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Auto-solved" hidden>ƒx</span></span><select id="dilC2U"><optgroup label="Molar"><option value="1">M</option><option value="0.001" selected>mM</option><option value="0.000001">μM</option><option value="1e-9">nM</option></optgroup><optgroup label="Mass conc."><option value="gl">g/L</option><option value="mgml">mg/mL</option><option value="mgl">mg/L</option><option value="ugml">μg/mL</option><option value="ngml">ng/mL</option><option value="pwv">% w/v</option></optgroup><optgroup label="Volume fraction"><option value="pvv">% v/v</option></optgroup><optgroup label="Activity"><option value="uul">U/μL</option><option value="uml">U/mL</option></optgroup></select></span></label>
       <span class="dil-op" aria-hidden="true">×</span>
-      <label class="f-v2">终体积 V₂<span class="dig"><span class="ibox"><input type="number" id="dilV2" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="自动求解" hidden>ƒx</span></span><select id="dilV2U"><option value="uL" selected>μL</option><option value="ml">mL</option><option value="l">L</option></select></span></label>
+      <label class="f-v2">Final volume V₂<span class="dig"><span class="ibox"><input type="number" id="dilV2" min="0" step="any"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Auto-solved" hidden>ƒx</span></span><select id="dilV2U"><option value="uL" selected>μL</option><option value="ml">mL</option><option value="l">L</option></select></span></label>
     </div>
-    <div class="dil-out" id="dilOut">填好任意三项，剩下一项自动填入并锁定（ƒx，可换单位显示）；清空任意一项即可重新填写。</div>
+    <div class="dil-out" id="dilOut">Fill any three fields; the remaining one is auto-filled and locked (ƒx, unit switchable). Clear any field to start over.</div>
   </div>
 </main>
 
@@ -114,7 +114,7 @@ import Layout from '../../layouts/Layout.astro';
   }
   function filterConc() {   // C₂ 菜单按 C₁ 族过滤 + 悬停原因
     const c1u = $('#dilCU').value;
-    const tip = '与 C₁（' + cuLabel('#dilCU') + '）量纲不同：简单稀释要求同族单位';
+    const tip = 'Different dimension from C₁ (' + cuLabel('#dilCU') + '): simple dilution requires same-family units';
     Array.prototype.forEach.call($('#dilC2U').options, (o) => {
       o.disabled = CFAM[o.value] !== CFAM[c1u];
       o.title = o.disabled ? tip : '';
@@ -131,14 +131,14 @@ import Layout from '../../layouts/Layout.astro';
     const vals = { dilC1: c1, dilV1: v1, dilC2: c2, dilV2: v2 };
     if (dilAuto) vals[dilAuto] = null;
     const blanks = Object.values(vals).filter((x) => x === null).length;
-    const clashMsg = '⚠ C₁ 与 C₂ 单位量纲不同（' + cuLabel('#dilCU') + ' 与 ' + cuLabel('#dilC2U') + '），无法换算：请把两者换成同族单位（如都用 mol/L 系、都用质量浓度）。';
-    if (blanks >= 2) { unlockAll(true); filterConc(); out.innerHTML = '填好任意三项，剩下一项自动填入并锁定（ƒx，可换单位显示）；清空任意一项即可重新填写。'; return; }
+    const clashMsg = '⚠ C₁ and C₂ use different dimensions (' + cuLabel('#dilCU') + ' vs ' + cuLabel('#dilC2U') + ') and cannot be converted: pick same-family units for both (e.g. both molar, or both mass concentration).';
+    if (blanks >= 2) { unlockAll(true); filterConc(); out.innerHTML = 'Fill any three fields; the remaining one is auto-filled and locked (ƒx, unit switchable). Clear any field to start over.'; return; }
     if (blanks === 0) {
       unlockAll(true);
       if (CFAM[c1u] !== CFAM[c2u]) { out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
       const L = c1 * CFAC[c1u] * v1 * VFAC[v1u], R = c2 * CFAC[c2u] * v2 * VFAC[v2u];
       const diff = Math.abs(L - R) / R;
-      out.innerHTML = diff <= 0.005 ? '✓ 四项与 C₁V₁ = C₂V₂ 一致。' : '⚠ 数值与公式不符：按 C₁V₁ = C₂V₂，V₁ 应为 <b>' + fmt(R / (c1 * CFAC[c1u]) / VFAC[v1u]) + ' ' + cuLabel('#dilVU') + '</b>（当前填 ' + fmt(v1) + ' ' + cuLabel('#dilVU') + '）。';
+      out.innerHTML = diff <= 0.005 ? '✓ The four values satisfy C₁V₁ = C₂V₂.' : '⚠ Values do not satisfy the formula: by C₁V₁ = C₂V₂, V₁ should be <b>' + fmt(R / (c1 * CFAC[c1u]) / VFAC[v1u]) + ' ' + cuLabel('#dilVU') + '</b> (currently ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ').';
       filterConc();
       return;
     }
@@ -147,19 +147,19 @@ import Layout from '../../layouts/Layout.astro';
     if (vals.dilV1 === null) {
       if (famClash) { unlockAll(true); out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
       solvedVal = vals.dilC2 * CFAC[c2u] * vals.dilV2 * VFAC[v2u] / (vals.dilC1 * CFAC[c1u]) / VFAC[v1u]; solvedId = 'dilV1';
-      out.innerHTML = '取 <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilVU') + '</b> 储液，加稀释液补至 <b>' + fmt(v2) + ' ' + cuLabel('#dilV2U') + '</b>。';
+      out.innerHTML = 'Take <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilVU') + '</b> of stock and add diluent to a final volume of <b>' + fmt(v2) + ' ' + cuLabel('#dilV2U') + '</b>.';
     } else if (vals.dilC1 === null) {
       if (CFAM[c1u] !== CFAM[c2u]) { $('#dilCU').value = c2u; $('#dilCU').dispatchEvent(new Event('dd:sync')); }   // 归位到 C₂ 同族单位
       solvedVal = vals.dilC2 * CFAC[c2u] * vals.dilV2 * VFAC[v2u] / (vals.dilV1 * VFAC[v1u]) / CFAC[$('#dilCU').value]; solvedId = 'dilC1';
-      out.innerHTML = '所需储液浓度 C₁ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilCU') + '</b>（取 ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ' 补至 ' + fmt(v2) + ' ' + cuLabel('#dilV2U') + '）。';
+      out.innerHTML = 'Required stock concentration C₁ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilCU') + '</b> (take ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ', make up to ' + fmt(v2) + ' ' + cuLabel('#dilV2U') + ').';
     } else if (vals.dilV2 === null) {
       if (famClash) { unlockAll(true); out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
       solvedVal = vals.dilC1 * CFAC[c1u] * vals.dilV1 * VFAC[v1u] / (vals.dilC2 * CFAC[c2u]) / VFAC[v2u]; solvedId = 'dilV2';
-      out.innerHTML = '可配制终体积 V₂ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilV2U') + '</b>（其中储液 ' + fmt(v1) + ' ' + cuLabel('#dilVU') + '，余为稀释液）。';
+      out.innerHTML = 'Achievable final volume V₂ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilV2U') + '</b> (of which ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ' is stock, the rest is diluent).';
     } else {
       if (CFAM[c1u] !== CFAM[c2u]) { $('#dilC2U').value = c1u; $('#dilC2U').dispatchEvent(new Event('dd:sync')); }   // 归位到 C₁ 同族单位
       solvedVal = vals.dilC1 * CFAC[c1u] * vals.dilV1 * VFAC[v1u] / (vals.dilV2 * VFAC[v2u]) / CFAC[$('#dilC2U').value]; solvedId = 'dilC2';
-      out.innerHTML = '终浓度 C₂ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilC2U') + '</b>（' + fmt(v1) + ' ' + cuLabel('#dilVU') + ' 储液定容至 ' + fmt(v2) + ' ' + cuLabel('#dilV2U') + '）。';
+      out.innerHTML = 'Final concentration C₂ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilC2U') + '</b> (' + fmt(v1) + ' ' + cuLabel('#dilVU') + ' of stock made up to ' + fmt(v2) + ' ' + cuLabel('#dilV2U') + ').';
     }
     if (dilAuto && dilAuto !== solvedId) { const old = $('#' + dilAuto); if (old.value !== '') old.value = ''; }   // 求解对象切换：清旧自动值
     FIDS.forEach((id) => { if (id !== solvedId) { const inp = $('#' + id); inp.readOnly = false; setIcons(inp, false); } });

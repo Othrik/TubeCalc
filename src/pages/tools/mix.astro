@@ -2,8 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 ---
 
-<Layout active="mix" title="溶液配制计算器 · TubeCalc"
-  note="原理：C₁V₁=C₂V₂ 浓度守恒，逐组分求加样量，水补齐总体积；% w/v 按 g/L 计，纯液体按 100% v/v 计。文献：Sambrook J, Russell DW. Molecular Cloning: A Laboratory Manual. 4th ed. CSHL Press, 2006."
+<Layout active="mix" lang="en" title="Solution Preparation Calculator · TubeCalc"
+  note="Principle: C₁V₁=C₂V₂ mass balance per component; solvent tops up the total volume; % w/v treated as g/L, pure liquids as 100% v/v. Reference: Sambrook J, Russell DW. Molecular Cloning: A Laboratory Manual. 4th ed. CSHL Press, 2006."
 >
   <Fragment slot="head">
     <script src="/mw.js?v=2" is:inline></script>
@@ -95,24 +95,24 @@ import Layout from '../../layouts/Layout.astro';
   </Fragment>
 
 <main class="container">
-  <h1 class="page-title">溶液配制计算器</h1>
-  <p class="page-desc">反应体系 / 母液配制：填"储液 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液、% v/v、% w/v 与粉末称量；浓度留空直接填用量即手动模式。溶剂自动补齐，数据自动保存在本浏览器。</p>
+  <h1 class="page-title">Solution Preparation Calculator</h1>
+  <p class="page-desc">Reaction setups & stock solutions: enter stock → final concentration and each component’s amount is computed (V = C_final × V_total ÷ C_stock). Supports × concentrates, % v/v, % w/v and powder weighing; leave the final concentration empty and type the amount directly for manual mode. Solvent tops up automatically; everything autosaves in this browser.</p>
 
   <div class="mix-controls">
-    <label>总体积
-      <span class="mix-total"><span class="ibox"><input type="number" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
+    <label>Total volume</label>
+      <span class="mix-total"><span class="ibox"><input type="number" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="Manual input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
       <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span>
     </label>
-    <button class="btn" id="addRow">添加组分</button>
-    <button class="btn btn-ghost" id="copyTsv">复制表格 (TSV)</button>
-    <button type="button" class="demo-link" id="loadDemo" title="填入 100 mL 缓冲液示例（含纯液体与定加组分演示；定加行反推终浓度），会覆盖当前配方">载入示例配方</button>
+    <button class="btn" id="addRow">Add component</button>
+    <button class="btn btn-ghost" id="copyTsv">Copy table (TSV)</button>
+    <button type="button" class="demo-link" id="loadDemo" title="Fill in the 100 mL buffer example (includes a pure liquid and a fixed-amount component; the fixed row back-calculates its final concentration). Overwrites the current recipe">Load example recipe</button>
   </div>
 
-  <div class="mix-head"><span>组分</span><span>储液 / 分子量</span><span>终浓度</span><span>用量</span><span></span></div>
+  <div class="mix-head"><span>Component</span><span>Stock / MW</span><span>Final conc.</span><span>Amount</span><span></span></div>
   <div id="waterRow"></div>
   <div id="rows"></div>
   <div class="error" id="mixWarn"></div>
-  <div class="hint dil-entry" style="margin-top:12px">只想快速做一次<b>单组分简单稀释</b>（C₁V₁ = C₂V₂，浓度、体积单位任意搭配自动换算）？<a href="/tools/dil/">前往简单稀释计算器 →</a></div>
+  <div class="hint dil-entry" style="margin-top:12px">Just need a quick <b>single-component dilution</b> (C₁V₁ = C₂V₂, any units auto-converted)?<a href="/tools/dil/">Open the simple dilution calculator →</a></div>
 
 </main>
 
@@ -125,9 +125,9 @@ const PENCIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 const BENZENE = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5 20.66 7.25v9.5L12 21.5 3.34 16.75v-9.5z"/><path d="M12 5 18.5 8.6M18.5 15.4 12 19.4M5.5 15.6V8.4"/></svg>';   // 苯环·凯库勒式：六边形+三条交替内双键
 // 第二列单位（自绘分组下拉，三类）：固体（粉剂称量，按 g/mol 填分子量）；溶液（一切浓度单位，含 % v/v 母液）；纯液体（浓度恒 100%，无需填值）
 const SU = [
-  ['固体', [['gmol','g/mol']]],
-  ['溶液', [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×'], ['pwv','% w/v'], ['pvv','% v/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL'], ['uul','U/μL'], ['uml','U/mL']]],
-  ['纯液体', [['pure','纯液体']]]
+  ['Solid', [['gmol','g/mol']]],
+  ['Stock solution', [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×'], ['pwv','% w/v'], ['pvv','% v/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL'], ['uul','U/μL'], ['uml','U/mL']]],
+  ['Pure liquid', [['pure','Pure liquid']]]
 ];
 // 第三列单位：M 系=摩尔终浓度；×=倍液；% v/v=体积比；% w/v 与 g/L 系=质量浓度（可称粉或配母液稀释）
 const FU = [['1','M'], ['0.001','mM'], ['0.000001','μM'], ['1e-9','nM'], ['x','×'], ['pvv','% v/v'], ['pwv','% w/v'], ['gl','g/L'], ['mgml','mg/mL'], ['mgl','mg/L'], ['ugml','μg/mL'], ['ngml','ng/mL'], ['uul','U/μL'], ['uml','U/mL']];
@@ -138,7 +138,7 @@ const MO = ['1','0.001','0.000001','1e-9'];   // 摩尔单位键
 // 用量列单位：μL（体积，计入溶剂扣减）或质量（不占体积）
 const AU = [['uL','μL'], ['ml','mL'], ['mg','mg'], ['ug','μg'], ['g','g']];
 // 溶剂选项：键（语言无关，存 LS）→ 显示名 → 密度 g/mL（约 20 ℃；黏稠溶剂常按质量取用，非水溶剂显示质量参考）
-const SOLV = [['water','水',1], ['ethanol','乙醇',0.789], ['methanol','甲醇',0.792], ['isopropanol','异丙醇',0.786], ['dmso','DMSO',1.10], ['glycerol','甘油',1.261], ['other','其他',0]];
+const SOLV = [['water','Water',1], ['ethanol','Ethanol',0.789], ['methanol','Methanol',0.792], ['isopropanol','Isopropanol',0.786], ['dmso','DMSO',1.10], ['glycerol','Glycerol',1.261], ['other','Other',0]];
 let rows = [];
 let solv = 'water';
 let solvU = 'uL';   // 溶剂体积显示单位（μL/mL）
@@ -167,16 +167,16 @@ const DFU = { '1':'1','0.001':'0.001','0.000001':'0.000001','1e-9':'1e-9','x':'x
 // 终浓度/用量可选单位取决于储液类型：族归属 + 禁用原因（悬停显示）
 const FUFAM = { '1':'M','0.001':'M','0.000001':'M','1e-9':'M','x':'RX','pvv':'RV','pwv':'GL','gl':'GL','mgml':'GL','mgl':'GL','ugml':'GL','ngml':'GL','uul':'U','uml':'U' };
 const SUTIP = {
-  '1':'储液是摩尔浓度：终浓度仅支持 mol/L 系单位','0.001':'储液是摩尔浓度：终浓度仅支持 mol/L 系单位','0.000001':'储液是摩尔浓度：终浓度仅支持 mol/L 系单位','1e-9':'储液是摩尔浓度：终浓度仅支持 mol/L 系单位',
-  'x':'× 倍液储液：终浓度仅支持 ×',
-  'pvv':'体积分数储液：终浓度仅支持 % v/v','pure':'纯液体：终浓度仅支持 % v/v',
-  'pwv':'质量分数储液：终浓度仅支持 % w/v 与 g/L 系单位',
-  'gl':'质量浓度储液：终浓度仅支持 % w/v 与 g/L 系单位','mgml':'质量浓度储液：终浓度仅支持 % w/v 与 g/L 系单位','mgl':'质量浓度储液：终浓度仅支持 % w/v 与 g/L 系单位','ugml':'质量浓度储液：终浓度仅支持 % w/v 与 g/L 系单位','ngml':'质量浓度储液：终浓度仅支持 % w/v 与 g/L 系单位',
-  'uul':'酶活性储液：终浓度仅支持 U 系单位','uml':'酶活性储液：终浓度仅支持 U 系单位',
-  'gmol':'g/mol 称量：终浓度支持 mol/L 系与质量浓度，不支持酶活性单位'
+  '1':'Stock is molar: final concentration supports mol/L-family units only','0.001':'Stock is molar: final concentration supports mol/L-family units only','0.000001':'Stock is molar: final concentration supports mol/L-family units only','1e-9':'Stock is molar: final concentration supports mol/L-family units only',
+  'x':'× concentrate stock: final concentration supports × only',
+  'pvv':'Volume-fraction stock: final concentration supports % v/v only','pure':'Pure liquid: final concentration supports % v/v only',
+  'pwv':'Mass-fraction stock: final concentration supports % w/v and g/L-family units',
+  'gl':'Mass-concentration stock: final concentration supports % w/v and g/L-family units','mgml':'Mass-concentration stock: final concentration supports % w/v and g/L-family units','mgl':'Mass-concentration stock: final concentration supports % w/v and g/L-family units','ugml':'Mass-concentration stock: final concentration supports % w/v and g/L-family units','ngml':'Mass-concentration stock: final concentration supports % w/v and g/L-family units',
+  'uul':'Enzyme-activity stock: final concentration supports U-family units only','uml':'Enzyme-activity stock: final concentration supports U-family units only',
+  'gmol':'g/mol weighing: final concentration supports molar and mass-concentration units, not activity units'
 };
-const DFVTIP = '已按储液与用量折算：只能选同量纲单位';
-const AUTIP_MASS = '质量用量仅 g/mol（填分子量）称量时可用';
+const DFVTIP = 'Derived from stock & amount: only same-dimension units';
+const AUTIP_MASS = 'Mass amounts require a g/mol stock (enter MW)';
 function fuFams(su) {
   if (su === 'gmol') return ['M','GL'];
   if (su === 'x') return ['RX'];
@@ -244,9 +244,9 @@ function dd(groups, val, cls) {   // 自绘分组下拉（储液单位专用：�
 }
 
 function render() {
-  $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="组分"><div class="ig">' +
-    '<select id="solvSel" aria-label="溶剂">' + SOLV.map(s => '<option value="' + s[0] + '"' + (s[0] === solv ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select><span class="solv-tag">溶剂</span></div></div>' +
-    '<div class="cell" data-l="储液 / 分子量"><span class="ghost g2">—</span></div><div class="cell" data-l="终浓度"><span class="ghost g3">—</span></div><div class="cell c4" data-l="用量"><div class="ig"><span class="vol-out"><span class="src-tag fx" title="自动计算">ƒx</span><span id="waterVol">—</span></span><select id="solvU" aria-label="溶剂单位"><option value="uL"' + (solvU === 'uL' ? ' selected' : '') + '>μL</option><option value="ml"' + (solvU === 'ml' ? ' selected' : '') + '>mL</option></select></div></div><div></div>' +
+  $('#waterRow').innerHTML = '<div class="mix-row water"><div class="cell name" data-l="Component"><div class="ig">' +
+    '<select id="solvSel" aria-label="Solvent">' + SOLV.map(s => '<option value="' + s[0] + '"' + (s[0] === solv ? ' selected' : '') + '>' + s[1] + '</option>').join('') + '</select><span class="solv-tag">Solvent</span></div></div>' +
+    '<div class="cell" data-l="Stock / MW"><span class="ghost g2">—</span></div><div class="cell" data-l="Final conc."><span class="ghost g3">—</span></div><div class="cell c4" data-l="Amount"><div class="ig"><span class="vol-out"><span class="src-tag fx" title="Auto">ƒx</span><span id="waterVol">—</span></span><select id="solvU" aria-label="Solvent unit"><option value="uL"' + (solvU === 'uL' ? ' selected' : '') + '>μL</option><option value="ml"' + (solvU === 'ml' ? ' selected' : '') + '>mL</option></select></div></div><div></div>' +
     '<div class="solv-mass" id="waterMass"></div></div>';
   $('#solvSel').addEventListener('change', () => { solv = $('#solvSel').value; changed(); });
   $('#solvU').addEventListener('change', () => { solvU = $('#solvU').value; changed(); });
@@ -259,11 +259,11 @@ function render() {
     const d = document.createElement('div');
     d.className = 'mix-row';
     d.innerHTML =
-      '<div class="cell name" data-l="组分"><div class="ig namebox"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"><button type="button" class="mw-ic" title="识别为化学式：点击填充分子量并切换为固体 g/mol 称量" hidden>' + BENZENE + '</button></div></div>' +
-      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="储液 / 分子量"><div class="ig"><span class="ibox"><input type="number" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
-      '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由储液与用量折算" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
-      '<div class="cell c4" data-l="用量"><div class="ig"><span class="ibox"><input type="number" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由浓度自动计算" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
-      '<button class="del" data-del title="删除该组分">×</button>';
+      '<div class="cell name" data-l="Component"><div class="ig namebox"><input type="text" data-k="name" placeholder="Component name" value="' + (r.name || '').replace(/"/g, '&quot;') + '"><button type="button" class="mw-ic" title="Recognised as a formula: click to fill the MW and switch to solid g/mol weighing" hidden>' + BENZENE + '</button></div></div>' +
+      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="Stock / MW"><div class="ig"><span class="ibox"><input type="number" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="Manual input">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
+      '<div class="cell c3" data-l="Final conc."><div class="ig"><span class="ibox"><input type="number" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="Manual input">' + PENCIL + '</span><span class="src-tag fx" title="Derived from stock & amount" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c4" data-l="Amount"><div class="ig"><span class="ibox"><input type="number" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="Manual input">' + PENCIL + '</span><span class="src-tag fx" title="Auto-computed from concentrations" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
+      '<button class="del" data-del title="Remove this component">×</button>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value;
       if (el.dataset.k === 'name') validateMw(d);
@@ -312,7 +312,7 @@ function validateMw(rowEl) {
     try { mw = window.mwParse(name).mw; ok = true; } catch (e) {}
   }
   ic.hidden = !ok;
-  if (ok) ic.title = '识别为化学式（' + (Math.round(mw * 100) / 100) + ' g/mol）：点击填充分子量并切换为固体 g/mol 称量';
+  if (ok) ic.title = 'Formula detected (' + (Math.round(mw * 100) / 100) + ' g/mol): click to fill the MW and switch to solid g/mol weighing';
 }
 
 // 苯环点击：填充分子量到储液/分子量列并切换储液类型为固体 g/mol；返回是否成功
@@ -333,32 +333,32 @@ function calcRow(r, vt) {
   const fd = FUD[r.fu] || ['M', 1], cls = fd[0], ff = fd[1];
   const sd = SUD[r.su] || null;
   const hasS = r.sv !== '' && r.sv != null && isFinite(svN) && svN > 0;
-  const hi = (cfv, csv) => cfv > csv ? '终浓度高于储液浓度，无法配制' : '';
+  const hi = (cfv, csv) => cfv > csv ? 'Final concentration exceeds the stock concentration — cannot prepare' : '';
   if (cls === 'M') {                                                 // 摩尔终浓度
     if (sd && sd[0] === 'M' && hasS) {
       const cf = fvN * ff, cs = svN * sd[1];
       return { v: cf * vt / cs, warn: hi(cf, cs) };
     }
     if (sd && sd[0] === 'MW') {
-      if (!hasS) return { warn: '需填分子量数值；若手动定量，请清空终浓度直接填用量' };
+      if (!hasS) return { warn: 'Enter a molecular weight; for manual dosing, clear the final concentration and enter the amount directly' };
       return { m: fvN * ff * vt / 1e6 * svN };                       // mol/L × L × g/mol = g
     }
-    if (!sd || !hasS) return { warn: '需填储液浓度，或第二列选 g/mol 填分子量；手动定量则清空终浓度' };
-    return { warn: '储液与终浓度单位不匹配（' + (r.su === 'x' ? '×' : r.su === 'pvv' ? '% v/v' : '% w/v') + ' 与摩尔浓度）' };
+    if (!sd || !hasS) return { warn: 'Enter a stock concentration, or pick g/mol in column 2 and enter the MW; for manual dosing clear the final concentration' };
+    return { warn: 'Stock and final-concentration units do not match (' + (r.su === 'x' ? '×' : r.su === 'pvv' ? '% v/v' : '% w/v') + ' vs molar)' };
   }
   if (cls === 'RX') {                                                // × 倍液
     if (sd && sd[0] === 'RX' && hasS) {
       const cf = fvN * ff, cs = svN * sd[1];
       return { v: cf * vt / cs, warn: hi(cf, cs) };
     }
-    return { warn: '×（倍数）需储液与终浓度同时使用 ×' };
+    return { warn: '× (fold) requires both stock and final concentration in ×' };
   }
   if (cls === 'U') {                                                 // U（酶活性）
     if (sd && sd[0] === 'U' && hasS) {
       const cf = fvN * ff, cs = svN * sd[1];
       return { v: cf * vt / cs, warn: hi(cf, cs) };
     }
-    return { warn: 'U（酶活性）终浓度需储液也是 U 系单位' };
+    return { warn: 'A U (activity) final concentration requires a U-based stock' };
   }
   if (cls === 'RV') {                                                // % v/v 体积比
     if (sd && sd[0] === 'RV' && hasS) {
@@ -366,15 +366,15 @@ function calcRow(r, vt) {
       return { v: cf * vt / cs, warn: hi(cf, cs) };
     }
     if (!sd || !hasS) return { v: fvN * ff * vt };                   // 不填储液 → 按 100% 纯液
-    return { warn: '% v/v 需储液也是 % v/v，或不填储液按 100% 纯液算' };
+    return { warn: '% v/v requires a % v/v stock, or an empty stock treated as 100% pure liquid' };
   }
   // cls GL — 质量浓度终浓度（g/L 系与 % w/v）
   if (sd && sd[0] === 'GL' && hasS) {                                // 储液也是质量浓度（母液稀释）→ 体积
     const cf = fvN * ff, cs = svN * sd[1];
     return { v: cf * vt / cs, warn: hi(cf, cs) };
   }
-  if (sd && sd[0] === 'M' && hasS) return { warn: '储液是摩尔浓度：请改用质量浓度单位填储液，或第二列改 g/mol 填分子量、终浓度用 mol/L' };
-  if (sd && sd[0] === 'RX' && hasS) return { warn: '×（倍数）不能与质量浓度混用' };
+  if (sd && sd[0] === 'M' && hasS) return { warn: 'Stock is molar: use a mass-concentration stock instead, or set column 2 to g/mol with the MW and a mol/L final concentration' };
+  if (sd && sd[0] === 'RX' && hasS) return { warn: '× (fold) cannot be mixed with mass concentrations' };
   return { m: fvN * ff * vt / 1e6 };                                 // 称粉（储液未填数值时分子量忽略）：g/L × L = g
 }
 
@@ -412,14 +412,14 @@ function updateOutputs() {
     }
     const auto = canV || canM;
     if (amtIn.readOnly !== auto) amtIn.readOnly = auto;
-    amtIn.title = auto ? '用量由浓度自动算出（数字锁定，可换单位）；手动填写请清空终浓度' : '';
+    amtIn.title = auto ? 'Amount computed from concentrations (value locked; unit switchable); clear the final concentration to type it manually' : '';
     const pTag = $('.cell.c4 .src-tag.pencil', d), fTag = $('.cell.c4 .src-tag.fx', d);
     if (pTag && fTag) { pTag.hidden = auto; fTag.hidden = !auto; }
     Array.prototype.forEach.call(auSel.options, o => {
       const isVol = o.value === 'uL' || o.value === 'ml';
-      if (canV) { o.disabled = !isVol; o.title = isVol ? '' : '用量已由浓度算出体积，质量单位不适用'; }
-      else if (canM) { o.disabled = isVol; o.title = isVol ? '用量已按质量自动算出，体积单位不适用' : ''; }
-      else if (r.su === 'gmol') { o.disabled = isVol; o.title = isVol ? '固体储液按 g/mol 称量：用量为质量，请选 mg/μg/g' : ''; }
+      if (canV) { o.disabled = !isVol; o.title = isVol ? '' : 'Amount computed as a volume — mass units do not apply'; }
+      else if (canM) { o.disabled = isVol; o.title = isVol ? 'Amount computed as a mass — volume units do not apply' : ''; }
+      else if (r.su === 'gmol') { o.disabled = isVol; o.title = isVol ? 'Solid stock is weighed by g/mol: the amount is a mass — pick mg/μg/g' : ''; }
       else { o.disabled = !isVol; o.title = o.disabled ? AUTIP_MASS : ''; }
     });
     auSel.dispatchEvent(new Event('dd:sync'));
@@ -436,7 +436,7 @@ function updateOutputs() {
       if (fvIn.value !== txt) fvIn.value = txt;
     } else if (fvIn.readOnly && fvIn.value !== '') { fvIn.value = ''; }          // 退出折算 → 清掉自动值回到手动
     if (fvIn.readOnly !== !!dfv) fvIn.readOnly = !!dfv;
-    fvIn.title = dfv ? '终浓度由储液与用量折算（数字锁定，可换单位）；手动填写请清空用量' : '';
+    fvIn.title = dfv ? 'Final concentration derived from stock & amount (value locked; unit switchable); clear the amount to type it manually' : '';
     const p3 = $('.cell.c3 .src-tag.pencil', d), f3 = $('.cell.c3 .src-tag.fx', d);
     if (p3 && f3) { p3.hidden = !!dfv; f3.hidden = !dfv; }
     const statFams = fuFams(r.su);
@@ -459,7 +459,7 @@ function updateOutputs() {
   $('#waterRow').classList.toggle('mw', useMW);
   if (water >= 0) {
     const totalStr = (($('#total').value || '0') + ' ' + (parseFloat($('#totalUnit').value) === 1000 ? 'mL' : 'μL')).replace(/^0+(\d)/, '$1');
-    wv.textContent = useMW ? '定容至 ' + totalStr : fmtVol(water / (solvU === 'ml' ? 1000 : 1));
+    wv.textContent = useMW ? 'Make up to ' + totalStr : fmtVol(water / (solvU === 'ml' ? 1000 : 1));
   } else {
     wv.textContent = '—';
   }
@@ -467,7 +467,7 @@ function updateOutputs() {
   // 非水溶剂附质量参考（黏稠溶剂常按质量取用）；水密度=1 与体积等值不显示，其他无密度
   const sd = SOLV.find(s => s[0] === solv);
   wm.textContent = (!useMW && water > 0 && sd && sd[2] && sd[2] !== 1) ? '≈ ' + fmtMass(water / 1000 * sd[2]) : '';
-  $('#mixWarn').textContent = water < 0 ? ('溶剂为负：液态组分总体积已达 ' + fmtVol(sum) + ' μL，超过总体系 ' + fmtVol(vt) + ' μL，请调整') : '';
+  $('#mixWarn').textContent = water < 0 ? ('Negative solvent: liquid components already total ' + fmtVol(sum) + ' μL, exceeding the ' + fmtVol(vt) + ' μL total — please adjust') : '';
 }
 
 function persist() {
@@ -500,19 +500,19 @@ $('#totalUnit').addEventListener('change', changed);
 $('#addRow').addEventListener('click', () => { rows.push({ name:'', sv:'', su:'1', fv:'', fu:'1', amt:'', au:'uL' }); render(); });
 $('#loadDemo').addEventListener('click', () => { const d = demo(); $('#total').value = d.total; $('#totalUnit').value = d.totalUnit; rows = d.rows.map(r => Object.assign({ amt:'', au:'uL', _lock:false }, r)); render(); });
 $('#copyTsv').addEventListener('click', function () {
-  const SUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pure':'（纯液 100%）','pwv':' % w/v','gmol':' g/mol','uul':' U/μL','uml':' U/mL'};
+  const SUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pure':' (pure 100%)','pwv':' % w/v','gmol':' g/mol','uul':' U/μL','uml':' U/mL'};
   const FUL = {'1':' M','0.001':' mM','0.000001':' μM','1e-9':' nM','x':'×','pvv':' % v/v','pwv':' % w/v','gl':' g/L','mgml':' mg/mL','mgl':' mg/L','ugml':' μg/mL','ngml':' ng/mL','uul':' U/μL','uml':' U/mL'};
   const AUL = {'uL':' μL','ml':' mL','mg':' mg','ug':' μg','g':' g'};
   const wUnit = (useMWNow || $('#waterVol').textContent === '—') ? '' : (solvU === 'ml' ? ' mL' : ' μL');
-  let out = '组分\t储液/分子量\t终浓度\t用量\n' + $('#solvSel').selectedOptions[0].textContent + '（溶剂）\t—\t—\t' + $('#waterVol').textContent + wUnit + ($('#waterMass').textContent ? ' ' + $('#waterMass').textContent : '') + '\n';
+  let out = 'Component\tStock/MW\tFinal conc.\tAmount\n' + $('#solvSel').selectedOptions[0].textContent + ' (solvent)\t—\t—\t' + $('#waterVol').textContent + wUnit + ($('#waterMass').textContent ? ' ' + $('#waterMass').textContent : '') + '\n';
   rows.forEach(r => {
     const cs = (r.sv === '' || r.sv == null) ? '—' : r.sv + (SUL[r.su] || '');
     const cf = (r.fv === '' || r.fv == null) ? '—' : r.fv + (FUL[r.fu] || '');
     const amt = (r.amt === '' || r.amt == null) ? '—' : r.amt + (AUL[r.au] || ' μL');
-    out += [r.name || '未命名', cs, cf, amt].join('\t') + '\n';
+    out += [r.name || 'Unnamed', cs, cf, amt].join('\t') + '\n';
   });
   const btn = $('#copyTsv'), t = btn.textContent;
-  const done = () => { btn.textContent = '已复制'; setTimeout(() => btn.textContent = t, 1200); };
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = t, 1200); };
   (navigator.clipboard ? navigator.clipboard.writeText(out) : Promise.reject()).catch(() => {
     const ta = document.createElement('textarea'); ta.value = out; document.body.appendChild(ta);
     ta.select(); document.execCommand('copy'); document.body.removeChild(ta);

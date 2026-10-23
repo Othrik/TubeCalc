@@ -2,21 +2,21 @@
 import Layout from '../../../layouts/Layout.astro';
 ---
 
-<Layout active="mw" lang="en" title="Molecular Weight Calculator · TubeCalc"
-  note="Principle: MW = Σ(atomic weight × count), with parentheses and hydrates supported; atomic weights are IUPAC standard values. Reference: Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
+<Layout active="mw" lang="fr" title="Masse molaire · TubeCalc"
+  note="Principe : masse molaire = Σ(masse atomique × nombre d’atomes), parenthèses et hydrates pris en charge ; masses atomiques selon les valeurs standard IUPAC. Référence : Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
 >
 
 <main class="container">
-  <h1 class="page-title">Molecular Weight Calculator</h1>
-  <p class="page-desc">Type a chemical formula to get molar mass and elemental composition. Nested parentheses and hydrate notation are supported.</p>
+  <h1 class="page-title">Calculatrice de masse molaire</h1>
+  <p class="page-desc">Saisissez une formule chimique pour obtenir la masse molaire et la composition élémentaire. Parenthèses imbriquées et hydrates pris en charge.</p>
 
   <div class="panel">
-    <label for="formula">Formula</label>
-    <input type="text" id="formula" placeholder="e.g. C6H12O6 or CuSO4·5H2O or (NH4)2SO4" autocomplete="off">
-    <div class="hint">Separators: · . * (e.g. CuSO4·5H2O); element symbols are case-sensitive.</div>
-    <button class="btn" id="calcBtn">Calculate</button>
+    <label for="formula">Formule</label>
+    <input type="text" id="formula" placeholder="ex. C6H12O6 ou CuSO4·5H2O ou (NH4)2SO4" autocomplete="off">
+    <div class="hint">Séparateurs : · . * (ex. CuSO4·5H2O) ; les symboles des éléments distinguent les majuscules.</div>
+    <button class="btn" id="calcBtn">Calculer</button>
     <span class="hint" style="display:inline-block;margin-left:10px">
-      Try:
+      Essayez :
       <a href="#" class="eg" data-f="C6H12O6">C6H12O6</a> ·
       <a href="#" class="eg" data-f="CuSO4·5H2O">CuSO4·5H2O</a> ·
       <a href="#" class="eg" data-f="(NH4)2SO4">(NH4)2SO4</a> ·
@@ -26,21 +26,21 @@ import Layout from '../../../layouts/Layout.astro';
   </div>
 
   <div class="panel result" id="resultPanel" style="display:none">
-    <label>Molar mass</label>
+    <label>Masse molaire</label>
     <div class="big-number"><span id="mwVal"></span><small>g/mol</small></div>
     <div id="compTable"></div>
   </div>
 
   <div class="panel result" id="convPanel" style="display:none">
-    <label>Mass &hArr; moles conversion (uses the molar mass above)</label>
+    <label>Conversion masse ⇌ moles (utilise la masse molaire ci-dessus)</label>
     <div class="row">
       <div>
-        <label for="massIn">Mass m (g)</label>
-        <input type="number" id="massIn" step="any" placeholder="Leave empty to compute mass from moles">
+        <label for="massIn">Masse m (g)</label>
+        <input type="number" id="massIn" step="any" placeholder="Laisser vide pour calculer la masse à partir des moles">
       </div>
       <div>
-        <label for="molIn">Amount n (mol)</label>
-        <input type="number" id="molIn" step="any" placeholder="Leave empty to compute moles from mass">
+        <label for="molIn">Quantité n (mol)</label>
+        <input type="number" id="molIn" step="any" placeholder="Laisser vide pour calculer les moles à partir de la masse">
       </div>
     </div>
     <div class="big-number" id="convOut" style="font-size:20px"></div>
@@ -74,7 +74,7 @@ function parseSegment(seg) {
     const ch = seg[i];
     if (ch === '(') { stack.push({}); stackTop++; i++; }
     else if (ch === ')') {
-      if (stackTop === 0) throw 'Mismatched parentheses';
+      if (stackTop === 0) throw 'Parenthèses non appariées';
       i++;
       let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
       const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
@@ -86,7 +86,7 @@ function parseSegment(seg) {
     else if (/[A-Z]/.test(ch)) {
       let sym = ch;
       if (i + 1 < seg.length && /[a-z]/.test(seg[i + 1])) { sym += seg[i + 1]; }
-      if (!(sym in MASS)) throw 'Unknown element symbol: ' + sym;
+      if (!(sym in MASS)) throw 'Symbole d’élément non reconnu : ' + sym;
       i += sym.length;
       let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
       const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
@@ -94,12 +94,12 @@ function parseSegment(seg) {
       top[sym] = (top[sym] || 0) + n;
       i = j;
     }
-    else if (/[a-z]/.test(ch)) { throw 'Lowercase letter (' + ch + ') where an element symbol starts — check capitalization'; }
-    else { throw 'Unrecognized character: ' + ch; }
+    else if (/[a-z]/.test(ch)) { throw 'Lettre minuscule ( + ch + ') là où commence un symbole d’élément — vérifiez la casse'; }
+    else { throw 'Caractère non reconnu : ' + ch; }
   }
-  if (stackTop !== 0) throw 'Mismatched parentheses';
+  if (stackTop !== 0) throw 'Parenthèses non appariées';
   if (mult > 1) for (const el in counts) counts[el] *= mult;
-  if (Object.keys(counts).length === 0) throw 'Empty segment';
+  if (Object.keys(counts).length === 0) throw 'Il y a un fragment vide';
   return counts;
 }
 
@@ -107,7 +107,7 @@ function parseFormula(input) {
   const segs = input.split(/[·.\*]/);
   const total = {};
   for (const seg of segs) {
-    if (!seg.trim()) throw 'Empty segment (check the separators)';
+    if (!seg.trim()) throw 'Il y a un fragment vide (vérifiez les séparateurs)';
     const c = parseSegment(seg);
     for (const el in c) total[el] = (total[el] || 0) + c[el];
   }
@@ -122,7 +122,7 @@ function calc() {
   const input = document.getElementById('formula').value.trim();
   const err = document.getElementById('err');
   err.textContent = '';
-  if (!input) { err.textContent = 'Please enter a formula'; return; }
+  if (!input) { err.textContent = 'Saisissez une formule'; return; }
   let counts;
   try { counts = parseFormula(input); } catch (e) { err.textContent = String(e); return; }
   let mw = 0; const rows = [];
@@ -130,7 +130,7 @@ function calc() {
     rows.push([el, counts[el], MASS[el], sub]); }
   rows.sort((a, b) => b[3] - a[3]);
   document.getElementById('mwVal').textContent = fmt(Math.round(mw * 100000) / 100000);
-  let html = '<table class="tbl"><tr><th>Element</th><th>Count</th><th>Atomic weight</th><th>Contribution (g/mol)</th></tr>';
+  let html = '<table class="tbl"><tr><th>Élément</th><th>Atomes</th><th>Masse atomique</th><th>Contribution (g/mol)</th></tr>';
   for (const r of rows) html += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + fmt(r[3]) + '</td></tr>';
   html += '</table>';
   document.getElementById('compTable').innerHTML = html;

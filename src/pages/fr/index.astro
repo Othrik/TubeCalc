@@ -1,0 +1,47 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout lang="fr" title="TubeCalc"
+  desc="Calculatrice phare de préparation de solutions : saisissez la concentration mère et la finale, la quantité de chaque composant est calculée automatiquement, avec plusieurs solvants et la pesée de poudres ; plus masse molaire, analyse de protéines et dilution."
+  note=""
+  lic="Icône de l’app basée sur Microsoft Fluent Emoji (licence MIT)"
+>
+
+<main class="container">
+  <div class="hero">
+    <h1>Mélanges complexes, calcul facile</h1>
+    <p>Phare · Préparation de solutions : concentrations mère et finale en entrée, quantités de chaque composant en sortie — solvant au choix, pesée directe des poudres, copie TSV vers votre tableur.</p>
+    <p>Légère, gratuite, sans inscription — conçue pour les calculs de laboratoire quotidiens.</p>
+    <div class="hero-cta">
+      <a class="btn hero-btn" href="/fr/tools/mix/">Ouvrir la calculatrice de préparation de solutions →</a>
+      <a class="hero-more" href="#tools">Voir tous les outils</a>
+    </div>
+  </div>
+
+  <a class="tool-card featured" href="/fr/tools/mix/">
+    <span class="featured-tag">Phare</span>
+    <h3>Calculatrice de préparation de solutions</h3>
+    <p>Calculez toute la réaction d’un coup : « mère → finale » donne la quantité de chaque composant, le solvant complète le volume, et toute modification recalcule instantanément.</p>
+    <ul class="feat-list">
+      <li>Toutes les unités : M/mM/μM, × concentrés, % v/v, % p/v, pesée en g/mol</li>
+      <li>Solvants : eau, éthanol, DMSO, glycérol et plus, avec référence de masse</li>
+      <li>Enregistrement automatique dans le navigateur ; copie TSV vers Excel en un clic</li>
+    </ul>
+    <span class="open">Ouvrir →</span>
+  </a>
+  <h2 class="sec-title" id="tools">Tous les outils</h2>
+  <div class="grid">
+    <a class="tool-card" href="/fr/tools/protein/">
+      <h3>Analyse de séquence de protéines</h3>
+      <p>Masse moléculaire, pI théorique, coefficient d’extinction ε280, A280, composition en acides aminés et indice d’hydropathie GRAVY.</p>
+      <span class="open">Ouvrir →</span>
+    </a>
+    <a class="tool-card" href="/fr/tools/mw/">
+      <h3>Calculatrice de masse molaire</h3>
+      <p>Saisissez une formule (parenthèses et hydrates pris en charge, ex. CuSO4·5H2O) pour obtenir la masse molaire et la composition élémentaire.</p>
+      <span class="open">Ouvrir →</span>
+    </a>
+  </div>
+</main>
+</Layout>
