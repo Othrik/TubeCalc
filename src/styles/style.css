@@ -406,3 +406,11 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 @media (min-width: 769px) and (max-width: 1000px) {                                  /* iPad竖屏 / 窄窗 */
   .container { padding-left:16px; padding-right:16px; }
 }
+
+/* v1.4.1 结构图下载：按钮贴图右上 + 自绘下拉 */
+.struct-wrap { position: relative; }
+.dl-wrap { position: absolute; top: 8px; right: 8px; z-index: 20; }
+.dl-menu { position: absolute; top: calc(100% + 6px); right: 0; min-width: 130px; display: none; padding: 6px; border: 1px solid var(--border); border-radius: 12px; background: var(--card, rgba(255,255,255,.78)); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 10px 34px rgba(0,0,0,.14); }
+.dl-menu.open { display: block; }
+.dl-item { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; color: var(--text); cursor: pointer; }
+.dl-item:hover { background: rgba(0,113,227,.10); }

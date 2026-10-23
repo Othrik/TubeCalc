@@ -36,6 +36,12 @@ bun install && bun run build   # or: npm install && npm run build
 npx serve dist                 # open http://localhost:3000
 ```
 
+## Credits
+
+The app icon is based on [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) ("Test tube · 3D"), © Microsoft Corporation, licensed under the [MIT License](https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE).
+
+应用图标基于微软 [Fluent Emoji](https://github.com/microsoft/fluentui-emoji) 的"Test tube · 3D"素材制作，版权归 © Microsoft Corporation 所有，依其 MIT 许可证使用。
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

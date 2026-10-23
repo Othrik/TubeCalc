@@ -2,12 +2,12 @@
 import Layout from '../../../layouts/Layout.astro';
 ---
 
-<Layout active="mw" lang="es" title="Masa molar · TubeCalc"
+<Layout active="mw" lang="es" title="Herramientas moleculares · TubeCalc"
   note="Principio: masa molar = Σ(peso atómico × número de átomos), con paréntesis e hidratos; pesos atómicos según valores estándar IUPAC. Referencia: Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
 >
 
 <main class="container">
-  <h1 class="page-title">Calculadora de masa molar</h1>
+  <h1 class="page-title">Herramientas moleculares</h1>
   <p class="page-desc">Escribe una fórmula química (paréntesis anidados e hidratos), una cadena SMILES o el nombre del compuesto: el tipo se detecta automáticamente; con SMILES y nombres también se dibuja la estructura 2D.</p>
 
   <div class="panel">
@@ -23,13 +23,12 @@ import Layout from '../../../layouts/Layout.astro';
 
   <div class="panel result" id="resultPanel" style="display:none">
     <div class="hint" id="modeBadge" style="margin-bottom:6px"></div>
-    <div class="struct-wrap" id="structWrap" style="display:none"><div id="structSvg"></div></div>
+    <div class="struct-wrap" id="structWrap" style="display:none"><div id="structSvg"></div><div class="dl-wrap"><button class="btn" id="dlBtn">Descargar &#9662;</button><div class="dl-menu" id="dlMenu"><button class="dl-item" data-fmt="svg">SVG</button><button class="dl-item" data-fmt="png">PNG</button><button class="dl-item" data-fmt="jpeg">JPEG</button><button class="dl-item" data-fmt="webp">WebP</button></div></div></div>
     <div class="hint" id="sVia" style="display:none;margin-top:8px"></div>
     <label style="margin-top:12px">Masa molar</label>
     <div class="big-number"><span id="mwVal"></span><small>g/mol</small></div>
     <div class="hint" id="fLine" style="margin-top:8px"></div>
     <div id="compTable"></div>
-    <button class="btn" id="dlSvg" style="display:none;margin-top:10px">Descargar SVG</button>
   </div>
 
   <div class="panel result" id="convPanel" style="display:none">
@@ -150,7 +149,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { empty: 'Introduce una fórmula, una cadena SMILES o el nombre del compuesto', invalid: 'SMILES no válido: ', pub: 'No se pudo resolver el nombre vía PubChem (sin red o no encontrado). Comprueba el nombre o pega directamente una cadena SMILES.', via: 'Estructura y fórmula resueltas vía PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Interpretado como SMILES: estructura dibujada' };
+  const L = { viaF: 'Estructura: coincidencia más cercana de PubChem para esta fórmula', empty: 'Introduce una fórmula, una cadena SMILES o el nombre del compuesto', invalid: 'SMILES no válido: ', pub: 'No se pudo resolver el nombre vía PubChem (sin red o no encontrado). Comprueba el nombre o pega directamente una cadena SMILES.', via: 'Estructura y fórmula resueltas vía PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Interpretado como SMILES: estructura dibujada' };
   const TH = ['Elemento', 'Átomos', 'Peso atómico', 'Contribución (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -288,7 +287,6 @@ function hillFormula(c) {
   function showResult(withStruct, badge, via) {
     $('resultPanel').style.display = '';
     $('structWrap').style.display = withStruct ? '' : 'none';
-    $('dlSvg').style.display = withStruct ? '' : 'none';
     if (!withStruct) $('structSvg').innerHTML = '';
     $('modeBadge').textContent = badge || '';
     if (via) { $('sVia').textContent = via; $('sVia').style.display = ''; } else { $('sVia').style.display = 'none'; }
@@ -311,21 +309,42 @@ function hillFormula(c) {
       return (p && (p.IsomericSMILES || p.SMILES)) || null;
     } catch (e) { return null; } finally { clearTimeout(to); }
   }
+  let curGen = 0;
+  function setVia(t) { $('sVia').textContent = t; $('sVia').style.display = ''; }
+  async function pubchemFormula(f) {
+    const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/fastformula/' + encodeURIComponent(f) + '/property/IsomericSMILES,SMILES/JSON';
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
+    try {
+      const r = await fetch(url, { signal: ctl.signal });
+      if (!r.ok) return null;
+      const j = await r.json();
+      const p = j.PropertyTable && j.PropertyTable.Properties && j.PropertyTable.Properties[0];
+      return (p && (p.IsomericSMILES || p.SMILES)) || null;
+    } catch (e) { return null; } finally { clearTimeout(to); }
+  }
   async function go() {
     const raw = $('q').value.trim();
+    const myGen = ++curGen;
     $('err').textContent = '';
     $('resultPanel').style.display = 'none';
     if (!raw) { $('err').textContent = L.empty; return; }
     let fCounts = null;                 // ① 化学式（严格语法）
     try { fCounts = parseFormula(raw); } catch (e) {}
     const preferSmiles = fCounts && (fCounts.H === undefined) && chainLike(raw);   // CCO/NC(CO)… 链式串 → SMILES 优先
-    if (fCounts && !preferSmiles) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }
+    if (fCounts && !preferSmiles) {
+      renderCounts(fCounts); showResult(false, L.modeF, null);
+      const smi = await pubchemFormula(hillFormula(fCounts));   // 普通分子式 → PubChem 最近匹配结构（渐进式）
+      if (myGen !== curGen) return;
+      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; setVia(L.viaF); } catch (e) {} }
+      return;
+    }
     try {                               // ② SMILES
       const sc = smilesCounts(raw);
       renderCounts(sc); draw(raw); showResult(true, L.modeS, null); return;
     } catch (e2) {}
     if (fCounts) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }   // 链式但 SMILES 失败 → 回落公式
     const smi = await pubchem(raw);     // ③ 名称 → PubChem
+    if (myGen !== curGen) return;
     if (smi) {
       try {
         const sc = smilesCounts(smi);
@@ -338,16 +357,39 @@ function hillFormula(c) {
   $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
   document.querySelectorAll('.eg').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); $('q').value = a.getAttribute('data-f'); go(); }));
   document.querySelectorAll('.eg-s').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); $('q').value = a.getAttribute('data-s'); go(); }));
-  $('dlSvg').addEventListener('click', function () {
+  function saveBlob(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 800);
+  }
+  function exportFmt(fmt) {
     const svg = document.querySelector('#structSvg svg');
     if (!svg) return;
     const clone = svg.cloneNode(true);
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    const blob = new Blob([clone.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'tubecalc-structure.svg';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 500);
+    const data = new XMLSerializer().serializeToString(clone);
+    const base = 'tubecalc-structure';
+    if (fmt === 'svg') { saveBlob(new Blob([data], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg'); return; }
+    const url = URL.createObjectURL(new Blob([data], { type: 'image/svg+xml;charset=utf-8' }));
+    const img = new Image();
+    img.onload = function () {
+      const w = img.naturalWidth || 520, h = img.naturalHeight || 380, scale = 3;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext('2d');
+      if (fmt === 'jpeg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function (b) { if (b) saveBlob(b, base + '.' + (fmt === 'jpeg' ? 'jpg' : fmt)); }, 'image/' + fmt, 0.95);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  $('dlBtn').addEventListener('click', function (e) { e.stopPropagation(); $('dlMenu').classList.toggle('open'); });
+  document.querySelectorAll('#dlMenu .dl-item').forEach(function (b) {
+    b.addEventListener('click', function (e) { e.stopPropagation(); $('dlMenu').classList.remove('open'); exportFmt(b.getAttribute('data-fmt')); });
   });
+  document.addEventListener('click', function () { $('dlMenu').classList.remove('open'); });
 })();
 </script>
