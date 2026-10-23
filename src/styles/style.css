@@ -428,3 +428,6 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 .mol-info .mi { font-size:14.5px; overflow-wrap:anywhere; }
 .mol-info .mi b { display:block; color:var(--muted, #6e6e73); font-weight:600; font-size:12.5px; margin-bottom:1px; }
 @media (max-width: 560px) { .mol-info { grid-template-columns:1fr; } }
+
+/* v1.4.5 RDKit 集成：信息块分组头 */
+.mol-info .mi-h { grid-column: 1 / -1; font-size:12.5px; font-weight:600; color:var(--muted, #6e6e73); border-bottom:1px solid var(--line, rgba(0,0,0,.08)); padding-bottom:3px; margin-top:2px; }

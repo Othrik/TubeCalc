@@ -19,7 +19,7 @@ import Layout from '../../../layouts/Layout.astro';
       <a href="#" class="eg" data-f="C6H12O6">C6H12O6</a> · <a href="#" class="eg" data-f="CuSO4·5H2O">CuSO4·5H2O</a> · <a href="#" class="eg" data-f="(NH4)2SO4">(NH4)2SO4</a> · <a href="#" class="eg" data-f="Ca(OH)2">Ca(OH)2</a> · <a href="#" class="eg-s" data-s="CC(=O)Oc1ccccc1C(=O)O">阿司匹林</a> · <a href="#" class="eg-s" data-s="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">咖啡因</a> · <a href="#" class="eg-s" data-s="OC[C@H]1O[C@H](O)[C@H](O)[C@H](O)[C@H]1O">葡萄糖</a> · <a href="#" class="eg-s" data-s="NC(CO)(CO)CO">Tris</a> · <a href="#" class="eg-s" data-s="OC(=O)CN(CCN(CC(=O)O)CC(=O)O)CC(=O)O">EDTA</a>
     </span>
     <div class="error" id="err"></div>
-    <div class="hint" style="margin-top:8px">结构与名称检索由 <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubChem</a>（NCBI）提供。</div>
+    <div class="hint" style="margin-top:8px">结构与名称检索由 <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubChem</a>（NCBI）提供 · 2D 绘制与描述符 by <a href="https://www.rdkit.org/" target="_blank" rel="noopener">RDKit</a>。</div>
 
 </div>
 
@@ -152,7 +152,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { iupac: 'IUPAC 名称', hbd: '氢键供体', hba: '氢键受体', rot: '可旋转键', chg: '形式电荷', heavy: '重原子数', viaF: '结构式：PubChem 按该分子式匹配的最接近结果', empty: '请输入化学式、SMILES 串或化合物名称', invalid: 'SMILES 无效：', pub: '无法经 PubChem 解析该名称（无网络或未收录）。请检查名称，或直接粘贴 SMILES 串。', via: '结构与分子式经 PubChem 解析', hill: '分子式（Hill）：', modeF: '已识别为化学式', modeS: '已识别为 SMILES，已绘制结构式' };
+  const L = { iupac: 'IUPAC 名称', hbd: '氢键供体', hba: '氢键受体', rot: '可旋转键', chg: '形式电荷', heavy: '重原子数', viaF: '结构式：PubChem 按该分子式匹配的最接近结果', pubHdr: 'PubChem 数据', rdkHdr: 'RDKit 本地计算', exM: '精确质量', rings: '环数', arom: '芳香环', empty: '请输入化学式、SMILES 串或化合物名称', invalid: 'SMILES 无效：', pub: '无法经 PubChem 解析该名称（无网络或未收录）。请检查名称，或直接粘贴 SMILES 串。', via: '结构与分子式经 PubChem 解析', hill: '分子式（Hill）：', modeF: '已识别为化学式', modeS: '已识别为 SMILES，已绘制结构式' };
   const TH = ['元素', '原子数', '相对原子质量', '贡献 (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -294,28 +294,37 @@ function hillFormula(c) {
     if (!withStruct) $('structSvg').innerHTML = '';
     $('modeBadge').textContent = badge || '';
     const mi = $('molInfo'); if (mi) { mi.style.display = 'none'; mi.innerHTML = ''; }
+    lastPc = null;
     if (via) { $('sVia').textContent = via; $('sVia').style.display = ''; } else { $('sVia').style.display = 'none'; }
     $('convPanel').style.display = '';
     document.getElementById('massIn').dispatchEvent(new Event('input'));
     if (window.renderKtx) window.renderKtx($('resultPanel'));
   }
   function draw(smiles) {
+    lastSmiles = smiles;
     const d = new SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false, noCondense: true });
     const host = $('structSvg');
     host.innerHTML = '';
     let frags = smiles.split('.');
-    if (frags.length > 1) frags = frags.filter((f) => f !== 'O').concat(frags.filter((f) => f === 'O'));   // 水排最后（教科书序）
+    if (frags.length > 1) {                       /* 连盐/水合物：非水片段在前，水在后（教科书序） */
+      frags = frags.filter((f) => f !== 'O').concat(frags.filter((f) => f === 'O'));
+    }
     const uniq = [];
     frags.forEach((f) => { const hit = uniq.find((u) => u.f === f); if (hit) hit.n++; else uniq.push({ f, n: 1 }); });
     uniq.forEach((u, idx) => {
       if (idx > 0) { const plus = document.createElement('span'); plus.className = 'frag-plus'; plus.textContent = '+'; host.appendChild(plus); }
       const cell = document.createElement('span'); cell.className = 'frag'; host.appendChild(cell);
       if (u.n > 1) { const mul = document.createElement('span'); mul.className = 'frag-mul'; mul.textContent = '×' + u.n; host.appendChild(mul); }
-      const f = u.f === 'O' ? '[H]O[H]' : u.f;   // 裸 O（水）→ 显式 H-O-H
-      try {
-        d.draw(f, 'svg', 'light', function (svg) { if (svg) cell.appendChild(svg); }, function () { cell.textContent = '·'; });
-      } catch (e) { cell.textContent = '·'; }
+      const f = u.f === 'O' ? '[H]O[H]' : u.f;    /* 裸 O（水）→ 显式 H-O-H */
+      if (RDK) {                                  /* RDKit 高质量绘制；失败回退 smiles-drawer */
+        if (!rdkitDrawOne(cell, f, uniq.length > 1 ? 210 : 380, uniq.length > 1 ? 150 : 300)) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, f); }
+      } else { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, f); }
     });
+  }
+  function sdCell(d, cell, f) {
+    try {
+      d.draw(f, 'svg', 'light', function (svg) { if (svg) cell.appendChild(svg); }, function () { cell.textContent = '·'; });
+    } catch (e) { cell.textContent = '·'; }
   }
   async function pubchemData(kind, value) {   // kind: name|fastformula|cid|inchikey|inchi → SMILES + 性质一次取回
     const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/' + kind + '/' + encodeURIComponent(value) +
@@ -330,16 +339,78 @@ function hillFormula(c) {
       return { smiles: p.IsomericSMILES || p.SMILES || null, props: p };
     } catch (e) { return null; } finally { clearTimeout(to); }
   }
-  function setMolInfo(pc) {
+  function setInfoUnified() {
+    const pc = lastPc;
     const el = $('molInfo');
-    if (!pc || !pc.props) { el.style.display = 'none'; el.innerHTML = ''; return; }
-    const p = pc.props, rows = [];
+    const rows = [];
     const add = (label, val) => { if (val !== undefined && val !== null && val !== '') rows.push('<div class="mi"><b>' + label + '</b>' + String(val) + '</div>'); };
-    add(L.iupac, p.IUPACName); add('InChIKey', p.InChIKey); add('XLogP', p.XLogP);
-    add(L.hbd, p.HBondDonorCount); add(L.hba, p.HBondAcceptorCount); add('TPSA (\u00c5\u00b2)', p.TPSA);
-    add(L.rot, p.RotatableBondCount); add(L.chg, p.Charge); add(L.heavy, p.HeavyAtomCount);
+    const f2 = (v, n) => (typeof v === 'number' ? v.toFixed(n) : v);
+    if (pc && pc.props) {
+      const p = pc.props;
+      const start = rows.length;
+      add(L.iupac, p.IUPACName); add('InChIKey', p.InChIKey); add('XLogP', p.XLogP);
+      add(L.hbd, p.HBondDonorCount); add(L.hba, p.HBondAcceptorCount); add('TPSA (Å²)', p.TPSA);
+      add(L.rot, p.RotatableBondCount); add(L.chg, p.Charge); add(L.heavy, p.HeavyAtomCount);
+      if (rows.length > start) rows.splice(start, 0, '<div class="mi-h">' + L.pubHdr + '</div>');
+    }
+    if (RDK && lastSmiles) {
+      const dsc = rdkitDescs(lastSmiles);
+      if (dsc) {
+        const start = rows.length;
+        add(L.exM, f2(dsc.exactmw, 3));
+        add('LogP (Crippen)', f2(dsc.CrippenClogP, 2));
+        if (!(pc && pc.props)) {                    /* 无 PubChem 数据 → 本地值补齐同类 */
+          add('TPSA (Å²)', f2(dsc.tpsa, 1));
+          add(L.hbd, dsc.lipinskiHBD); add(L.hba, dsc.lipinskiHBA);
+          add(L.rot, dsc.NumRotatableBonds); add(L.heavy, dsc.NumHeavyAtoms);
+        }
+        add(L.rings, dsc.NumRings); add(L.arom, dsc.NumAromaticRings); add('Fraction Csp3', f2(dsc.FractionCSP3, 2));
+        if (rows.length > start) rows.splice(start, 0, '<div class="mi-h">' + L.rdkHdr + '</div>');
+      }
+    }
     if (!rows.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
     el.innerHTML = rows.join(''); el.style.display = '';
+  }
+  let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
+  function rdkitReady() {
+    if (RDK || rdkitFailed) return Promise.resolve(RDK);
+    if (!window.__rdkP) {
+      window.__rdkP = new Promise(function (resolve, reject) {
+        var sc = document.createElement('script');
+        sc.src = '/js/rdkit/RDKit_minimal.js?v=1';
+        sc.onload = function () { window.initRDKitModule({ locateFile: function (f) { return '/js/rdkit/' + f; } }).then(resolve, reject); };
+        sc.onerror = function () { reject(new Error('rdkit-load')); };
+        document.head.appendChild(sc);
+      });
+      window.__rdkP.then(function (m) { RDK = m; onRdkitUp(); }, function () { rdkitFailed = true; });
+    }
+    return window.__rdkP;
+  }
+  rdkitReady();
+  function onRdkitUp() {
+    if (lastSmiles) { draw(lastSmiles); }
+    if (lastPc !== null) { setInfoUnified(); }
+  }
+  function rdkitDrawOne(cell, frag, w, h) {
+    try {
+      var m = RDK.get_mol(frag);
+      if (!m) return false;
+      cell.innerHTML = m.get_svg(w, h);
+      cell.dataset.eng = 'rdkit';
+      m.delete();
+      return true;
+    } catch (e) { return false; }
+  }
+  function rdkitDescs(smiles) {
+    if (!RDK) return null;
+    try {
+      var m = RDK.get_mol(smiles);
+      if (!m) return null;
+      var out = null;
+      try { out = JSON.parse(m.get_descriptors()); } catch (e1) {}
+      m.delete();
+      return out;
+    } catch (e) { return null; }
   }
   let curGen = 0;
   function setVia(t) { $('sVia').textContent = t; $('sVia').style.display = ''; }
@@ -358,19 +429,19 @@ function hillFormula(c) {
       if (myGen !== curGen) return;
       const smi = pc && pc.smiles;   // 普通分子式 → PubChem 最近匹配结构（渐进式）
       if (myGen !== curGen) return;
-      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; $('dlWrap').style.display = ''; setVia(L.viaF); setMolInfo(pc); } catch (e) {} }
+      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; $('dlWrap').style.display = ''; setVia(L.viaF); lastPc = pc; setInfoUnified(); } catch (e) {} }
       return;
     }
     try {                               // ② SMILES
       const sc = smilesCounts(raw);
-      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); return;
+      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified(); return;
     } catch (e2) {}
     if (fCounts) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }   // 链式但 SMILES 失败 → 回落公式
     if (/^\d{1,12}$/.test(raw)) {        // ③ CID
       const pc = await pubchemData('cid', raw);
       if (myGen !== curGen) return;
       if (pc && pc.smiles) {
-        try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); setMolInfo(pc); return; } catch (e) {}
+        try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); lastPc = pc; setInfoUnified(); return; } catch (e) {}
       }
       $('err').textContent = L.pub; return;
     }
@@ -378,7 +449,7 @@ function hillFormula(c) {
       const pc = await pubchemData(/^InChI=/.test(raw) ? 'inchi' : 'inchikey', raw);
       if (myGen !== curGen) return;
       if (pc && pc.smiles) {
-        try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); setMolInfo(pc); return; } catch (e) {}
+        try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); lastPc = pc; setInfoUnified(); return; } catch (e) {}
       }
       $('err').textContent = L.pub; return;
     }
@@ -389,7 +460,7 @@ function hillFormula(c) {
     if (smi) {
       try {
         const sc = smilesCounts(smi);
-        renderCounts(sc); draw(smi); showResult(true, L.modeS, L.via); setMolInfo(pc); return;
+        renderCounts(sc); draw(smi); showResult(true, L.modeS, L.via); lastPc = pc; setInfoUnified(); return;
       } catch (e3) {}
     }
     $('err').textContent = L.pub;
