@@ -485,3 +485,10 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 .st-slot{grid-column:1/-1;width:100%;margin:6px 0 2px}
 .st-slot .struct-wrap{margin:0 auto;max-width:420px}
 .st-slot .dl-wrap{position:static;display:flex;justify-content:center;margin:10px auto 0}
+/* P35: mol 页视觉层次 */
+.mol-info .sec-h{font-size:14.5px;font-weight:700;color:var(--text,#1d1d1f);padding:10px 14px;margin:16px 0 6px;background:linear-gradient(90deg,rgba(0,113,227,.10),rgba(0,113,227,.02));border-left:3px solid #0071e3;border-radius:0 8px 8px 0;letter-spacing:.02em}
+.mol-info .mi{padding:7px 2px;border-bottom:1px dashed var(--line,rgba(0,0,0,.08));font-size:14px}
+.mol-info .mi:last-child{border-bottom:0}
+.mol-info .mi b{font-size:11.5px;font-weight:600;letter-spacing:.04em;color:var(--muted,#6e6e73);margin-bottom:2px}
+.mol-info .pchip{margin:3px 6px 3px 0;padding:3px 10px;font-size:12px;background:#fff}
+.mol-info .big-number span{background:linear-gradient(135deg,#0a84ff,#0071e3);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}

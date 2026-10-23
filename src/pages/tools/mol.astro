@@ -452,7 +452,13 @@ function hillFormula(c) {
   var PKX = {};
   Object.assign(L, {"sec1": "1. Identity & Identification", "sec2": "2. Structure", "sec3": "3. Physical Properties", "sec4": "4. Chemical Properties & Reactivity", "sec5": "5. Hazard Information", "syns": "Synonyms", "ids": "Identifiers", "cat": "Compound class", "catNP": "Natural product", "catDrug": "Drug", "catBio": "Bioactive molecule", "catSm": "Small molecule", "comp": "Computed properties", "formula": "Molecular formula", "canSm": "Canonical SMILES"});
   function escH(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  function pubHit(p, myGen) { dbSet('pub', 'hit', { props: p.props, cid: p.cid }); if (p.cid && DB.hz.cid !== p.cid) { DB.hz.cid = p.cid; hzByCid(p.cid, myGen); pubEx(p.cid, myGen); } }
+  function pubHit(p, myGen) { dbSet('pub', 'hit', { props: p.props, cid: p.cid }); if (p.cid && DB.hz.cid !== p.cid) { DB.hz.cid = p.cid; hzByCid(p.cid, myGen); pubEx(p.cid, myGen); casSyn(p.cid, myGen); } }
+  async function casSyn(cid, myGen) {
+    try { const r = await fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/' + cid + '/synonyms/JSON');
+      if (r.ok && myGen === curGen) { const j = await r.json(); const arr = (j.InformationList && j.InformationList.Information && j.InformationList.Information[0] && j.InformationList.Information[0].Synonym) || [];
+        const m = arr.find(function (x) { return /^\d{2,7}-\d{2}-\d$/.test(x); });
+        if (m && DB && DB.cir && !(DB.cir.st === 'hit' && DB.cir.cas)) { DB.cir = { st: 'hit', cas: m, id: m }; renderDb(); } } } catch (e) {}
+  }
     async function pubEx(cid, myGen) {
     try { const r = await fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/' + cid + '/JSON?heading=' + encodeURIComponent('Experimental properties')); if (r.ok) { const j = await r.json(); const secs = (j.Record && j.Record.Section && j.Record.Section[0] && j.Record.Section[0].Section) || []; const props = [];
       const walk = function (arr) { (arr || []).forEach(function (sc) { (sc.Information || []).forEach(function (inf) { const v = inf.Value && inf.Value.StringWithMarkup && inf.Value.StringWithMarkup[0] && inf.Value.StringWithMarkup[0].String; if (inf.Name && v) { const vv = String(v).replace(/\s+/g, ' ').trim().slice(0, 180); if (props.every(function (x) { return x.k !== inf.Name; })) props.push({ k: inf.Name, v: vv }); } }); walk(sc.Section); }); };
@@ -476,8 +482,8 @@ function hillFormula(c) {
     dbSet('rx', 'miss', {});
   }
   async function cirCas(id) {
-    try { const r = await fetch('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(id) + '/cas/text'); const t = r.ok ? (await r.text()).trim() : ''; if (t && /^[0-9]{2,7}-[0-9]{2}-[0-9]$/.test(t)) { dbSet('cir', 'hit', { cas: t, id: id }); return; } } catch (e) {}
-    dbSet('cir', 'miss', {});
+    try { const r = await fetch('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(id) + '/cas/text'); const t = r.ok ? (await r.text()).trim() : ''; if (t && /^[0-9]{2,7}-[0-9]{2}-[0-9]$/.test(t)) { if (DB.cir.st !== 'hit') dbSet('cir', 'hit', { cas: t, id: id }); return; } } catch (e) {}
+    if (DB.cir.st === 'pending') dbSet('cir', 'miss', {});
   }
   function dbHead(k, rows) {
     const w = DB[k].st === 'pending' ? ' <span style="opacity:.5">…</span>' : '';
@@ -493,7 +499,7 @@ function hillFormula(c) {
     const chip = (t) => '<span class="pchip">' + t + '</span>';
     const sec = (n, t) => '<div class="sec-h">' + t + '</div>';
     let r = '';
-    r += sec(1, L.sec1); r += '<div id="slot1" class="mw-slot"></div>';
+    r += sec(1, L.sec1);
     if (DB.pub.syn && DB.pub.syn.length) r += '<div class="mi"><b>' + L.syns + '</b>' + DB.pub.syn.map(chip).join('') + '</div>';
     const ids = [];
     if (DB.cir.st === 'hit' && DB.cir.cas) ids.push(chip(link('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(DB.cir.id || ''), 'CAS ' + (DB.cir.cas || '—'))));
@@ -505,11 +511,9 @@ function hillFormula(c) {
     if (DB.np.st === 'hit' && DB.np.name) r += '<div class="mi"><b>' + L.npName + '</b>' + DB.np.name + '</div>';
     if (DB.chebl.st === 'hit' && DB.chebl.mo && DB.chebl.mo.pref_name) r += '<div class="mi"><b>' + L.prefName + '</b>' + DB.chebl.mo.pref_name + '</div>';
     const fp = DB.pub.props;
-    if (fp && fp.MolecularFormula) r += '<div class="mi"><b>' + L.formula + '</b>' + fp.MolecularFormula + '</div>';
-    if (fp && fp.MolecularWeight) r += '<div class="mi"><b>MW</b>' + fp.MolecularWeight + '</div>';
     let cat = null;
     if (DB.np.st === 'hit') cat = L.catNP; else if (DB.rx.st === 'hit') cat = L.catDrug; else if (DB.chebl.st === 'hit') cat = L.catBio; else if (DB.pub.st === 'hit') cat = L.catSm;
-    if (cat) r += '<div class="mi"><b>' + L.cat + '</b>' + cat + '</div>';
+    if (cat) r += '<div class="mi"><b>' + L.cat + '</b>' + cat + '</div>'; r += '<div id="slot1" class="mw-slot"></div>';
     r += sec(2, L.sec2); r += '<div id="slot2" class="st-slot"></div>';
     if (lastSmiles) r += '<div class="mi"><b>' + L.canSm + '</b><span style="word-break:break-all">' + escH(lastSmiles) + '</span></div>';
     if (fp && fp.InChIKey) r += '<div class="mi"><b>InChIKey</b>' + fp.InChIKey + '</div>';
