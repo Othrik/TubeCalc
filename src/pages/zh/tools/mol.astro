@@ -156,7 +156,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: '主要危害', hzSig: '信号词', hzPict: '象形图', hzP: "防范说明", common: '通用名', brand: '商品名', npName: '名称', npVia: '来自 COCONUT', iupac: 'IUPAC 名称', hbd: '氢键供体', hba: '氢键受体', rot: '可旋转键', chg: '形式电荷', heavy: '重原子数', viaF: '结构式：PubChem 按该分子式匹配的最接近结果', pubHdr: 'PubChem 数据', rdkHdr: 'RDKit 本地计算', viaSmi: '已在 PubChem 匹配该化合物', prefName: '首选名称', maxPhase: '最高研发阶段', molType: '类型', therapeutic: '治疗用', bioact: '生物活性', cheblErr: 'ChEMBL 查询失败：请检查 ID（如 CHEMBL25）', viaCir: 'CAS 号已经 NCI CIR 解析', casErr: 'CAS 号解析失败：请改用化合物名或核对 CAS 号', exM: '精确质量', rings: '环数', arom: '芳香环', empty: '请输入化学式、SMILES 串或化合物名称', invalid: 'SMILES 无效：', pub: '无法经 PubChem 解析该名称（无网络或未收录）。请检查名称，或直接粘贴 SMILES 串。', via: '结构与分子式经 PubChem 解析', hill: '分子式（Hill）：', modeF: '已识别为化学式', modeS: '2D结构式' };
+  const L = { hzHdr: '主要危害', hzSig: '信号词', hzPict: '象形图', hzP: "防范说明", common: '通用名', brand: '商品名', noZh: '暂未收录该中文名，请改用英文名、CAS 号或 SMILES', npName: '名称', npVia: '来自 COCONUT', iupac: 'IUPAC 名称', hbd: '氢键供体', hba: '氢键受体', rot: '可旋转键', chg: '形式电荷', heavy: '重原子数', viaF: '结构式：PubChem 按该分子式匹配的最接近结果', pubHdr: 'PubChem 数据', rdkHdr: 'RDKit 本地计算', viaSmi: '已在 PubChem 匹配该化合物', prefName: '首选名称', maxPhase: '最高研发阶段', molType: '类型', therapeutic: '治疗用', bioact: '生物活性', cheblErr: 'ChEMBL 查询失败：请检查 ID（如 CHEMBL25）', viaCir: 'CAS 号已经 NCI CIR 解析', casErr: 'CAS 号解析失败：请改用化合物名或核对 CAS 号', exM: '精确质量', rings: '环数', arom: '芳香环', empty: '请输入化学式、SMILES 串或化合物名称', invalid: 'SMILES 无效：', pub: '无法经 PubChem 解析该名称（无网络或未收录）。请检查名称，或直接粘贴 SMILES 串。', via: '结构与分子式经 PubChem 解析', hill: '分子式（Hill）：', modeF: '已识别为化学式', modeS: '2D结构式' };
   const TH = ['元素', '原子数', '相对原子质量', '贡献 (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -503,7 +503,8 @@ function hillFormula(c) {
     const syns = (DB.pub.syn || []);
     const brands = syns.filter(function (w) { return /^[A-Z]{3,}$/.test(w); }).slice(0, 4);
     const rest = syns.filter(function (w) { return brands.indexOf(w) < 0; });
-    const cn = (DB.np.st === 'hit' && DB.np.name) || (DB.pub.props && DB.pub.props.Title) || (DB.chebl.st === 'hit' && DB.chebl.mo && DB.chebl.mo.pref_name) || null;
+    let cn = (DB.np.st === 'hit' && DB.np.name) || (DB.pub.props && DB.pub.props.Title) || (DB.chebl.st === 'hit' && DB.chebl.mo && DB.chebl.mo.pref_name) || null;
+    if (DB._zhcn) cn = cn ? DB._zhcn + '（' + cn + '）' : DB._zhcn;
     if (cn) r += '<div class="mi mi-key"><b>' + L.common + '</b>' + cn + '</div>';
     const iu = DB.pub.props && DB.pub.props.IUPACName;
     if (iu) r += '<div class="mi"><b>' + L.iupac + '</b><span class="iupac-v">' + iu + '</span></div>';
@@ -620,7 +621,7 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
   let curGen = 0;
   function setVia(t) { $('sVia').textContent = t; $('sVia').style.display = ''; }
   async function go() {
-    const raw = $('q').value.trim();
+    const raw0 = $('q').value.trim(); let raw = raw0;
     const myGen = ++curGen;
     $('err').textContent = '';
     $('resultPanel').style.display = 'none';
@@ -711,6 +712,14 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
     }
 
 initDb();
+    if (/[\u4e00-\u9fff]/.test(raw)) {               // 中文名 → 本地词典翻译
+      let dict0 = null;
+      try { const r0 = await fetch('/zhdict.json'); if (r0.ok) dict0 = await r0.json(); } catch (e0) {}
+      const en0 = dict0 && dict0[raw];
+      if (!en0) { ['np', 'pub', 'chebl', 'rx', 'cir'].forEach(function (k) { if (DB[k].st === 'pending') dbSet(k, 'miss', {}); }); $('err').textContent = L.noZh; return; }
+      DB._zhcn = raw;
+      raw = en0;
+    }
     bridge(null, raw, myGen);   // RxNorm 名称桥
     let npHit = await npFirst(raw);   // ⑤a COCONUT 本地库先行
     if (myGen !== curGen) return;
