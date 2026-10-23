@@ -1,7 +1,7 @@
 /* TubeCalc Service Worker：预缓存核心页 + stale-while-revalidate 运行时缓存 → 全站可离线。
    发新版时递增 VER 即可；旧缓存随 activate 自动清理。 */
 'use strict';
-const VER = 'tubecalc-v1.4.3';
+const VER = 'tubecalc-v1.4.4';
 const CORE = [
   '/', '/tools/mix/', '/tools/dil/', '/tools/protein/', '/tools/mol/',
   '/zh/', '/zh/tools/mix/', '/zh/tools/dil/', '/zh/tools/protein/', '/zh/tools/mol/',
