@@ -40,14 +40,14 @@ canvas.plot { width: 100%; display: block; }
 
 <main class="container">
   <h1 class="page-title">Analyse de séquence de protéines</h1>
-  <p class="page-desc">Collez une séquence protéique (code à une lettre, en-tête FASTA accepté) pour obtenir la masse molaire, le pI théorique, le coefficient d’extinction ε280, la courbe charge–pH et la composition en acides aminés.</p>
+  <p class="page-desc">Collez une séquence protéique (code à une lettre, en-tête FASTA accepté) pour obtenir la masse molaire, le pI théorique, le coefficient d’extinction <span class="ktx">\varepsilon_&#123;280&#125;</span>, la courbe charge–pH et la composition en acides aminés.</p>
 
   <div class="panel">
     <div class="field-head">
       <label for="protIn">Séquence (20 acides aminés standards, code à une lettre)</label>
       <button type="button" class="demo-link" id="exBtn" title="Remplit la séquence d’exemple d’ubiquitine humaine (76 aa)">Charger la séquence d’exemple</button>
     </div>
-    <textarea id="protIn" rows="6" placeholder="Collez la séquence d’acides aminés ou un FASTA (la ligne d’en-tête &gt; est retirée automatiquement)&#10;ex. : MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <textarea autocapitalize="none" autocorrect="off" spellcheck="false" id="protIn" rows="6" placeholder="Collez la séquence d’acides aminés ou un FASTA (la ligne d’en-tête &gt; est retirée automatiquement)&#10;ex. : MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">Analyser</button>

@@ -387,3 +387,22 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 @media (display-mode: standalone) {
   footer { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
 }
+
+
+/* ===== v1.4.0：mix 总体积标签置顶 / 移动端·触摸·iPad竖屏·窄窗优化 ===== */
+.tv-wrap { display:flex; flex-direction:column; gap:3px; }
+@media (max-width: 768px) {
+  input[type="text"], input[type="number"], textarea, select { font-size:16px; }   /* iOS 聚焦禁缩放 */
+  .dil-grid { grid-template-columns:1fr 1fr; gap:12px 10px; }                       /* 4 字段折成 2×2 */
+  .dil-grid .dil-op { display:none; }
+  .tbl { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }        /* 成分表窄屏横滚 */
+  .struct-wrap { padding:8px; }
+  .big-number { font-size:clamp(24px, 6.4vw, 34px); }
+  .row { flex-wrap:wrap; }
+}
+@media (pointer: coarse) {
+  input[type="text"], input[type="number"], textarea, select, .btn, .dd-btn { min-height:44px; }  /* 触摸目标 */
+}
+@media (min-width: 769px) and (max-width: 1000px) {                                  /* iPad竖屏 / 窄窗 */
+  .container { padding-left:16px; padding-right:16px; }
+}

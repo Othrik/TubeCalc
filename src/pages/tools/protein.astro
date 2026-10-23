@@ -40,14 +40,14 @@ canvas.plot { width: 100%; display: block; }
 
 <main class="container">
   <h1 class="page-title">Protein Sequence Analysis</h1>
-  <p class="page-desc">Paste a protein sequence (single-letter code, FASTA header allowed) to get molecular weight, theoretical pI, extinction coefficient ε280, charge-vs-pH curve and amino-acid composition.</p>
+  <p class="page-desc">Paste a protein sequence (single-letter code, FASTA header allowed) to get molecular weight, theoretical pI, extinction coefficient <span class="ktx">\varepsilon_&#123;280&#125;</span>, charge-vs-pH curve and amino-acid composition.</p>
 
   <div class="panel">
     <div class="field-head">
       <label for="protIn">Sequence (20 standard amino acids, single-letter code)</label>
       <button type="button" class="demo-link" id="exBtn" title="Fill in the human ubiquitin (76 aa) example sequence">Load example sequence</button>
     </div>
-    <textarea id="protIn" rows="6" placeholder="Paste an amino-acid sequence or FASTA (&gt; header line is stripped automatically)&#10;e.g. MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <textarea autocapitalize="none" autocorrect="off" spellcheck="false" id="protIn" rows="6" placeholder="Paste an amino-acid sequence or FASTA (&gt; header line is stripped automatically)&#10;e.g. MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">Analyze</button>

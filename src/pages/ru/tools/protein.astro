@@ -40,14 +40,14 @@ canvas.plot { width: 100%; display: block; }
 
 <main class="container">
   <h1 class="page-title">Анализ последовательности белка</h1>
-  <p class="page-desc">Вставьте последовательность белка (однобуквенный код, заголовок FASTA допускается) — получите молекулярную массу, теоретический pI, коэффициент экстинкции ε280, кривую заряда по pH и аминокислотный состав.</p>
+  <p class="page-desc">Вставьте последовательность белка (однобуквенный код, заголовок FASTA допускается) — получите молекулярную массу, теоретический pI, коэффициент экстинкции <span class="ktx">\varepsilon_&#123;280&#125;</span>, кривую заряда по pH и аминокислотный состав.</p>
 
   <div class="panel">
     <div class="field-head">
       <label for="protIn">Последовательность (20 стандартных аминокислот, однобуквенный код)</label>
       <button type="button" class="demo-link" id="exBtn" title="Заполнить пример последовательности убиквитина человека (76 а. о.)">Загрузить пример</button>
     </div>
-    <textarea id="protIn" rows="6" placeholder="Вставьте последовательность аминокислот или FASTA (строка заголовка &gt; удаляется автоматически)&#10;напр.: MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <textarea autocapitalize="none" autocorrect="off" spellcheck="false" id="protIn" rows="6" placeholder="Вставьте последовательность аминокислот или FASTA (строка заголовка &gt; удаляется автоматически)&#10;напр.: MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">Анализировать</button>

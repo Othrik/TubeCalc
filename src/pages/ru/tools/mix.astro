@@ -96,12 +96,12 @@ import Layout from '../../../layouts/Layout.astro';
 
 <main class="container">
   <h1 class="page-title">Калькулятор приготовления растворов</h1>
-  <p class="page-desc">Приготовление рабочих растворов: введите «исходный → конечный» и получите объём каждого компонента (V = C_кон × V_общ ÷ C_исх). Поддерживаются × концентраты, % об., % масс. и взвешивание порошков; оставьте конечную концентрацию пустой и введите количество напрямую для ручного режима. Растворитель доводит объём автоматически; всё сохраняется в этом браузере.</p>
+  <p class="page-desc">Приготовление рабочих растворов: введите «исходный → конечный» и получите объём каждого компонента (<span class="ktx">V = C_&#123;\text&#123;кон&#125;&#125; \times V_&#123;\text&#123;общ&#125;&#125; \div C_&#123;\text&#123;исх&#125;&#125;</span>). Поддерживаются × концентраты, % об., % масс. и взвешивание порошков; оставьте конечную концентрацию пустой и введите количество напрямую для ручного режима. Растворитель доводит объём автоматически; всё сохраняется в этом браузере.</p>
 
   <div class="mix-controls">
-    <label>Общий объём</label>
-      <span class="mix-total"><span class="ibox"><input type="number" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="Ручной ввод"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
-      <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span>
+    <span class="tv-wrap"><label>Общий объём</label>
+      <span class="mix-total"><span class="ibox"><input type="number" inputmode="decimal" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="Ручной ввод"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
+      <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span></span>
     </label>
     <button class="btn" id="addRow">Добавить компонент</button>
     <button class="btn btn-ghost" id="copyTsv">Копировать таблицу (TSV)</button>
@@ -260,9 +260,9 @@ function render() {
     d.className = 'mix-row';
     d.innerHTML =
       '<div class="cell name" data-l="Компонент"><div class="ig namebox"><input type="text" data-k="name" placeholder="Название компонента" value="' + (r.name || '').replace(/"/g, '&quot;') + '"><button type="button" class="mw-ic" title="Распознана как формула: нажмите, чтобы подставить молярную массу и перейти к взвешиванию твёрдого вещества в г/моль" hidden>' + BENZENE + '</button></div></div>' +
-      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="Исходный / Молярная масса"><div class="ig"><span class="ibox"><input type="number" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="Ручной ввод">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
-      '<div class="cell c3" data-l="Конечная конц."><div class="ig"><span class="ibox"><input type="number" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="Ручной ввод">' + PENCIL + '</span><span class="src-tag fx" title="Рассчитано из исходного раствора и объёма" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
-      '<div class="cell c4" data-l="Количество"><div class="ig"><span class="ibox"><input type="number" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="Ручной ввод">' + PENCIL + '</span><span class="src-tag fx" title="Автоматически из концентраций" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
+      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="Исходный / Молярная масса"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="Ручной ввод">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
+      '<div class="cell c3" data-l="Конечная конц."><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="Ручной ввод">' + PENCIL + '</span><span class="src-tag fx" title="Рассчитано из исходного раствора и объёма" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c4" data-l="Количество"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="Ручной ввод">' + PENCIL + '</span><span class="src-tag fx" title="Автоматически из концентраций" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="Удалить этот компонент">×</button>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value;

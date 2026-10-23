@@ -96,12 +96,12 @@ import Layout from '../../../layouts/Layout.astro';
 
 <main class="container">
   <h1 class="page-title">Calculadora de preparación de disoluciones</h1>
-  <p class="page-desc">Preparación de disoluciones / stocks: introduce «stock → concentración final» y obtienes el volumen de cada componente (V = C_final × V_total ÷ C_stock). Admite × concentrados, % v/v, % p/v y pesada de polvos; deja vacía la concentración final y escribe la cantidad directamente para el modo manual. El disolvente completa solo; todo se guarda en este navegador.</p>
+  <p class="page-desc">Preparación de disoluciones / stocks: introduce «stock → concentración final» y obtienes el volumen de cada componente (<span class="ktx">V = C_&#123;\text&#123;final&#125;&#125; \times V_&#123;\text&#123;total&#125;&#125; \div C_&#123;\text&#123;stock&#125;&#125;</span>). Admite × concentrados, % v/v, % p/v y pesada de polvos; deja vacía la concentración final y escribe la cantidad directamente para el modo manual. El disolvente completa solo; todo se guarda en este navegador.</p>
 
   <div class="mix-controls">
-    <label>Volumen total</label>
-      <span class="mix-total"><span class="ibox"><input type="number" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="Entrada manual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
-      <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span>
+    <span class="tv-wrap"><label>Volumen total</label>
+      <span class="mix-total"><span class="ibox"><input type="number" inputmode="decimal" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="Entrada manual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
+      <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span></span>
     </label>
     <button class="btn" id="addRow">Añadir componente</button>
     <button class="btn btn-ghost" id="copyTsv">Copiar tabla (TSV)</button>
@@ -260,9 +260,9 @@ function render() {
     d.className = 'mix-row';
     d.innerHTML =
       '<div class="cell name" data-l="Componente"><div class="ig namebox"><input type="text" data-k="name" placeholder="Nombre del componente" value="' + (r.name || '').replace(/"/g, '&quot;') + '"><button type="button" class="mw-ic" title="Reconocida como fórmula: haz clic para rellenar la masa molar y cambiar a pesada de sólido en g/mol" hidden>' + BENZENE + '</button></div></div>' +
-      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="Stock / Masa molar"><div class="ig"><span class="ibox"><input type="number" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="Entrada manual">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
-      '<div class="cell c3" data-l="Conc. final"><div class="ig"><span class="ibox"><input type="number" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="Entrada manual">' + PENCIL + '</span><span class="src-tag fx" title="Calculado a partir del stock y la cantidad" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
-      '<div class="cell c4" data-l="Cantidad"><div class="ig"><span class="ibox"><input type="number" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="Entrada manual">' + PENCIL + '</span><span class="src-tag fx" title="Calculado a partir de las concentraciones" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
+      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="Stock / Masa molar"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="Entrada manual">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
+      '<div class="cell c3" data-l="Conc. final"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="Entrada manual">' + PENCIL + '</span><span class="src-tag fx" title="Calculado a partir del stock y la cantidad" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c4" data-l="Cantidad"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="Entrada manual">' + PENCIL + '</span><span class="src-tag fx" title="Calculado a partir de las concentraciones" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="Quitar este componente">×</button>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value;

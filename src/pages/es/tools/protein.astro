@@ -40,14 +40,14 @@ canvas.plot { width: 100%; display: block; }
 
 <main class="container">
   <h1 class="page-title">Análisis de secuencia de proteínas</h1>
-  <p class="page-desc">Pega una secuencia de proteína (código de una letra, cabecera FASTA admitida) y obtén el peso molecular, el pI teórico, el coeficiente de extinción ε280, la curva carga–pH y la composición de aminoácidos.</p>
+  <p class="page-desc">Pega una secuencia de proteína (código de una letra, cabecera FASTA admitida) y obtén el peso molecular, el pI teórico, el coeficiente de extinción <span class="ktx">\varepsilon_&#123;280&#125;</span>, la curva carga–pH y la composición de aminoácidos.</p>
 
   <div class="panel">
     <div class="field-head">
       <label for="protIn">Secuencia (20 aminoácidos estándar, código de una letra)</label>
       <button type="button" class="demo-link" id="exBtn" title="Rellena la secuencia de ejemplo de ubiquitina humana (76 aa)">Cargar secuencia de ejemplo</button>
     </div>
-    <textarea id="protIn" rows="6" placeholder="Pega la secuencia de aminoácidos o FASTA (la línea de cabecera &gt; se elimina automáticamente)&#10;ej.: MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <textarea autocapitalize="none" autocorrect="off" spellcheck="false" id="protIn" rows="6" placeholder="Pega la secuencia de aminoácidos o FASTA (la línea de cabecera &gt; se elimina automáticamente)&#10;ej.: MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
       <button class="btn" id="runBtn">Analizar</button>

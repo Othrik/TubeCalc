@@ -96,13 +96,12 @@ import Layout from '../../../layouts/Layout.astro';
 
 <main class="container">
   <h1 class="page-title">溶液配制计算器</h1>
-  <p class="page-desc">反应体系 / 母液配制：填"储液 → 终浓度"自动算加样量（V = C终 × V总 ÷ C储），支持 × 倍液、% v/v、% w/v 与粉末称量；浓度留空直接填用量即手动模式。溶剂自动补齐，数据自动保存在本浏览器。</p>
+  <p class="page-desc">反应体系 / 母液配制：填"储液 → 终浓度"自动算加样量（<span class="ktx">V = C_&#123;\text&#123;终&#125;&#125; \times V_&#123;\text&#123;总&#125;&#125; \div C_&#123;\text&#123;储&#125;&#125;</span>），支持 × 倍液、% v/v、% w/v 与粉末称量；浓度留空直接填用量即手动模式。溶剂自动补齐，数据自动保存在本浏览器。</p>
 
   <div class="mix-controls">
-    <label>总体积
-      <span class="mix-total"><span class="ibox"><input type="number" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
-      <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span>
-    </label>
+    <span class="tv-wrap"><label>总体积</label>
+      <span class="mix-total"><span class="ibox"><input type="number" inputmode="decimal" id="total" value="200" min="0" step="any" style="width:110px"><span class="src-tag pencil" title="手动输入"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span></span>
+      <select id="totalUnit" style="width:74px"><option value="1">μL</option><option value="1000">mL</option></select></span></span>
     <button class="btn" id="addRow">添加组分</button>
     <button class="btn btn-ghost" id="copyTsv">复制表格 (TSV)</button>
     <button type="button" class="demo-link" id="loadDemo" title="填入 100 mL 缓冲液示例（含纯液体与定加组分演示；定加行反推终浓度），会覆盖当前配方">载入示例配方</button>
@@ -260,9 +259,9 @@ function render() {
     d.className = 'mix-row';
     d.innerHTML =
       '<div class="cell name" data-l="组分"><div class="ig namebox"><input type="text" data-k="name" placeholder="组分名" value="' + (r.name || '').replace(/"/g, '&quot;') + '"><button type="button" class="mw-ic" title="识别为化学式：点击填充分子量并切换为固体 g/mol 称量" hidden>' + BENZENE + '</button></div></div>' +
-      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="储液 / 分子量"><div class="ig"><span class="ibox"><input type="number" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
-      '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由储液与用量折算" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
-      '<div class="cell c4" data-l="用量"><div class="ig"><span class="ibox"><input type="number" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由浓度自动计算" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
+      '<div class="cell c2' + (r.su === 'pure' ? ' pure' : '') + '" data-l="储液 / 分子量"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="sv" min="0" step="any" value="' + r.sv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span></span>' + dd(SU, r.su, 'su') + '</div></div>' +
+      '<div class="cell c3" data-l="终浓度"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="fv" min="0" step="any" value="' + r.fv + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由储液与用量折算" hidden>ƒx</span></span>' + sel(fuList, r.fu, 'fu') + '</div></div>' +
+      '<div class="cell c4" data-l="用量"><div class="ig"><span class="ibox"><input type="number" inputmode="decimal" data-k="amt" min="0" step="any" value="' + (r.amt || '') + '"><span class="src-tag pencil" title="手动输入">' + PENCIL + '</span><span class="src-tag fx" title="由浓度自动计算" hidden>ƒx</span></span>' + sel(AU, r.au || 'uL', 'au') + '</div></div>' +
       '<button class="del" data-del title="删除该组分">×</button>';
     d.querySelectorAll('[data-k]').forEach(el => el.addEventListener('input', () => {
       r[el.dataset.k] = el.value;
