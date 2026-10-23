@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+*.log
+/.astro/
+build_*.log
+install*.log
+tmp/

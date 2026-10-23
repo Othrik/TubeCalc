@@ -1,0 +1,208 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout active="dil" lang="es" title="Dilución simple · TubeCalc"
+  note="Principio: C₁V₁=C₂V₂, con conversión automática entre unidades de concentración y volumen. Referencia: Sambrook J, Russell DW. Molecular Cloning: A Laboratory Manual. 4.ª ed. CSHL Press, 2006."
+>
+  <Fragment slot="head">
+    <style is:inline>
+.dil-wrap { max-width:760px; }
+.dil-card { margin-top:14px; padding:20px 22px; border:1px solid var(--border); border-radius:14px; background:var(--card, rgba(255,255,255,.55)); }
+.dil-title { font-weight:600; font-size:16px; }
+.dil-sub { font-weight:400; font-size:12.5px; color:var(--muted); margin-left:6px; }
+.dil-grid { display:grid; grid-template-columns:1fr 18px 1fr 18px 1fr 18px 1fr; gap:12px 4px; margin-top:16px; align-items:start; }   /* 各列顶对齐：框行恒在同一水平线 */
+.dil-wrap .dil-grid label { margin:0; font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0; white-space:nowrap; }   /* 覆盖全局 label 的 12px 上边距（首子豁免导致 C₁ 与其余列错位 12px） */
+.dil-op { align-self:flex-end; height:42px; line-height:42px; color:var(--muted); font-size:15px; text-align:center; }   /* 与 42px 框行严格同高居中 */
+.dig { display:flex; align-items:center; gap:6px; min-width:0; }
+/* 数字来源图标与输入框（与溶液配制页同一套框样式） */
+.ibox { position:relative; display:inline-flex; }
+.dig .ibox { flex:1; min-width:0; }
+.ibox input { padding-left:30px; padding-right:8px; text-align:right; }
+.src-tag { position:absolute; left:9px; top:50%; transform:translateY(-50%); pointer-events:none; display:inline-flex; align-items:center; }
+.src-tag[hidden] { display:none; }
+.src-tag svg { width:14px; height:14px; }
+.src-tag.pencil { color:var(--muted); }
+.src-tag.fx { color:var(--accent); font:italic 700 13px/1 Georgia,'Times New Roman',serif; letter-spacing:.5px; }
+.dig .ibox { flex:1; min-width:0; }
+.dil-grid input { width:100%; height:42px; box-sizing:border-box; padding:7px 8px 7px 30px; border:1px solid var(--border); border-radius:10px; background:var(--bg2, #fff); color:var(--text); font:inherit; font-size:14px; text-align:right; }
+.dil-grid .dd { flex:0 1 auto; }
+.dil-grid .dd-btn { height:42px; }
+.dil-grid input:focus { outline:2px solid rgba(10,132,255,.35); border-color:var(--accent, #0a84ff); }
+/* 列语义色：C₁=储液紫，V₁=取用琥珀（同用量列），C₂=目标青，V₂=蓝（同溶液配制页总体积，代表"体系规模"） */
+.f-c1 .ibox input, .f-c1 .dd-btn { background:rgba(94,92,230,.07); border-color:rgba(94,92,230,.30); }
+.f-v1 .ibox input, .f-v1 .dd-btn { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
+.f-c2 .ibox input, .f-c2 .dd-btn { background:rgba(34,165,180,.08); border-color:rgba(34,165,180,.32); }
+.f-v2 .ibox input, .f-v2 .dd-btn { background:rgba(0,113,227,.07); border-color:rgba(0,113,227,.30); }
+.dil-out { margin-top:14px; font-size:14.5px; color:var(--text); line-height:1.7; }
+.dil-out b { color:var(--accent, #0a84ff); }
+.dil-out .warn { color:var(--danger); }
+.pagedesc a { color:var(--accent, #0a84ff); font-weight:600; }
+@media (max-width:640px){ .dil-grid { grid-template-columns:1fr 1fr; gap:10px; } .dil-op { display:none; } }
+    </style>
+  </Fragment>
+
+<main class="container dil-wrap">
+  <h1 class="page-title">Calculadora de dilución simple</h1>
+  <p class="page-desc pagedesc"><span class="ktx">C_1V_1 = C_2V_2</span>: rellena tres campos cualesquiera y el restante se resuelve automáticamente. C₁ y C₂ eligen cada una su unidad de concentración (molar, másica, % p/v, % v/v, actividad enzimática U — conversión automática en la misma familia), V₁ y V₂ su unidad de volumen; todo se guarda en este navegador. ¿Preparas un sistema multicomponente?<a href="/es/tools/mix/">Abrir la calculadora de preparación de disoluciones →</a></p>
+
+  <div class="dil-card">
+    <div class="dil-title">Dilución simple <span class="dil-sub"><span class="ktx">C_1V_1 = C_2V_2</span> · unidades libres, conversión automática en la misma familia</span></div>
+    <div class="dil-grid">
+      <label class="f-c1">Conc. stock C₁<span class="dig"><span class="ibox"><input type="number" inputmode="decimal" id="dilC1" min="0" step="any"><span class="src-tag pencil" title="Entrada manual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Resuelto automáticamente" hidden>ƒx</span></span><select id="dilCU"><optgroup label="Molar"><option value="1">M</option><option value="0.001" selected>mM</option><option value="0.000001">μM</option><option value="1e-9">nM</option></optgroup><optgroup label="Conc. másica"><option value="gl">g/L</option><option value="mgml">mg/mL</option><option value="mgl">mg/L</option><option value="ugml">μg/mL</option><option value="ngml">ng/mL</option><option value="pwv">% w/v</option></optgroup><optgroup label="Fracción de volumen"><option value="pvv">% v/v</option></optgroup><optgroup label="Actividad"><option value="uul">U/μL</option><option value="uml">U/mL</option></optgroup></select></span></label>
+      <span class="dil-op" aria-hidden="true">×</span>
+      <label class="f-v1">Volumen V₁<span class="dig"><span class="ibox"><input type="number" inputmode="decimal" id="dilV1" min="0" step="any"><span class="src-tag pencil" title="Entrada manual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Resuelto automáticamente" hidden>ƒx</span></span><select id="dilVU"><option value="uL" selected>μL</option><option value="ml">mL</option><option value="l">L</option></select></span></label>
+      <span class="dil-op" aria-hidden="true">=</span>
+      <label class="f-c2">Conc. final C₂<span class="dig"><span class="ibox"><input type="number" inputmode="decimal" id="dilC2" min="0" step="any"><span class="src-tag pencil" title="Entrada manual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Resuelto automáticamente" hidden>ƒx</span></span><select id="dilC2U"><optgroup label="Molar"><option value="1">M</option><option value="0.001" selected>mM</option><option value="0.000001">μM</option><option value="1e-9">nM</option></optgroup><optgroup label="Conc. másica"><option value="gl">g/L</option><option value="mgml">mg/mL</option><option value="mgl">mg/L</option><option value="ugml">μg/mL</option><option value="ngml">ng/mL</option><option value="pwv">% w/v</option></optgroup><optgroup label="Fracción de volumen"><option value="pvv">% v/v</option></optgroup><optgroup label="Actividad"><option value="uul">U/μL</option><option value="uml">U/mL</option></optgroup></select></span></label>
+      <span class="dil-op" aria-hidden="true">×</span>
+      <label class="f-v2">Volumen final V₂<span class="dig"><span class="ibox"><input type="number" inputmode="decimal" id="dilV2" min="0" step="any"><span class="src-tag pencil" title="Entrada manual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span><span class="src-tag fx" title="Resuelto automáticamente" hidden>ƒx</span></span><select id="dilV2U"><option value="uL" selected>μL</option><option value="ml">mL</option><option value="l">L</option></select></span></label>
+    </div>
+    <div class="hint" style="margin-top:12px">Ejemplos: <a href="#" class="eg-d" data-v="1|1|0.001|50|ml|10">1 M → 50 mM · 10 mL</a> · <a href="#" class="eg-d" data-v="0.001|100|0.001|25|ml|50">100 mM → 25 mM · 50 mL</a> · <a href="#" class="eg-d" data-v="0.001|5|0.000001|200|ml|2">5 mM → 200 μM · 2 mL</a></div>
+    <div class="dil-out" id="dilOut">Rellena tres campos cualesquiera; el restante se rellena y bloquea solo (ƒx, unidad cambiable). Borra cualquier campo para empezar de nuevo.</div>
+  </div>
+</main>
+
+<script is:inline>
+(function () {
+  const $ = (t) => document.querySelector(t);
+  const KEY = 'tubecalc_dil_v2';
+  const CFAC = { '1':1, '0.001':1e-3, '0.000001':1e-6, '1e-9':1e-9, 'gl':1, 'mgml':1, 'mgl':1e-3, 'ugml':1e-6, 'ngml':1e-6, 'pwv':10, 'pvv':0.01, 'uul':1000, 'uml':1 };   // 各族基准因子（M系→mol/L；质量→g/L；U→U/mL）
+  const CFAM = { '1':'M', '0.001':'M', '0.000001':'M', '1e-9':'M', 'gl':'GL', 'mgml':'GL', 'mgl':'GL', 'ugml':'GL', 'ngml':'GL', 'pwv':'GL', 'pvv':'RV', 'uul':'U', 'uml':'U' };
+  const VFAC = { uL:1e-6, ml:1e-3, l:1 };
+  const MSG_V = 'La dilución exige V₂ &gt; V₁: el volumen final ({v2}) debe ser mayor que el volumen de stock tomado ({v1}). Con V₂ ≤ V₁ se trataría de una concentración, que no puede lograrse añadiendo diluyente.';   // V₂≤V₁ 校验文案   // 升每单位
+  const MSG_C = 'La dilución exige C₂ &lt; C₁: la concentración final ({c2}) debe ser menor que la del stock ({c1}). Una concentración final igual o mayor no es una dilución.';   // C₂≥C₁ 校验文案
+  const ids = ['dilC1', 'dilV1', 'dilC2', 'dilV2', 'dilCU', 'dilVU', 'dilC2U', 'dilV2U'];
+  const FIDS = ['dilC1', 'dilV1', 'dilC2', 'dilV2'];
+  const num = (id) => { const v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : null; };
+  function fmt(x) {
+    if (!isFinite(x) || x <= 0) return '—';
+    if (x >= 1e6 || x < 1e-4) return x.toExponential(2).replace('e+', '×10^');
+    return String(parseFloat(x.toPrecision(4)));
+  }
+  const fmtN = (x) => String(parseFloat(x.toPrecision(4)));   // 写入输入框的安全数字（type=number 可解析）
+  let dilAuto = null;   // 当前自动求解并锁定的字段
+  function setIcons(inp, auto) {
+    const p = inp.parentNode.querySelector('.src-tag.pencil'), f = inp.parentNode.querySelector('.src-tag.fx');
+    if (p) p.hidden = auto;
+    if (f) f.hidden = !auto;
+  }
+  function lockField(id, txt) {
+    const inp = $('#' + id);
+    if (inp.value !== txt) inp.value = txt;
+    inp.readOnly = true;
+    setIcons(inp, true);
+  }
+  function unlockAll(clearAuto) {
+    FIDS.forEach((id) => {
+      const inp = $('#' + id);
+      inp.readOnly = false;
+      setIcons(inp, false);
+      if (clearAuto && id === dilAuto && inp.value !== '') inp.value = '';   // 清掉上一次的自动值，回到可手填
+    });
+    if (clearAuto) dilAuto = null;
+  }
+  const cuLabel = (id) => $(id).selectedOptions[0].textContent;
+  // C₂ 单位取决于 C₁：族不同自动归位（C₂ 有值则清空，旧量纲下无意义）
+  function reconcile() {
+    const c1u = $('#dilCU').value, c2u = $('#dilC2U').value;
+    if (CFAM[c1u] !== CFAM[c2u]) {
+      if (dilAuto === 'dilC2') dilAuto = null;
+      $('#dilC2U').value = c1u;
+      $('#dilC2U').dispatchEvent(new Event('dd:sync'));
+      const c2inp = $('#dilC2');
+      if (c2inp.value !== '') c2inp.value = '';
+      return true;
+    }
+    return false;
+  }
+  function filterConc() {   // C₂ 菜单按 C₁ 族过滤 + 悬停原因
+    const c1u = $('#dilCU').value;
+    const tip = 'Dimensión distinta de C₁ (' + cuLabel('#dilCU') + '): la dilución simple exige la misma familia';
+    Array.prototype.forEach.call($('#dilC2U').options, (o) => {
+      o.disabled = CFAM[o.value] !== CFAM[c1u];
+      o.title = o.disabled ? tip : '';
+    });
+    $('#dilC2U').dispatchEvent(new Event('dd:sync'));
+  }
+  function calc() {
+    const fixed = reconcile();
+    if (fixed) filterConc();
+    const c1 = num('#dilC1'), v1 = num('#dilV1'), c2 = num('#dilC2'), v2 = num('#dilV2');
+    const c1u = $('#dilCU').value, c2u = $('#dilC2U').value, v1u = $('#dilVU').value, v2u = $('#dilV2U').value;
+    const out = $('#dilOut');
+    // 自动求解字段在计数时视为待求：其值随单位切换重算，不因"四项有值"误判为手动核对
+    const vals = { dilC1: c1, dilV1: v1, dilC2: c2, dilV2: v2 };
+    if (dilAuto) vals[dilAuto] = null;
+    const blanks = Object.values(vals).filter((x) => x === null).length;
+    const clashMsg = '⚠ C₁ y C₂ usan dimensiones distintas (' + cuLabel('#dilCU') + ' frente a ' + cuLabel('#dilC2U') + ') y no se pueden convertir: elige la misma familia para ambas (p. ej. ambas molares, o ambas másicas).';
+    if (blanks >= 2) { unlockAll(true); filterConc(); out.innerHTML = 'Rellena tres campos cualesquiera; el restante se rellena y bloquea solo (ƒx, unidad cambiable). Borra cualquier campo para empezar de nuevo.'; return; }
+    if (blanks === 0) {
+      unlockAll(true);
+      if (CFAM[c1u] !== CFAM[c2u]) { out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
+      if (v2 * VFAC[v2u] <= v1 * VFAC[v1u]) { out.innerHTML = '<span class="warn">' + MSG_V.replace('{v1}', fmt(v1) + ' ' + cuLabel('#dilVU')).replace('{v2}', fmt(v2) + ' ' + cuLabel('#dilV2U')) + '</span>'; filterConc(); return; }
+      if (CFAM[c1u] === CFAM[c2u] && c2 * CFAC[c2u] >= c1 * CFAC[c1u]) { out.innerHTML = '<span class="warn">' + MSG_C.replace('{c1}', fmt(c1) + ' ' + cuLabel('#dilCU')).replace('{c2}', fmt(c2) + ' ' + cuLabel('#dilC2U')) + '</span>'; filterConc(); return; }
+      const L = c1 * CFAC[c1u] * v1 * VFAC[v1u], R = c2 * CFAC[c2u] * v2 * VFAC[v2u];
+      const diff = Math.abs(L - R) / R;
+      out.innerHTML = diff <= 0.005 ? '✓ Los cuatro valores cumplen C₁V₁ = C₂V₂.' : '⚠ Los valores no cumplen la fórmula: según C₁V₁ = C₂V₂, V₁ debería ser <b>' + fmt(R / (c1 * CFAC[c1u]) / VFAC[v1u]) + ' ' + cuLabel('#dilVU') + '</b> (actualmente ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ').';
+      filterConc();
+      return;
+    }
+    const famClash = vals.dilC1 !== null && vals.dilC2 !== null && CFAM[c1u] !== CFAM[c2u];
+    let solvedId, solvedVal;
+    if (vals.dilV1 === null) {
+      if (famClash) { unlockAll(true); out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
+      solvedVal = vals.dilC2 * CFAC[c2u] * vals.dilV2 * VFAC[v2u] / (vals.dilC1 * CFAC[c1u]) / VFAC[v1u]; solvedId = 'dilV1';
+      out.innerHTML = 'Toma <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilVU') + '</b> de stock y añade diluyente hasta un volumen final de <b>' + fmt(v2) + ' ' + cuLabel('#dilV2U') + '</b>.';
+    } else if (vals.dilC1 === null) {
+      if (CFAM[c1u] !== CFAM[c2u]) { $('#dilCU').value = c2u; $('#dilCU').dispatchEvent(new Event('dd:sync')); }   // 归位到 C₂ 同族单位
+      solvedVal = vals.dilC2 * CFAC[c2u] * vals.dilV2 * VFAC[v2u] / (vals.dilV1 * VFAC[v1u]) / CFAC[$('#dilCU').value]; solvedId = 'dilC1';
+      out.innerHTML = 'Concentración de stock necesaria C₁ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilCU') + '</b> (tomar ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ', ajustar a ' + fmt(v2) + ' ' + cuLabel('#dilV2U') + ').';
+    } else if (vals.dilV2 === null) {
+      if (famClash) { unlockAll(true); out.innerHTML = '<span class="warn">' + clashMsg + '</span>'; return; }
+      solvedVal = vals.dilC1 * CFAC[c1u] * vals.dilV1 * VFAC[v1u] / (vals.dilC2 * CFAC[c2u]) / VFAC[v2u]; solvedId = 'dilV2';
+      out.innerHTML = 'Volumen final alcanzable V₂ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilV2U') + '</b> (de los cuales ' + fmt(v1) + ' ' + cuLabel('#dilVU') + ' es stock, el resto diluente).';
+    } else {
+      if (CFAM[c1u] !== CFAM[c2u]) { $('#dilC2U').value = c1u; $('#dilC2U').dispatchEvent(new Event('dd:sync')); }   // 归位到 C₁ 同族单位
+      solvedVal = vals.dilC1 * CFAC[c1u] * vals.dilV1 * VFAC[v1u] / (vals.dilV2 * VFAC[v2u]) / CFAC[$('#dilC2U').value]; solvedId = 'dilC2';
+      out.innerHTML = 'Concentración final C₂ = <b>' + fmt(solvedVal) + ' ' + cuLabel('#dilC2U') + '</b> (' + fmt(v1) + ' ' + cuLabel('#dilVU') + ' de stock llevado a ' + fmt(v2) + ' ' + cuLabel('#dilV2U') + ').';
+    }
+    const sv1 = (solvedId === 'dilV1') ? solvedVal : v1, sv2 = (solvedId === 'dilV2') ? solvedVal : v2;
+    const sc1 = (solvedId === 'dilC1') ? solvedVal : c1, sc2 = (solvedId === 'dilC2') ? solvedVal : c2;
+    if (CFAM[c1u] === CFAM[c2u] && sc1 != null && sc2 != null && sc2 * CFAC[c2u] >= sc1 * CFAC[c1u]) {
+      unlockAll(true);
+      out.innerHTML = '<span class="warn">' + MSG_C.replace('{c1}', fmt(sc1) + ' ' + cuLabel('#dilCU')).replace('{c2}', fmt(sc2) + ' ' + cuLabel('#dilC2U')) + '</span>';
+      filterConc();
+      return;
+    }
+    if (sv1 != null && sv2 != null && sv2 * VFAC[v2u] <= sv1 * VFAC[v1u]) {
+      unlockAll(true);
+      out.innerHTML = '<span class="warn">' + MSG_V.replace('{v1}', fmt(sv1) + ' ' + cuLabel('#dilVU')).replace('{v2}', fmt(sv2) + ' ' + cuLabel('#dilV2U')) + '</span>';
+      filterConc();
+      return;
+    }
+    if (dilAuto && dilAuto !== solvedId) { const old = $('#' + dilAuto); if (old.value !== '') old.value = ''; }   // 求解对象切换：清旧自动值
+    FIDS.forEach((id) => { if (id !== solvedId) { const inp = $('#' + id); inp.readOnly = false; setIcons(inp, false); } });
+    lockField(solvedId, fmtN(solvedVal));
+    dilAuto = solvedId;
+    filterConc();
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(ids.map((i) => [i, $('#' + i).value])))); } catch (e) {}
+  }
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || '{}');
+    ids.forEach((i) => { if (d[i] !== undefined) $('#' + i).value = d[i]; });
+  } catch (e) {}
+  ['input', 'change'].forEach((ev) => ids.forEach((i) => $('#' + i).addEventListener(ev, () => { calc(); save(); })));
+  document.querySelectorAll('.eg-d').forEach((a) => a.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    const v = a.getAttribute('data-v').split('|');   // c1u|c1|c2u|c2|v2u|v2
+    ['dilC1', 'dilV1', 'dilC2', 'dilV2'].forEach((i) => { $('#' + i).value = ''; });
+    $('#dilCU').value = v[0]; $('#dilC1').value = v[1];
+    $('#dilC2U').value = v[2]; $('#dilC2').value = v[3];
+    $('#dilVU').value = 'uL'; $('#dilV2U').value = v[4]; $('#dilV2').value = v[5];
+    calc(); save();
+  }));   // select 换单位引擎只派发 change，必须双绑
+  calc();
+})();
+</script>

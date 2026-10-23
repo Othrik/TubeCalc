@@ -1,0 +1,246 @@
+---
+// 全站统一骨架：<head> + 导航 + 页脚。
+// 每页只声明 title / desc / active（短名：index/mix/protein/…）/ note（页脚方法注释）/ lic（页脚图标署名，可选，首页用），其余内容走 slot。全站链接用绝对路径。
+import '../styles/style.css';
+import pkg from '../../package.json';
+const { title, desc = '', active = 'index', note = '', lic = '', lang = 'en' } = Astro.props;
+
+// 语言清单：英文=默认（根路径），其余挂前缀
+const LANGS = [
+  { code: 'en', label: 'English', pre: '', html: 'en' },
+  { code: 'zh', label: '中文', pre: '/zh', html: 'zh-CN' },
+  { code: 'es', label: 'Español', pre: '/es', html: 'es' },
+  { code: 'pt', label: 'Português', pre: '/pt', html: 'pt' },
+  { code: 'ru', label: 'Русский', pre: '/ru', html: 'ru' },
+  { code: 'fr', label: 'Français', pre: '/fr', html: 'fr' },
+];
+const cur = LANGS.find((l) => l.code === lang) || LANGS[0];
+const path = Astro.url.pathname;
+const base = cur.pre && path.startsWith(cur.pre + '/') ? path.slice(cur.pre.length) : path;
+const hrefFor = (l) => l.pre + (base.startsWith('/') ? base : '/' + base);
+
+// 导航清单：标签按语言、路径按前缀
+const NL = {  en: ['Home', 'Mixing', 'Dilution', 'Protein', 'Mol Tools'],  zh: ['首页', '配制计算', '简单稀释', '蛋白质工具', '分子工具'],  es: ['Inicio', 'Preparación', 'Dilución', 'Proteínas', 'Herr. mol.'],  pt: ['Início', 'Preparação', 'Diluição', 'Proteínas', 'Ferr. mol.'],  ru: ['Главная', 'Приготовление', 'Разбавление', 'Белки', 'Мол. инстр.'],  fr: ['Accueil', 'Préparation', 'Dilution', 'Protéines', 'Outils mol.'],
+}[lang] || ['Home', 'Mixing', 'Dilution', 'Protein', 'Mol Tools'];
+const P = cur.pre;
+const NAV = [
+  [P ? P + '/' : '/', NL[0], 'index'],
+  [P + '/tools/mix/', NL[1], 'mix'],
+  [P + '/tools/dil/', NL[2], 'dil'],
+  [P + '/tools/protein/', NL[3], 'protein'],
+  [P + '/tools/mol/', NL[4], 'mol'],
+];
+---
+<!doctype html>
+<html lang={cur.html}>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{title}</title>
+{desc ? <meta name="description" content={desc} /> : null}
+<meta name="theme-color" content="#f5f5f7">
+<script is:inline>try{var _u=navigator.userAgent||'';if(/iPad|iPhone|iPod/.test(_u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1))document.documentElement.classList.add('ios')}catch(e){}</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TubeCalc">
+<link rel="manifest" href="/manifest.webmanifest?v=12">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=6">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=6">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a84ff%27/%3E%3Ctext x=%2716%27 y=%2724%27 font-size=%2719%27 text-anchor=%27middle%27%3E%F0%9F%A7%AA%3C/text%3E%3C/svg%3E">
+<slot name="head" />
+<link rel="stylesheet" href="/katex/katex.min.css">
+</head>
+<body>
+<nav class="nav"><div class="nav-inner">
+  <a class="brand" href={P ? P + '/' : '/'}><img class="brand-ic" src="/icons/icon-192.png?v=6" alt={lang === 'zh' ? 'TubeCalc 图标' : 'TubeCalc icon'} width="27" height="27">TubeCalc</a>
+  <div class="nav-links">
+    {NAV.map(([href, label, key]) => (
+      <a href={href} class={key === active ? 'active' : null}>{label}</a>
+    ))}
+  </div>
+  <div class="lang-wrap">
+    <svg class="lang-ic" viewBox="0 0 1024 1024" aria-hidden="true"><path d="M516.864 85.333333l82.261333 19.114667c-10.069333 42.837333 9.984 82.730667 68.053334 124.330667 135.509333 97.024 167.509333 151.722667 128.981333 272.64-22.698667 71.253333 4.821333 97.28 99.84 97.28V682.666667c-145.92 0-223.018667-72.96-180.394667-206.592 24.874667-77.994667 11.434667-100.906667-97.834666-179.2-83.456-59.733333-119.722667-131.84-100.906667-211.541334z" fill="currentColor"></path><path d="M134.656 440.32a384 384 0 0 0 495.445333 437.162667c-23.594667-54.528-49.322667-66.730667-97.28-65.365334-5.845333 0.128-10.837333 0.426667-21.76 1.066667-82.688 4.992-123.818667-5.333333-162.688-64.426667-43.477333-65.962667-29.866667-113.664 22.613334-174.165333l6.229333-7.168c39.082667-44.8 42.794667-58.794667 14.421333-99.584-31.744-45.653333-49.365333-48.085333-115.669333-29.098667-62.293333 17.792-102.229333 21.717333-141.312 1.578667z m26.368-84.394667c21.418667 16.341333 40.448 15.36 91.477333 0.768 97.408-27.861333 151.637333-20.309333 209.194667 62.421334 55.808 80.213333 41.642667 133.546667-20.181333 204.416l-6.058667 6.954666c-30.293333 34.986667-33.194667 45.013333-15.786667 71.381334 16.981333 25.856 31.317333 29.44 86.229334 26.154666 11.861333-0.725333 17.450667-1.024 24.490666-1.237333 81.664-2.304 137.813333 28.16 177.237334 115.712A384 384 0 1 0 161.066667 355.925333zM512 981.333333C252.8 981.333333 42.666667 771.2 42.666667 512S252.8 42.666667 512 42.666667s469.333333 210.133333 469.333333 469.333333-210.133333 469.333333-469.333333 469.333333z" fill="currentColor"></path></svg>
+    <select class="lang-sel" aria-label="Language" onchange="location.href=this.value">
+      {LANGS.map((l) => (
+        <option value={hrefFor(l)} selected={l.code === lang}>{l.label}</option>
+      ))}
+    </select>
+  </div>
+</div></nav>
+<slot />
+<footer>
+  {note ? <span class="foot-note">{note}</span> : null}
+{lic ? <><br /><span class="foot-lic" set:html={lic} /></> : null}
+<br>© 2026 <a href="/">TubeCalc</a> · <a href="https://github.com/Othrik/TubeCalc" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" style="vertical-align:-2px;margin-right:4px" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a> · <span class="foot-ver">v{pkg.version}</span>
+</footer>
+<script is:inline>
+(function () {
+  function upgrade(sel) {
+    if (sel.closest('.dd') || sel.dataset.ddDone) return;
+    if (sel.classList.contains('lang-sel')) return upgradeLang(sel);
+    sel.dataset.ddDone = '1';
+    sel.style.display = 'none';
+    var dd = document.createElement('span'); dd.className = 'dd';
+    sel.parentNode.insertBefore(dd, sel); dd.appendChild(sel);
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'dd-btn'; btn.setAttribute('aria-haspopup', 'listbox');
+    var panel = document.createElement('div'); panel.className = 'dd-panel'; panel.setAttribute('role', 'listbox');
+    dd.appendChild(btn); dd.appendChild(panel);
+    function label() { var o = sel.selectedOptions[0]; btn.innerHTML = (o ? o.textContent : '—') + ' <svg class=\"dd-ar\" width=\"13\" height=\"11\" viewBox=\"0 0 13 11\" aria-hidden=\"true\"><path d=\"M2.6 2.2 L6.5 8.4 L10.4 2.2 Z\" fill=\"currentColor\" stroke=\"currentColor\" stroke-width=\"2.6\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/></svg>'; }
+    function build() {
+      panel.innerHTML = ''; var sec = null;
+      Array.prototype.forEach.call(sel.options, function (o) {
+        if (o.parentNode.tagName === 'OPTGROUP' && o.parentNode !== sec) {
+          sec = o.parentNode; var h = document.createElement('div'); h.className = 'dd-sec'; h.textContent = sec.label; panel.appendChild(h);
+        }
+        var it = document.createElement('button'); it.type = 'button'; it.className = 'dd-it'; it.setAttribute('role', 'option');
+        it.textContent = o.textContent; it.dataset.v = o.value;
+        if (o.disabled) { it.classList.add('dis'); if (o.title) it.title = o.title; }   // 禁用项置灰+悬停原因（不用 disabled 属性：浏览器会吞掉 disabled 元素的 title 提示）
+        if (o.selected) it.classList.add('cur');
+        panel.appendChild(it);
+      });
+      label();
+    }
+    sel.addEventListener('dd:sync', function () { build(); });   // 页面程序化改 option 的 disabled/title 后，派发此事件重建菜单
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = dd.classList.contains('open');
+      document.querySelectorAll('.dd.open').forEach(function (x) { x.classList.remove('open'); });
+      if (!open) dd.classList.add('open');
+    });
+    panel.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var it = e.target.closest('.dd-it'); if (!it || it.classList.contains('dis')) return;   // 禁用项不可选
+      sel.value = it.dataset.v;
+      panel.querySelectorAll('.dd-it').forEach(function (x) { x.classList.toggle('cur', x === it); });
+      label(); dd.classList.remove('open');
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    build();
+  }
+  // 语言切换专用自绘：弹层复用 .dd-panel/.dd-it 玻璃样式，但 portal 到 body 用 position:fixed 锚定
+  // （移动端 .nav-inner 为 overflow-x:auto 横滑容器，绝对定位弹层会被裁剪）；触发器保持无框胶囊（地球+语言名+dd-ar 三角）
+  function upgradeLang(sel) {
+    if (sel.dataset.ddDone) return;
+    sel.dataset.ddDone = '1';
+    sel.style.display = 'none';
+    var ARROW = ' <svg class="dd-ar" width="13" height="11" viewBox="0 0 13 11" aria-hidden="true"><path d="M2.6 2.2 L6.5 8.4 L10.4 2.2 Z" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+    var wrap = sel.closest('.lang-wrap');
+    var dd = document.createElement('span'); dd.className = 'dd dd-lang';
+    sel.parentNode.insertBefore(dd, sel); dd.appendChild(sel);
+    var btn = document.createElement('button'); btn.type = 'button';
+    btn.className = 'dd-btn dd-btn-lang'; btn.setAttribute('aria-haspopup', 'listbox'); btn.setAttribute('aria-expanded', 'false');
+    var g = wrap && wrap.querySelector('.lang-ic');
+    if (g) btn.appendChild(g);
+    var lbl = document.createElement('span'); lbl.className = 'dd-lbl'; btn.appendChild(lbl);
+    btn.insertAdjacentHTML('beforeend', ARROW);
+    dd.appendChild(btn);
+    var panel = document.createElement('div'); panel.className = 'dd-panel dd-panel-fx'; panel.setAttribute('role', 'listbox');
+    document.body.appendChild(panel);
+    function label() { var o = sel.selectedOptions[0]; lbl.textContent = o ? o.textContent : '—'; }
+    function build() {
+      panel.innerHTML = '';
+      Array.prototype.forEach.call(sel.options, function (o) {
+        var it = document.createElement('button'); it.type = 'button'; it.className = 'dd-it'; it.setAttribute('role', 'option');
+        it.textContent = o.textContent; it.dataset.v = o.value;
+        if (o.selected) it.classList.add('cur');
+        panel.appendChild(it);
+      });
+      label();
+    }
+    function close() { panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+    function place() {
+      var r = btn.getBoundingClientRect();
+      panel.style.top = (r.bottom + 6) + 'px';
+      panel.style.left = 'auto';
+      panel.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+    }
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = panel.classList.contains('open');
+      document.querySelectorAll('.dd.open').forEach(function (x) { x.classList.remove('open'); });
+      document.querySelectorAll('.dd-panel-fx.open').forEach(function (x) { if (x !== panel) x.classList.remove('open'); });
+      if (open) { close(); return; }
+      place(); panel.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+    });
+    panel.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var it = e.target.closest('.dd-it'); if (!it) return;
+      sel.value = it.dataset.v;
+      panel.querySelectorAll('.dd-it').forEach(function (x) { x.classList.toggle('cur', x === it); });
+      label(); close();
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    build();
+  }
+  function scan(root) { (root || document).querySelectorAll('select').forEach(upgrade); }
+  scan();
+  new MutationObserver(function (muts) {
+    muts.forEach(function (m) { m.addedNodes.forEach(function (n) {
+      if (n.nodeType !== 1) return;
+      if (n.tagName === 'SELECT') upgrade(n);
+      else if (n.querySelectorAll) n.querySelectorAll('select').forEach(upgrade);
+    }); });
+  }).observe(document.body, { childList: true, subtree: true });
+  document.addEventListener('click', function () { document.querySelectorAll('.dd.open').forEach(function (x) { x.classList.remove('open'); }); document.querySelectorAll('.dd-panel-fx.open').forEach(function (x) { x.classList.remove('open'); }); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { document.querySelectorAll('.dd.open').forEach(function (x) { x.classList.remove('open'); }); document.querySelectorAll('.dd-panel-fx.open').forEach(function (x) { x.classList.remove('open'); }); } });
+
+  // ===== 统一悬停提示浮层：接管页面所有原生 title（含禁用单位的原因说明）=====
+  var tipEl = document.createElement('div');
+  tipEl.className = 'dd-tip';
+  tipEl.setAttribute('role', 'tooltip');
+  document.body.appendChild(tipEl);
+  var tipCur = null;
+  function tipShow(el) {
+    var txt = el.getAttribute('data-tip') || el.getAttribute('title');
+    if (!txt) return;
+    if (el.hasAttribute('title')) { el.setAttribute('data-tip', el.getAttribute('title')); el.removeAttribute('title'); }   // 移除原生 title，阻止系统气泡
+    tipCur = el;
+    tipEl.textContent = txt;
+    tipEl.classList.add('show');
+    var r = el.getBoundingClientRect();
+    var x = Math.min(Math.max(10, r.left + r.width / 2 - tipEl.offsetWidth / 2), window.innerWidth - tipEl.offsetWidth - 10);
+    var y = r.top - tipEl.offsetHeight - 8;
+    if (y < 8) y = r.bottom + 8;
+    tipEl.style.left = x + 'px';
+    tipEl.style.top = y + 'px';
+  }
+  function tipHide() { tipCur = null; tipEl.classList.remove('show'); }
+  document.addEventListener('mouseover', function (e) {
+    if (!e.target || !e.target.closest) return;
+    var el = e.target.closest('[data-tip],[title]');
+    if (el === tipCur) return;
+    if (el) tipShow(el); else tipHide();
+  });
+  document.addEventListener('mouseout', function (e) {
+    if (!tipCur) return;
+    var to = e.relatedTarget;
+    if (to && to.closest && to.closest('[data-tip],[title]')) return;   // 落到别的带提示元素：交给 mouseover 接管
+    tipHide();
+  });
+  window.addEventListener('scroll', tipHide, true);
+  window.addEventListener('blur', tipHide);
+})();
+</script>
+<script is:inline>
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=45').catch(function () {}); }); }
+</script>
+
+<link rel="stylesheet" href="/katex/katex.min.css">
+<script is:inline defer src="/katex/katex.min.js"></script>
+<script is:inline defer src="/katex/mhchem.min.js"></script>
+<script is:inline>
+window.renderKtx = function (root) {
+  if (!window.katex) return;
+  (root || document).querySelectorAll('.ktx:not([data-k])').forEach(function (el) {
+    el.setAttribute('data-k', '1');
+    try { katex.render(el.textContent, el, { throwOnError: false, strict: false }); } catch (e) {}
+  });
+};
+document.addEventListener('DOMContentLoaded', function () { window.renderKtx(document); });
+</script>
+</script>
+</body>
+</html>

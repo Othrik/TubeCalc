@@ -1,0 +1,47 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout lang="es" title="TubeCalc"
+  desc="Calculadora estrella de preparación de disoluciones: introduces la concentración del stock y la final y obtén automáticamente la cantidad de cada componente, con varios disolventes y pesada de polvos; además de masa molar, análisis de proteínas y dilución."
+  note=""
+  lic="Icono de la app basado en Microsoft Fluent Emoji (licencia MIT)"
+>
+
+<main class="container">
+  <div class="hero">
+    <h1>Mezclas complejas, cálculo sencillo</h1>
+    <p>Estrella · Preparación de disoluciones: introduces stock y concentración final y salen las cantidades de cada componente — elige disolvente, pesa polvos directamente y copia el TSV a tu hoja de cálculo.</p>
+    <p>Ligera, gratuita y sin registro — creada para el cálculo diario de laboratorio.</p>
+    <div class="hero-cta">
+      <a class="btn hero-btn" href="/es/tools/mix/">Abrir la calculadora de preparación de disoluciones →</a>
+      <a class="hero-more" href="#tools">Ver todas las herramientas</a>
+    </div>
+  </div>
+
+  <a class="tool-card featured" href="/es/tools/mix/">
+    <span class="featured-tag">Destacada</span>
+    <h3>Calculadora de preparación de disoluciones</h3>
+    <p>Calcula toda la reacción de una vez: «stock → concentración final» da la cantidad de cada componente, el disolvente completa el volumen y cualquier cambio se recalcula al instante.</p>
+    <ul class="feat-list">
+      <li>Todas las unidades: M/mM/μM, × concentrados, % v/v, % p/v, pesada en g/mol</li>
+      <li>Disolventes: agua, etanol, DMSO, glicerol y más, con referencia de masa</li>
+      <li>Guardado automático en el navegador; copia TSV a Excel con un clic</li>
+    </ul>
+    <span class="open">Abrir →</span>
+  </a>
+  <h2 class="sec-title" id="tools">Todas las herramientas</h2>
+  <div class="grid">
+    <a class="tool-card" href="/es/tools/protein/">
+      <h3>Análisis de secuencia de proteínas</h3>
+      <p>Masa molecular, pI teórico, coeficiente de extinción ε280, A280, composición de aminoácidos e índice de hidropatía GRAVY.</p>
+      <span class="open">Abrir →</span>
+    </a>
+    <a class="tool-card" href="/es/tools/mol/">
+      <h3>Herramientas moleculares</h3>
+      <p>Escribe una fórmula (con paréntesis e hidratos, p. ej. CuSO4·5H2O) y obtén la masa molar y la composición elemental.</p>
+      <span class="open">Abrir →</span>
+    </a>
+  </div>
+</main>
+</Layout>

@@ -1,0 +1,771 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout lang="pt" lic={'Dados: <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubChem</a> (NCBI) · Desenho 2D e descritores: <a href="https://www.rdkit.org/" target="_blank" rel="noopener">RDKit</a> · <a href="https://www.ebi.ac.uk/chembl/" target="_blank" rel="noopener">ChEMBL</a> · <a href="https://www.nlm.nih.gov/research/umls/rxnorm/" target="_blank" rel="noopener">RxNorm</a> (NLM) · <a href="https://cactus.nci.nih.gov/chemical/structure" target="_blank" rel="noopener">NCI CIR</a> · <a href="https://coconut.naturalproducts.net/" target="_blank" rel="noopener">COCONUT</a> (CC BY 4.0) · GHS pictograms: <a href="https://unece.org/transport/dangerous-goods/ghs-rev10" target="_blank" rel="noopener">UN GHS Rev.10</a>'} active="mol" title="Ferramentas moleculares · TubeCalc"
+  note="Princípio: massa molar = Σ(peso atómico × número de átomos), com parênteses e hidratos; pesos atómicos segundo valores padrão IUPAC. Referência: Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
+>
+
+<main class="container">
+  <h1 class="page-title">Ferramentas moleculares</h1>
+  <p class="page-desc">Escreve uma fórmula química (parênteses aninhados e hidratos), uma cadeia SMILES ou o nome do composto — o tipo é detetado automaticamente; SMILES e nomes também desenham a estrutura 2D.</p>
+
+  <div class="panel">
+    <label for="q">Fórmula · SMILES · nome — deteção automática</label>
+    <input type="text" id="q" placeholder="p. ex. C6H12O6, CuSO4·5H2O, CC(=O)Oc1ccccc1C(=O)O ou «cafeína»" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+    <div class="hint">Uma só caixa para tudo: fórmulas químicas (parênteses e hidratos), estruturas SMILES ou nomes de compostos via PubChem — o tipo de entrada é detetado automaticamente.</div>
+    <button class="btn" id="calcBtn">Calcular</button>
+    <span class="hint" style="display:inline-block;margin-left:10px">Experimente:
+      <a href="#" class="eg" data-f="C6H12O6">C6H12O6</a> · <a href="#" class="eg" data-f="CuSO4·5H2O">CuSO4·5H2O</a> · <a href="#" class="eg" data-f="(NH4)2SO4">(NH4)2SO4</a> · <a href="#" class="eg" data-f="Ca(OH)2">Ca(OH)2</a> · <a href="#" class="eg-s" data-s="CC(=O)Oc1ccccc1C(=O)O">Aspirina</a> · <a href="#" class="eg-s" data-s="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Cafeína</a> · <a href="#" class="eg-s" data-s="OC[C@H]1O[C@H](O)[C@H](O)[C@H](O)[C@H]1O">Glicose</a> · <a href="#" class="eg-s" data-s="NC(CO)(CO)CO">Tris</a> · <a href="#" class="eg-s" data-s="OC(=O)CN(CCN(CC(=O)O)CC(=O)O)CC(=O)O">EDTA</a>
+    </span>
+    <div class="error" id="err"></div>
+
+</div>
+
+  <div class="panel result" id="resultPanel" style="display:none">
+    <div class="res-head"><div class="hint" id="modeBadge" style="display:none"></div><div class="dl-wrap" id="dlWrap" style="display:none"><button class="btn" id="dlBtn">Descarregar &#9662;</button><div class="dl-menu" id="dlMenu"><button class="dl-item" data-fmt="svg">SVG</button><button class="dl-item" data-fmt="png">PNG</button><button class="dl-item" data-fmt="jpeg">JPEG</button><button class="dl-item" data-fmt="webp">WebP</button></div></div></div>
+
+    <div class="eng-sw" id="engSw"><span class="eng-lb">Motor de desenho</span><button type="button" class="eng-opt" data-e="rdkit">RDKit</button><button type="button" class="eng-opt" data-e="sd">SmilesDrawer</button></div>
+<div class="struct-wrap" id="structWrap" style="display:none"><div id="structSvg"></div></div>
+    
+    <div id="mwBlock"><label style="margin-top:12px">Massa molar</label>
+    <div class="big-number"><span id="mwVal"></span><small>g/mol</small></div>
+    <div class="hint" id="fLine" style="margin-top:8px"></div>
+    <div id="compTable"></div></div>
+    <div id="resStatics" style="display:none"></div>
+    <div id="molInfo" class="mol-info" style="display:none"></div>
+  </div>
+    <div class="hint" id="sVia" style="display:none;margin-top:8px"></div>
+  </div>
+
+  <div class="panel result" id="convPanel" style="display:none">
+    <label>Conversão massa ⇌ moles (usa a massa molar acima)</label>
+    <div class="row">
+      <div>
+        <label for="massIn">Massa m (g)</label>
+        <input type="number" inputmode="decimal" id="massIn" step="any" placeholder="Deixe vazio para calcular a massa a partir dos moles">
+      </div>
+      <div>
+        <label for="molIn">Quantidade n (mol)</label>
+        <input type="number" inputmode="decimal" id="molIn" step="any" placeholder="Deixe vazio para calcular os moles a partir da massa">
+      </div>
+    </div>
+    <div class="big-number" id="convOut" style="font-size:20px"></div>
+  </div>
+
+
+  <style is:inline>
+.struct-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px;margin-top:14px;display:flex;justify-content:center}
+.struct-wrap svg{max-width:100%;height:auto}
+  </style>
+</main>
+
+
+<script is:inline>
+'use strict';
+const MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
+Ne:20.180,Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.06,Cl:35.45,Ar:39.948,
+K:39.098,Ca:40.078,Sc:44.956,Ti:47.867,V:50.942,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,
+Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.630,As:74.922,Se:78.971,Br:79.904,Kr:83.798,
+Rb:85.468,Sr:87.62,Y:88.906,Zr:91.224,Nb:92.906,Mo:95.95,Tc:98,Ru:101.07,Rh:102.91,
+Pd:106.42,Ag:107.87,Cd:112.41,In:114.82,Sn:118.71,Sb:121.76,Te:127.60,I:126.90,Xe:131.29,
+Cs:132.91,Ba:137.33,La:138.91,Ce:140.12,Pr:140.91,Nd:144.24,Pm:145,Sm:150.36,Eu:151.96,
+Gd:157.25,Tb:158.93,Dy:162.50,Ho:164.93,Er:167.26,Tm:168.93,Yb:173.05,Lu:174.97,Hf:178.49,
+Ta:180.95,W:183.84,Re:186.21,Os:190.23,Ir:192.22,Pt:195.08,Au:196.97,Hg:200.59,Tl:204.38,
+Pb:207.2,Bi:208.98,Po:209,At:210,Rn:222,Fr:223,Ra:226,Ac:227,Th:232.04,Pa:231.04,U:238.03,
+Np:237,Pu:244};
+
+// 解析一个片段（不含水合物分隔符），返回元素计数对象
+function parseSegment(seg) {
+  let i = 0, mult = 1;
+  const m = seg.match(/^\s*(\d+)/);
+  if (m) { mult = parseInt(m[1], 10); i = m[1].length; }
+  const counts = {};
+  const stack = [counts];
+  let stackTop = 0;
+  while (i < seg.length) {
+    const ch = seg[i];
+    if (ch === '(') { stack.push({}); stackTop++; i++; }
+    else if (ch === ')') {
+      if (stackTop === 0) throw 'Parênteses sem par';
+      i++;
+      let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
+      const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
+      const group = stack.pop(); stackTop--;
+      const top = stack[stackTop];
+      for (const el in group) top[el] = (top[el] || 0) + group[el] * n;
+      i = j;
+    }
+    else if (/[A-Z]/.test(ch)) {
+      let sym = ch;
+      if (i + 1 < seg.length && /[a-z]/.test(seg[i + 1])) { sym += seg[i + 1]; }
+      if (!(sym in MASS)) throw 'Símbolo de elemento não reconhecido: ' + sym;
+      i += sym.length;
+      let j = i; while (j < seg.length && /\d/.test(seg[j])) j++;
+      const n = (j > i) ? parseInt(seg.slice(i, j), 10) : 1;
+      const top = stack[stackTop];
+      top[sym] = (top[sym] || 0) + n;
+      i = j;
+    }
+    else if (/[a-z]/.test(ch)) { throw 'Letra minúscula (' + ch + ') onde começa um símbolo de elemento; verifique maiúsculas e minúsculas'; }
+    else { throw 'Carácter não reconhecido: ' + ch; }
+  }
+  if (stackTop !== 0) throw 'Parênteses sem par';
+  if (mult > 1) for (const el in counts) counts[el] *= mult;
+  if (Object.keys(counts).length === 0) throw 'Há um fragmento vazio';
+  return counts;
+}
+
+function parseFormula(input) {
+  const segs = input.split(/[·.\*]/);
+  const total = {};
+  for (const seg of segs) {
+    if (!seg.trim()) throw 'Há um fragmento vazio (verifique os separadores)';
+    const c = parseSegment(seg);
+    for (const el in c) total[el] = (total[el] || 0) + c[el];
+  }
+  return total;
+}
+
+function fmt(x) {
+  return Math.abs(x - Math.round(x)) < 1e-9 ? String(Math.round(x)) : String(Math.round(x * 10000) / 10000);
+}
+
+// 质量 ⇌ 摩尔换算
+function convertMassMol() {
+  const mw = parseFloat(document.getElementById('mwVal').textContent);
+  if (!mw) return;
+  const mIn = document.getElementById('massIn'), nIn = document.getElementById('molIn');
+  const m = parseFloat(mIn.value), n = parseFloat(nIn.value);
+  const out = document.getElementById('convOut');
+  const editingMass = document.activeElement === mIn;
+  const editingMol = document.activeElement === nIn;
+  if (editingMass && isFinite(m) && m > 0) {
+    nIn.value = (Math.round(m / mw * 1e6) / 1e6);
+    out.textContent = nIn.value + ' mol ⇌ ' + m + ' g';
+  } else if (editingMol && isFinite(n) && n > 0) {
+    mIn.value = (Math.round(n * mw * 1e6) / 1e6);
+    out.textContent = mIn.value + ' g ⇌ ' + n + ' mol';
+  }
+}
+document.getElementById('massIn').addEventListener('input', convertMassMol);
+document.getElementById('molIn').addEventListener('input', convertMassMol);
+</script>
+
+<script is:inline src="/js/smiles-drawer.min.js?v=2" defer></script>
+<script is:inline>
+(function () {
+  'use strict';
+  const L = { hzHdr: 'Perigos principais', hzSig: 'Sinal', hzPict: 'Pictogramas', hzP: "Frases de prudência", npName: 'Nome', npVia: 'via COCONUT', iupac: 'Nome IUPAC', hbd: 'Dadores de pontes H', hba: 'Aceptores de pontes H', rot: 'Ligações rotativas', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estrutura: correspondência mais próxima do PubChem para esta fórmula', pubHdr: 'Dados do PubChem', rdkHdr: 'RDKit (cálculo local)', viaSmi: 'Composto correspondente no PubChem', prefName: 'Nome preferido', maxPhase: 'Fase máx.', molType: 'Tipo', therapeutic: 'Terapêutico', bioact: 'Atividade', cheblErr: 'Falha no ChEMBL: verifique o ID (ex. CHEMBL25)', viaCir: 'Número CAS resolvido via NCI CIR', casErr: 'Não foi possível resolver o CAS: tente o nome ou confira o número', exM: 'Massa exata', rings: 'N.º de anéis', arom: 'Anéis aromáticos', empty: 'Introduz uma fórmula, uma cadeia SMILES ou o nome do composto', invalid: 'SMILES inválido: ', pub: 'Não foi possível resolver o nome via PubChem (sem rede ou não encontrado). Verifica o nome ou cola diretamente uma cadeia SMILES.', via: 'Estrutura e fórmula resolvidas via PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Estrutura 2D' };
+  const TH = ['Elemento', 'Átomos', 'Peso atómico', 'Contribuição (g/mol)'];
+  const $ = (id) => document.getElementById(id);
+  const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
+Ne:20.180,Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.06,Cl:35.45,Ar:39.948,
+K:39.098,Ca:40.078,Sc:44.956,Ti:47.867,V:50.942,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,
+Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.630,As:74.922,Se:78.971,Br:79.904,Kr:83.798,
+Rb:85.468,Sr:87.62,Y:88.906,Zr:91.224,Nb:92.906,Mo:95.95,Tc:98,Ru:101.07,Rh:102.91,
+Pd:106.42,Ag:107.87,Cd:112.41,In:114.82,Sn:118.71,Sb:121.76,Te:127.60,I:126.90,Xe:131.29,
+Cs:132.91,Ba:137.33,La:138.91,Ce:140.12,Pr:140.91,Nd:144.24,Pm:145,Sm:150.36,Eu:151.96,
+Gd:157.25,Tb:158.93,Dy:162.50,Ho:164.93,Er:167.26,Tm:168.93,Yb:173.05,Lu:174.97,Hf:178.49,
+Ta:180.95,W:183.84,Re:186.21,Os:190.23,Ir:192.22,Pt:195.08,Au:196.97,Hg:200.59,Tl:204.38,
+Pb:207.2,Bi:208.98,Po:209,At:210,Rn:222,Fr:223,Ra:226,Ac:227,Th:232.04,Pa:231.04,U:238.03,
+Np:237,Pu:244};   // 自包含原子量表（IUPAC 2013）
+  const tfmt = (x) => String(Math.round(x * 100000) / 100000);
+// SMILES → 元素计数（含隐式氢）。纯函数、无 DOM，可 node 测试，亦可注入页面。
+function smilesCounts(input) {
+  const s = String(input || '').trim();
+  if (!s) throw 'Empty input';
+  const MASS_OK = /^[A-Z][a-z]?$/;
+  const ARO = { b:'B', c:'C', n:'N', o:'O', p:'P', s:'S' };
+  const ORG1 = { B:1, C:1, N:1, O:1, P:1, S:1, F:1, I:1 };
+  const ORG2 = { Cl:1, Br:1 };
+  const VALENCE = { B:[3], C:[4], N:[3], O:[2], P:[3,5], S:[2,4,6], F:[1], Cl:[1], Br:[1], I:[1] };
+  const A = [];            // {el, bs(键级和), h(括号原子显式H), aro}
+  const rings = {};        // 开环表
+  let prev = -1, pend = null;
+  const stack = [];
+  const bondAdd = (a, b, o) => { A[a].bs += o; A[b].bs += o; };
+  const newAtom = (el, aro, h) => {
+    const a = { el, bs: 0, h: (h === undefined ? null : h), aro: !!aro };
+    A.push(a);
+    const cur = A.length - 1;
+    if (prev >= 0) bondAdd(prev, cur, (pend != null) ? pend : ((a.aro && A[prev].aro) ? 1.5 : 1));
+    pend = null; prev = cur;
+    return cur;
+  };
+  let i = 0;
+  while (i < s.length) {
+    const ch = s[i];
+    if (ch === '(') { stack.push(prev); i++; continue; }
+    if (ch === ')') { if (!stack.length) throw 'Unbalanced parentheses'; prev = stack.pop(); i++; continue; }
+    if (ch === '.') { prev = -1; pend = null; i++; continue; }
+    if (ch === '-' || ch === '/' || ch === '\\') { pend = 1; i++; continue; }
+    if (ch === '=') { pend = 2; i++; continue; }
+    if (ch === '#') { pend = 3; i++; continue; }
+    if (ch === ':') { pend = 1.5; i++; continue; }
+    if (ch === '%') {
+      const m = s.slice(i + 1).match(/^(\d{2})/);
+      if (!m) throw 'Bad ring closure (%nn)';
+      const r = m[1];
+      if (rings[r] !== undefined) { const o = rings[r]; delete rings[r]; bondAdd(o.atom, prev, (pend != null) ? pend : ((o.aro && A[prev].aro) ? 1.5 : 1)); }
+      else { rings[r] = { atom: prev, aro: A[prev].aro, order: pend }; if (pend != null) pend = null; }
+      pend = null; i += 1 + m[1].length; continue;
+    }
+    if (/\d/.test(ch)) {
+      const r = ch;
+      if (rings[r] !== undefined) { const o = rings[r]; delete rings[r]; bondAdd(o.atom, prev, (pend != null) ? pend : ((o.aro && A[prev].aro) ? 1.5 : ((o.order != null) ? o.order : 1))); }
+      else { rings[r] = { atom: prev, aro: A[prev].aro, order: pend }; if (pend != null) pend = null; }
+      pend = null; i++; continue;
+    }
+    if (ch === '[') {
+      const j = s.indexOf(']', i);
+      if (j < 0) throw 'Unclosed bracket atom';
+      const body = s.slice(i + 1, j);
+      let k = 0;
+      while (k < body.length && /\d/.test(body[k])) k++;                     // 同位素（忽略，按天然丰度计）
+      if (k >= body.length) throw 'Empty bracket atom';
+      let sym = body[k]; k++;
+      if (k < body.length && /[a-z]/.test(body[k])) { sym += body[k]; k++; } // 两字母符号
+      let aro = false;
+      if (sym[0] >= 'a' && sym[0] <= 'z') { aro = true; sym = (ARO[sym] !== undefined) ? ARO[sym] : sym[0].toUpperCase() + sym.slice(1); }
+      if (!MASS_OK.test(sym)) throw 'Unknown element in brackets: ' + sym;
+      if (body[k] === '@') { k++; if (body[k] === '@') k++; else { const m2 = body.slice(k).match(/^(TH|AL|SP|TB|OH)\d+/); if (m2) k += m2[1].length + 1; } }
+      let h = 0;
+      if (body[k] === 'H') { k++; let d = ''; while (k < body.length && /\d/.test(body[k])) { d += body[k]; k++; } h = d ? parseInt(d, 10) : 1; }
+      let charge = 0;
+      if (body[k] === '+' || body[k] === '-') {
+        const sign = body[k] === '+' ? 1 : -1; k++;
+        let d = ''; while (k < body.length && body[k] === body[k - 1] && (body[k] === '+' || body[k] === '-')) { d += body[k]; k++; }
+        let n = ''; while (k < body.length && /\d/.test(body[k])) { n += body[k]; k++; }
+        charge = n ? sign * parseInt(n, 10) : sign * (1 + d.length);
+      }
+      if (body[k] === ':') { k++; while (k < body.length && /\d/.test(body[k])) k++; }
+      if (k !== body.length) throw 'Cannot parse bracket atom [' + body + ']';
+      if (charge !== 0 && !aro) { /* 带电括号原子：H 已显式给出 */ }
+      newAtom(sym, aro, h);
+      i = j + 1; continue;
+    }
+    if (ORG2[ch] !== undefined && /[a-z]/.test(s[i + 1] || '')) { newAtom(ch, false, null); i += 2; continue; }
+    if (ORG1[ch]) { newAtom(ch, false, null); i++; continue; }
+    if (ARO[ch]) { newAtom(ARO[ch], true, null); i++; continue; }
+    throw 'Unrecognized character: ' + ch;
+  }
+  if (stack.length) throw 'Unbalanced parentheses';
+  if (!A.length) throw 'No atoms found';
+  for (const r in rings) throw 'Unclosed ring bond: ' + r;
+  // 隐式氢：非括号原子 = 最小可容纳价态 − 键级和；括号原子 = 显式 H
+  const counts = {};
+  for (const a of A) {
+    let H;
+    if (a.h !== null) H = a.h;
+    else {
+      const vl = VALENCE[a.el] || [];
+      let v = null;
+      for (const x of vl) if (x >= a.bs - 1e-9) { v = x; break; }
+      H = (v === null) ? 0 : Math.round(v - a.bs);
+    }
+    if (H < 0) H = 0;
+    counts[a.el] = (counts[a.el] || 0) + 1;
+    if (H > 0) counts.H = (counts.H || 0) + H;
+  }
+  return counts;
+}
+// 显示式：有碳按 Hill（C,H,余字母序）；无碳 H 最前（符合 NH3/H2SO4/SO2 惯例）
+function hillFormula(c) {
+  const parts = [];
+  const push = (el, n) => parts.push(el + (n > 1 ? n : ''));
+  const rest = Object.keys(c).filter((el) => el !== 'C' && el !== 'H').sort();
+  if (c.C) { push('C', c.C); if (c.H) push('H', c.H); rest.forEach((el) => push(el, c[el])); }
+  else { if (c.H) push('H', c.H); rest.forEach((el) => push(el, c[el])); }
+  return parts.join('') || '—';
+}
+  function chainLike(s) { return !/[\d\[\]]/.test(s) && (s.includes('(') || /(.)\1/.test(s)); }   // CCO/NC(CO)… 类链式串 → SMILES 优先
+  function renderCounts(counts) {
+    let mw = 0; const rows = [];
+    for (const el in counts) { const sub = TC_MASS[el] * counts[el]; mw += sub; rows.push([el, counts[el], TC_MASS[el], sub]); }
+    rows.sort((a, b) => b[3] - a[3]);
+    $('mwVal').textContent = tfmt(Math.round(mw * 100000) / 100000);
+    let html = '<table class="tbl"><tr><th>' + TH[0] + '</th><th>' + TH[1] + '</th><th>' + TH[2] + '</th><th>' + TH[3] + '</th></tr>';
+    for (const r of rows) html += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + tfmt(r[3]) + '</td></tr>';
+    html += '</table>';
+    $('compTable').innerHTML = html;
+    $('fLine').innerHTML = L.hill + ' <span class="ktx">\\ce{' + hillFormula(counts) + '}</span>';
+  }
+  function showResult(withStruct, badge, via) {
+    $('resultPanel').style.display = '';
+    $('structWrap').style.display = withStruct ? '' : 'none';
+    $('dlWrap').style.display = withStruct ? '' : 'none';
+    if (!withStruct) $('structSvg').innerHTML = '';
+    $('modeBadge').textContent = badge || '';
+    const mi = $('molInfo');
+    const back = document.getElementById('resStatics');
+    ['mwBlock', 'compTable', 'engSw', 'structWrap', 'dlWrap'].forEach(function (id) { const n = document.getElementById(id); if (n && back && n.parentElement !== back) back.appendChild(n); });
+    if (mi) { mi.style.display = 'none'; mi.innerHTML = ''; } lastChebl = null;
+    lastPc = null;
+    if (via) { $('sVia').textContent = via; $('sVia').style.display = ''; } else { $('sVia').style.display = 'none'; }
+    $('convPanel').style.display = '';
+    document.getElementById('massIn').dispatchEvent(new Event('input'));
+    if (window.renderKtx) window.renderKtx($('resultPanel'));
+  }
+  function getEngPref() {
+    try { var v = localStorage.getItem('tubecalc_eng'); return (v === 'rdkit' || v === 'sd') ? v : 'auto'; } catch (e2) { return 'auto'; }
+  }
+  function initEngSw(redraw) {
+    var box = document.getElementById('engSw');
+    if (!box || box.dataset.done) return;
+    box.dataset.done = '1';
+    var cur = getEngPref(); if (cur !== 'sd') cur = 'rdkit';
+    [].forEach.call(box.querySelectorAll('.eng-opt'), function (b) {
+      b.classList.toggle('cur', b.dataset.e === cur);
+      b.addEventListener('click', function () {
+        try { localStorage.setItem('tubecalc_eng', b.dataset.e); } catch (e3) {}
+        [].forEach.call(box.querySelectorAll('.eng-opt'), function (x) { x.classList.toggle('cur', x === b); });
+        redraw();
+      });
+    });
+  }
+  function draw(smiles) {
+    lastSmiles = smiles;
+    const d = new SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false, noCondense: true });
+    const host = $('structSvg');
+    host.innerHTML = '';
+    let frags = smiles.split('.');
+    if (frags.length > 1) {                       /* salts/hydrates: non-water first, water last */
+      frags = frags.filter((f) => f !== 'O').concat(frags.filter((f) => f === 'O'));
+    }
+    const n = frags.length;
+    const w = n > 1 ? (n > 4 ? 150 : 210) : 380;
+    const h = n > 1 ? (n > 4 ? 110 : 150) : 300;
+    const ENG = getEngPref();
+    frags.forEach((f) => {
+      const cell = document.createElement('span'); cell.className = 'frag'; host.appendChild(cell);
+      const smi = f === 'O' ? '[H]O[H]' : f;      /* bare O (water) -> explicit H-O-H */
+      if (ENG === 'sd') { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); return; }
+      if (RDK) {
+        if (!rdkitDrawOne(cell, smi, w, h)) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); }
+        return;
+      }
+      if (!rdkitFailed) { cell.dataset.eng = 'wait'; cell.textContent = '…'; return; }
+      cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi);
+    });
+  }
+  function sdCell(d, cell, f) {
+    try {
+      d.draw(f, 'svg', 'light', function (svg) { if (svg) cell.appendChild(svg); }, function () { cell.textContent = '·'; });
+    } catch (e) { cell.textContent = '·'; }
+  }
+  async function pubchemData(kind, value) {   // kind: name|fastformula|cid|inchikey|inchi → SMILES + 性质一次取回
+    const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/' + kind + '/' + encodeURIComponent(value) +
+      '/property/IsomericSMILES,SMILES,IUPACName,InChIKey,XLogP,HBondDonorCount,HBondAcceptorCount,TPSA,RotatableBondCount,Charge,HeavyAtomCount/JSON';
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
+    try {
+      const r = await fetch(url, { signal: ctl.signal });
+      if (!r.ok) return null;
+      const j = await r.json();
+      const p = j.PropertyTable && j.PropertyTable.Properties && j.PropertyTable.Properties[0];
+      if (!p) return null;
+      return { smiles: p.IsomericSMILES || p.SMILES || null, props: p, cid: p.CID };
+    } catch (e) { return null; } finally { clearTimeout(to); }
+  }
+    let DB = null;
+  var DBNAMES = { np: 'COCONUT', pub: 'PubChem', chebl: 'ChEMBL', rx: 'RxNorm', cir: 'NCI CIR', hz: L.hzHdr, rdk: 'RDKit' };
+  function initDb() { DB = { np: { st: 'pending' }, pub: { st: 'pending' }, chebl: { st: 'pending' }, rx: { st: 'pending' }, cir: { st: 'pending' }, hz: { st: 'pending' } }; renderDb(); }
+  function dbSet(k, st, data) { if (!DB) initDb(); DB[k] = Object.assign({ st: st }, data || {}); renderDb(); }
+  function finalizeDb(myGen) {
+    setTimeout(function () {
+      if (myGen !== curGen || !DB) return;
+      ['np', 'pub', 'chebl', 'rx', 'cir', 'hz'].forEach(function (k) { if (DB[k] && DB[k].st === 'pending') dbSet(k, 'miss', {}); });
+    }, 20000);
+  }
+  async function npFirst(q) {
+  try {
+    if (!window.__npMeta) {
+      const r = await fetch('/data/np_meta.json', { cache: 'default' });
+      if (!r.ok) return null;
+      window.__npMeta = await r.json();
+      window.__npShards = {};
+    }
+    const ql = String(q || '').toLowerCase();
+    if (ql.length < 2 || !/^[a-z]/.test(ql)) return null;
+    let best = null;
+    for (const m of window.__npMeta.shards) { if (ql.indexOf(m.k) === 0 && (!best || m.k.length > best.k.length)) best = m; }
+    if (!best) return null;
+    let items = window.__npShards[best.k];
+    if (!items) { const r = await fetch('/data/np_shards/' + best.f, { cache: 'default' }); if (!r.ok) return null; items = window.__npShards[best.k] = (await r.json()).items; }
+    let hit = null;
+    for (const it of items) { if (it[1] && it[1].toLowerCase() === ql) { hit = it; break; } }
+    if (!hit) for (const it of items) { if (it[1] && it[1].toLowerCase().indexOf(ql) === 0) { hit = it; break; } }
+    return hit;
+  } catch (e) { return null; }
+  }
+
+  function bridge(smiles, name, myGen) {
+    if (myGen !== curGen || !DB) return;
+    if (smiles && !DB._s) { DB._s = smiles;
+      if (DB.chebl.st === 'pending') cheblBySmiles(smiles);
+      if (DB.cir.st === 'pending') cirCas(smiles);
+      if (DB.pub.st === 'pending') pubchemData('smiles', smiles).then(function (p) { if (myGen !== curGen) return; if (p && p.smiles) { pubHit(p, myGen); pubName(p.cid, null, function (nm) { bridge(null, nm, myGen); }); } else { dbSet('pub', 'miss', {}); } });
+    }
+    if (name && DB._n !== name) { DB._n = name;
+      if (DB.np.st === 'pending' || DB.np.st === 'miss') npFirst(name).then(function (h) { if (myGen !== curGen) return; if (h) dbSet('np', 'hit', { name: h[1], id: h[0], mw: h[4] }); else if (DB.np.st === 'pending') dbSet('np', 'miss', {}); });
+      if (DB.rx.st === 'pending' || DB.rx.st === 'miss') rxByName(name);
+      if (DB.chebl.st === 'pending' || DB.chebl.st === 'miss') cheblByName(name);
+    }
+  }
+  async function hzByCid(cid, myGen) {
+    try {
+      let ps = [];
+      const r = await fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/' + cid + '/JSON?heading=' + encodeURIComponent('GHS Classification'));
+      const r2 = await fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/' + cid + '/JSON?heading=' + encodeURIComponent('Chemical Safety'));
+      if (myGen !== curGen) return;
+      let signal = null; const hs = [];
+      if (r.ok) {
+        const j = await r.json();
+        const info = j.Record && j.Record.Section && j.Record.Section[0] && j.Record.Section[0].Section && j.Record.Section[0].Section[0] && j.Record.Section[0].Section[0].Section && j.Record.Section[0].Section[0].Section[0];
+        const strs = [];
+        ((info && info.Information) || []).forEach(function (i) { ((i.Value && i.Value.StringWithMarkup) || []).forEach(function (m) { if (m.String && m.String.trim()) strs.push(m.String.trim()); }); });
+        for (let k = 0; k < strs.length; k++) {
+          if (!signal && (strs[k] === 'Warning' || strs[k] === 'Danger')) signal = strs[k];
+          if (/^H\d{3}/.test(strs[k])) {
+            if (!signal) signal = 'Warning';
+            hs.push(strs[k]);
+            for (let m2 = k + 1; m2 < strs.length; m2++) { if (/^H\d{3}/.test(strs[m2])) hs.push(strs[m2]); else break; }
+            break;
+          }
+        }
+        for (let k = 0; k < strs.length; k++) { if (/^P\d{3}/.test(strs[k])) { strs[k].split(/,\s*/).forEach(function (pp) { pp.split('+').forEach(function (px) { px = px.trim(); if (/^P\d{3}/.test(px) && ps.indexOf(px) < 0) ps.push(px); }); }); break; } }
+      }
+      const pics = [];
+      if (r2.ok) {
+        const j2 = await r2.json();
+        (function walk(secs) { (secs || []).forEach(function (s) { (s.Information || []).forEach(function (i) { ((i.Value && i.Value.StringWithMarkup) || []).forEach(function (m) { ((m.Markup) || []).forEach(function (k) { const mm = /\/images\/ghs\/(GHS\d\d)\.svg/.exec(k.URL || ''); if (mm && pics.indexOf(mm[1]) < 0) pics.push(mm[1]); }); }); }); walk(s.Section); }); })(j2.Record && j2.Record.Section);
+      }
+      if (myGen !== curGen) return;
+      if (signal || hs.length || pics.length || ps.length) dbSet('hz', 'hit', { signal: signal, pics: pics, hs: hs, ps: ps });
+      else dbSet('hz', 'miss', {});
+    } catch (e) { if (myGen === curGen) dbSet('hz', 'miss', {}); }
+  }
+  function ghPict(code) { return '<img src="/ghs/' + code + '.svg" width="30" height="30" alt="' + code + '" title="' + code + (GNX[code] ? ' · ' + GNX[code] : '') + '" style="vertical-align:middle;margin-right:5px" loading="lazy">'; }
+  var HSX = {"H204": "Perigo de incêndio ou de projeção", "H206": "Perigo de incêndio, de explosão ou de projeção; agente de dessensibilização reduzido", "H207": "Perigo de incêndio ou de projeção; risco aumentado de explosão se o agente de dessensibilização for reduzido", "H208": "Perigo de incêndio; risco aumentado de explosão se o agente de dessensibilização for reduzido", "H209": "Explosivo", "H210": "Extremamente sensível", "H211": "Muito sensível", "H220": "Gás extremamente inflamável", "H221": "Gás inflamável", "H222": "Aerossol extremamente inflamável", "H223": "Aerossol inflamável", "H224": "Líquido e vapores extremamente inflamáveis", "H225": "Líquido e vapores muito inflamáveis", "H226": "Líquido e vapores inflamáveis", "H227": "Líquido combustível", "H228": "Sólido inflamável", "H229": "Recipiente pressurizado: pode rebentar se aquecido", "H230": "Pode reagir explosivamente mesmo em ausência de ar", "H231": "Pode reagir explosivamente mesmo em ausência de ar, à alta pressão e/ou à temperatura elevada", "H232": "Pode inflamar-se espontaneamente em contacto com o ar", "H240": "O aquecimento pode provocar uma explosão", "H241": "O aquecimento pode provocar um incêndio ou uma explosão", "H242": "O aquecimento pode provocar um incêndio", "H250": "Inflama-se espontaneamente em contacto com o ar", "H251": "Aquecimento espontâneo; pode inflamar-se", "H252": "Aquecimento espontâneo em grandes quantidades; pode inflamar-se", "H260": "Em contacto com a água liberta gases inflamáveis que podem inflamar-se espontaneamente", "H261": "Em contacto com a água liberta gases inflamáveis", "H270": "Pode provocar ou agravar um incêndio; comburente", "H271": "Pode provocar um incêndio ou uma explosão; muito comburente", "H272": "Pode agravar um incêndio; comburente", "H280": "Contém gás sob pressão; pode rebentar se aquecido", "H281": "Contém gás refrigerado; pode provocar queimaduras ou ferimentos criogénicos", "H282": "Produto químico pressurizado extremamente inflamável: pode rebentar se aquecido", "H283": "Produto químico pressurizado inflamável: pode rebentar se aquecido", "H284": "Produto químico pressurizado: pode rebentar se aquecido", "H290": "Pode corroer os metais", "H301": "Tóxico em caso de ingestão", "H303": "Pode ser nocivo em caso de ingestão", "H305": "Pode ser nocivo em caso de ingestão e de penetração nas vias respiratórias", "H311": "Tóxico em contacto com a pele", "H312": "Nocivo em contacto com a pele", "H313": "Pode ser nocivo em contacto com a pele", "H314": "Provoca queimaduras graves da pele e lesões oculares", "H316": "Provoca uma ligeira irritação cutânea", "H317": "Pode provocar uma reação alérgica cutânea", "H318": "Provoca lesões oculares graves", "H319": "Provoca irritação ocular grave", "H320": "Provoca irritação ocular", "H331": "Tóxico em caso de inalação", "H332": "Nocivo por inalação", "H333": "Pode ser nocivo por inalação", "H335": "Pode irritar as vias respiratórias", "H336": "Pode provocar sonolência ou vertigens", "H340": "Pode provocar anomalias genéticas", "H341": "Suspeita de provocar anomalias genéticas", "H350": "Pode provocar cancro", "H351": "Suspeita de provocar cancro", "H361": "Suspeita de prejudicar a fertilidade ou o feto", "H362": "Pode ser nocivo para as crianças amamentadas pelo peito", "H370": "Provoca lesões dos órgãos", "H371": "Pode provocar lesões dos órgãos", "H372": "Provoca lesões dos órgãos após exposições repetidas ou prolongadas", "H373": "Pode provocar lesões dos órgãos após exposições repetidas ou prolongadas", "H401": "Tóxico para os organismos aquáticos", "H402": "Nocivo para os organismos aquáticos", "H411": "Tóxico para os organismos aquáticos, com efeitos duradouros", "H412": "Nocivo para os organismos aquáticos, com efeitos duradouros", "H413": "Pode ser nocivo para os organismos aquáticos, provocando efeitos duradouros", "H420": "Prejudica a saúde pública e o ambiente, destruindo o ozono da alta atmosfera", "H200": "Explosivo instável", "H300": "Fatal em caso de ingestão", "H302": "Nocivo em caso de ingestão", "H304": "Pode ser fatal em caso de ingestão e de penetração nas vias respiratórias", "H310": "Fatal em contacto com a pele", "H315": "Provoca irritação cutânea", "H330": "Fatal em caso de inalação", "H334": "Inalado pode provocar sintomas de alergia ou de asma ou dificuldades respiratórias", "H360": "Pode prejudicar a fertilidade ou o feto", "H400": "Muito tóxico para os organismos aquáticos", "H410": "Muito tóxico para os organismos aquáticos, com efeitos duradouros"};
+  var PSX = {"P101": "Se for necessário consultar um médico, mantenha à mão o recipiente ou o rótulo do produto", "P102": "Manter fora do alcance das crianças", "P103": "Ler atentamente e cumprir todas as instruções", "P203": "Obter, ler e seguir todas as instruções de segurança antes da utilização", "P210": "Manter afastado do calor, de superfícies quentes, de faíscas, de chamas vivas e de outras fontes de ignição. Não fumar", "P233": "Manter o recipiente hermeticamente fechado", "P260": "Não respirar as poeiras/fumos/gases/névoas/vapores/aerossóis", "P264": "Lavar cuidadosamente após a manipulação", "P270": "Não comer, beber ou fumar durante a utilização deste produto", "P280": "Usar luvas de proteção/vestuário de proteção/proteção ocular/proteção facial", "P284": "[Em caso de ventilação insuficiente] use proteção respiratória", "P301": "EM CASO DE INGESTÃO:", "P302": "EM CASO DE CONTACTO COM A PELE:", "P304": "EM CASO DE INALAÇÃO:", "P305": "EM CASO DE CONTACTO COM OS OLHOS:", "P310": "Contate imediatamente um CENTRO DE INFORMAÇÃO TOXICOLÓGICA/médico", "P330": "Enxaguar a boca", "P331": "Não provocar o vómito", "P340": "Transportar a vítima para o exterior e mantê-la numa posição confortável para a respiração", "P351": "Enxaguar cuidadosamente com água durante vários minutos", "P370": "EM CASO DE INCÊNDIO:", "P391": "Recolher o produto derramado", "P401": "Armazenar de acordo com …", "P403": "Armazenar em local bem ventilado", "P405": "Guardar sob chave", "P410": "Proteger da luz solar", "P420": "Armazenar afastado de outros materiais", "P501": "Eliminar o conteúdo/recipiente em conformidade com a regulamentação local/regional/nacional/internacional", "P502": "Solicitar informações ao fabricante ou ao fornecedor no que respeita à recuperação/reciclagem", "P211": "Não pulverizar sobre uma chama viva ou outra fonte de ignição", "P220": "Manter afastado de vestuário e de outros materiais combustíveis", "P231": "Manipular e armazenar em gás inerte/…", "P232": "Proteger da humidade", "P234": "Guardar exclusivamente na embalagem de origem", "P235": "Manter em lugar fresco", "P241": "Utilizar sistemas elétricos/de ventilação/de iluminação/… à prova de explosão", "P242": "Utilizar apenas ferramentas que não produzam faíscas", "P243": "Tomar medidas de precaução contra descargas electrostáticas", "P251": "Não perfurar nem queimar, mesmo depois de utilização", "P261": "Evitar respirar as poeiras/fumos/gases/névoas/vapores/aerossóis", "P262": "Evitar o contacto com os olhos, com a pele ou com o vestuário", "P271": "Utilizar apenas ao ar livre ou em local bem ventilado", "P272": "Não retirar do local de trabalho as roupas de trabalho contaminadas", "P273": "Evitar a libertação para o ambiente", "P281": "Use equipamento de proteção individual conforme exigido.", "P282": "Usar luvas de proteção contra o frio e um protetor facial ou proteção ocular", "P283": "Usar vestuário de proteção contra o fogo ou ignifugo", "P303": "EM CASO DE CONTACTO COM A PELE (OU CABELO):", "P306": "EM CASO DE CONTACTO COM O VESTUÁRIO:", "P308": "EM CASO DE exposição ou de preocupação:", "P311": "Ligue para um CENTRO DE TOXICOLOGIA ou um médico.", "P312": "Ligue para um CENTRO DE TOXICOLOGIA ou um médico se sentir-se mal.", "P313": "Procure orientação médica.", "P314": "Procure orientação médica se sentir-se mal.", "P316": "Procurar assistência médica urgente", "P317": "Procurar assistência médica", "P318": "Se lesão ou irritação ocular: procurar assistência médica", "P321": "Tratamento específico (ver … neste rótulo)", "P332": "Em caso de irritação cutânea:", "P333": "Em caso de irritação ou de erupção cutânea:", "P337": "Se a irritação ocular persistir:", "P338": "Retirar as lentes de contacto, se existirem e se for fácil. Continuar a enxaguar", "P342": "Em caso de sintomas respiratórios:", "P352": "Lavar abundantemente com água/…", "P353": "Lavar a pele com água [ou tomar um duche]", "P360": "Lavar imediatamente e de forma abundante com água o vestuário e a pele contaminados, antes de retirar as roupas", "P361": "Retirar imediatamente todo o vestuário contaminado", "P362": "Retirar o vestuário contaminado", "P363": "Lavar o vestuário contaminado antes de voltar a utilizá-lo", "P371": "Em caso de incêndio importante e de grande quantidade:", "P372": "Risco de explosão", "P373": "NÃO combater o fogo quando este atinja os explosivos", "P375": "Combater o fogo à distância devido ao risco de explosão", "P376": "Parar a fuga, se não houver perigo", "P378": "Utilizar … para extinguir", "P380": "Evacuar a zona", "P390": "Absorver o produto derramado para evitar danos materiais", "P402": "Armazenar em local seco", "P404": "Armazenar em recipiente fechado", "P411": "Armazenar a uma temperatura inferior a … °C/… °F", "P412": "Não expor a temperaturas superiores a 50 °C/122 °F", "P503": "Solicitar informações ao fabricante/fornecedor no que respeita à eliminação/recuperação/reciclagem", "P222": "Não permitir o contacto com o ar", "P240": "Ligar o recipiente e o equipamento de receção à terra para compensar as correntes estáticas", "P244": "Manter as válvulas e os acessórios isentos de óleo e de gordura", "P250": "Não sujeitar a choques mecânicos/ao atrito/…", "P263": "Evitar o contacto durante a gravidez e durante a amamentação", "P319": "Em caso de indisposição, procurar assistência médica", "P320": "Tratamento urgente específico necessário (ver … neste rótulo)", "P334": "Immergir em água fria [ou aplicar compressas húmidas]", "P335": "Retirar delicadamente da pele as partículas com uma escova", "P336": "Descongelar as partes congeladas com água morna. Não esfregar a parte atingida", "P354": "Lavar imediatamente com água durante vários minutos", "P364": "Lavá-lo antes de voltar a utilizá-lo", "P377": "Fuga de gás em chamas: não extinguir, salvo se puder parar a fuga sem perigo", "P381": "Em caso de fuga, eliminar todas as fontes de ignição", "P406": "Armazenar em recipiente resistente à corrosão/… com revestimento interior resistente", "P407": "Deixar espaços livres entre osmontões/paletes", "P413": "Armazenar massas superiores a … kg/… lb a uma temperatura inferior a … °C/… °F"};
+  var GNX = {"GHS01": "Bomba em explosão", "GHS02": "Chama", "GHS03": "Chama sobre um círculo", "GHS04": "Botijão de gás", "GHS05": "Corrosão", "GHS06": "Caveira e ossos cruzados", "GHS07": "Ponto de exclamação", "GHS08": "Perigo à saúde", "GHS09": "Meio ambiente"};
+  var PKX = {"Melting Point": "Ponto de fusão", "Boiling Point": "Ponto de ebulição", "Water Solubility": "Solubilidade em água", "Solubility": "Solubilidade", "Density": "Densidade", "Refractive Index": "Índice de refração", "Flash Point": "Ponto de inflamação", "Odor": "Odor", "Appearance": "Aparência", "Physical Description": "Descrição física", "Color/Form": "Cor e forma", "Color": "Cor", "Form": "Forma", "LogP": "Coeficiente de partição", "Optical Rotation": "Rotação óptica", "Hygroscopicity": "Higroscopicidade", "Stability": "Estabilidade", "Decomposition": "Decomposição", "Taste": "Sabor", "Soluble In": "Solúvel em"};
+  Object.assign(L, {"sec1": "1. Identidade e identificação", "sec2": "2. Estrutura", "sec3": "3. Propriedades físicas", "sec4": "4. Propriedades químicas e reatividade", "sec5": "5. Informação de perigo", "syns": "Sinónimos", "ids": "Identificadores", "cat": "Classe de composto", "catNP": "Produto natural", "catDrug": "Fármaco", "catBio": "Molécula bioativa", "catSm": "Molécula pequena", "comp": "Propriedades calculadas", "formula": "Fórmula molecular", "canSm": "SMILES canónico"});
+  function escH(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function pubHit(p, myGen) { dbSet('pub', 'hit', { props: p.props, cid: p.cid }); if (p.cid && DB.hz.cid !== p.cid) { DB.hz.cid = p.cid; hzByCid(p.cid, myGen); pubEx(p.cid, myGen); } }
+    async function pubEx(cid, myGen) {
+    try { const r = await fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/' + cid + '/JSON?heading=' + encodeURIComponent('Experimental properties')); if (r.ok) { const j = await r.json(); const secs = (j.Record && j.Record.Section && j.Record.Section[0] && j.Record.Section[0].Section) || []; const props = [];
+      const walk = function (arr) { (arr || []).forEach(function (sc) { (sc.Information || []).forEach(function (inf) { const v = inf.Value && inf.Value.StringWithMarkup && inf.Value.StringWithMarkup[0] && inf.Value.StringWithMarkup[0].String; if (inf.Name && v) { const vv = String(v).replace(/\s+/g, ' ').trim().slice(0, 180); if (props.every(function (x) { return x.k !== inf.Name; })) props.push({ k: inf.Name, v: vv }); } }); walk(sc.Section); }); };
+      walk(secs);
+      if (myGen === curGen && props.length && DB) { DB.pubEx = props; renderDb(); } return; } } catch (e) {}
+  }
+  async function pubName(cid, orig, cb) {
+    try { const r = await fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/' + cid + '/synonyms/JSON'); if (r.ok) { const j = await r.json(); const inf = j.InformationList && j.InformationList.Information && j.InformationList.Information[0]; const s = (inf && inf.Synonym) || []; const c = s.filter(function (x) { return x && /[a-z]/i.test(x) && !/^\d{2,7}-\d{2}-\d$/.test(x) && (!orig || x.toLowerCase() !== String(orig).toLowerCase()); }); if (c.length && DB) { DB.pub.syn = c.slice(0, 8); } cb(c.length ? c[0] : (s.length ? s[0] : null)); return; } } catch (e) {}
+    cb(null);
+  }
+  async function cheblByName(name) {
+    try { const r = await fetch('https://www.ebi.ac.uk/chembl/api/data/molecule.json?pref_name__iexact=' + encodeURIComponent(name) + '&limit=1'); if (r.ok) { const j = await r.json(); const mo = j.molecules && j.molecules[0]; if (mo) { dbSet('chebl', 'hit', { cid: mo.molecule_chembl_id, mo: mo, acts: [], rx: '' }); cheblEnrich(mo.molecule_chembl_id, curGen); return; } } } catch (e) {}
+    dbSet('chebl', 'miss', {});
+  }
+  async function cheblBySmiles(sm) {
+    try { const r = await fetch('https://www.ebi.ac.uk/chembl/api/data/molecule.json?molecule_structures__canonical_smiles__iexact=' + encodeURIComponent(sm) + '&limit=1'); if (r.ok) { const j = await r.json(); const mo = j.molecules && j.molecules[0]; if (mo) { dbSet('chebl', 'hit', { cid: mo.molecule_chembl_id, mo: mo, acts: [], rx: '' }); cheblEnrich(mo.molecule_chembl_id, curGen); return; } } } catch (e) {}
+    dbSet('chebl', 'miss', {});
+  }
+  async function rxByName(name) {
+    try { const r = await fetch('https://rxnav.nlm.nih.gov/REST/rxcui.json?name=' + encodeURIComponent(name)); if (r.ok) { const j = await r.json(); const g = j.idGroup; const id = g && g.rxnormId && g.rxnormId[0] ? g.rxnormId[0] : ''; if (id) { dbSet('rx', 'hit', { rxcui: id }); return; } } } catch (e) {}
+    dbSet('rx', 'miss', {});
+  }
+  async function cirCas(id) {
+    try { const r = await fetch('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(id) + '/cas/text'); const t = r.ok ? (await r.text()).trim() : ''; if (t && /^[0-9]{2,7}-[0-9]{2}-[0-9]$/.test(t)) { dbSet('cir', 'hit', { cas: t, id: id }); return; } } catch (e) {}
+    dbSet('cir', 'miss', {});
+  }
+  function dbHead(k, rows) {
+    const w = DB[k].st === 'pending' ? ' <span style="opacity:.5">…</span>' : '';
+    return '<div class="mi-h">' + DBNAMES[k] + w + '</div>' + (rows || '<div class="mi" style="opacity:.55">—</div>');
+  }
+  function renderDb() {
+    const el = $('molInfo');
+    if (!DB) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    const f2 = (v, n) => (typeof v === 'number' ? v.toFixed(n) : v);
+    const back0 = $('resStatics');
+    ['mwBlock', 'compTable', 'engSw', 'structWrap', 'dlWrap'].forEach(function (id2) { const n2 = $(id2); if (n2 && back0 && el.contains(n2)) back0.appendChild(n2); });
+    const link = (u, t) => '<a href="' + u + '" target="_blank" rel="noopener">' + t + '</a>';
+    const chip = (t) => '<span class="pchip">' + t + '</span>';
+    const sec = (n, t) => '<div class="sec-h">' + t + '</div>';
+    let r = '';
+    r += sec(1, L.sec1); r += '<div id="slot1" class="mw-slot"></div>';
+    if (DB.pub.syn && DB.pub.syn.length) r += '<div class="mi"><b>' + L.syns + '</b>' + DB.pub.syn.map(chip).join('') + '</div>';
+    const ids = [];
+    if (DB.cir.st === 'hit' && DB.cir.cas) ids.push(chip(link('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(DB.cir.id || ''), 'CAS ' + (DB.cir.cas || '—'))));
+    if (DB.pub.cid) ids.push(chip(link('https://pubchem.ncbi.nlm.nih.gov/compound/' + DB.pub.cid, 'CID ' + DB.pub.cid)));
+    if (DB.chebl.st === 'hit' && DB.chebl.cid) ids.push(chip(link('https://www.ebi.ac.uk/chembl/compound_report_card/' + DB.chebl.cid + '/', 'ChEMBL ' + DB.chebl.cid)));
+    if (DB.rx.st === 'hit') ids.push(chip(link('https://mor.nlm.nih.gov/RxNav/search?searchBy=rxcui&searchTerm=' + encodeURIComponent(DB.rx.rxcui), 'RxCUI ' + DB.rx.rxcui)));
+    if (DB.np.st === 'hit' && DB.np.id) ids.push(chip(link('https://coconut.naturalproducts.net/?query=' + encodeURIComponent(DB.np.id), 'COCONUT ' + DB.np.id)));
+    if (ids.length) r += '<div class="mi"><b>' + L.ids + '</b>' + ids.join('') + '</div>';
+    if (DB.np.st === 'hit' && DB.np.name) r += '<div class="mi"><b>' + L.npName + '</b>' + DB.np.name + '</div>';
+    if (DB.chebl.st === 'hit' && DB.chebl.mo && DB.chebl.mo.pref_name) r += '<div class="mi"><b>' + L.prefName + '</b>' + DB.chebl.mo.pref_name + '</div>';
+    const fp = DB.pub.props;
+    if (fp && fp.MolecularFormula) r += '<div class="mi"><b>' + L.formula + '</b>' + fp.MolecularFormula + '</div>';
+    if (fp && fp.MolecularWeight) r += '<div class="mi"><b>MW</b>' + fp.MolecularWeight + '</div>';
+    let cat = null;
+    if (DB.np.st === 'hit') cat = L.catNP; else if (DB.rx.st === 'hit') cat = L.catDrug; else if (DB.chebl.st === 'hit') cat = L.catBio; else if (DB.pub.st === 'hit') cat = L.catSm;
+    if (cat) r += '<div class="mi"><b>' + L.cat + '</b>' + cat + '</div>';
+    r += sec(2, L.sec2); r += '<div id="slot2" class="st-slot"></div>';
+    if (lastSmiles) r += '<div class="mi"><b>' + L.canSm + '</b><span style="word-break:break-all">' + escH(lastSmiles) + '</span></div>';
+    if (fp && fp.InChIKey) r += '<div class="mi"><b>InChIKey</b>' + fp.InChIKey + '</div>';
+    if (lastSmiles && RDK) { const dsc = rdkitDescs(lastSmiles);
+      if (dsc) { const ds = [];
+        if (dsc.exactmw !== undefined) ds.push(L.exM + ' ' + f2(dsc.exactmw, 3));
+        if (dsc.tpsa !== undefined) ds.push('TPSA ' + f2(dsc.tpsa, 1) + ' Å²');
+        ds.push(L.hbd + ' ' + dsc.lipinskiHBD); ds.push(L.hba + ' ' + dsc.lipinskiHBA);
+        ds.push(L.rot + ' ' + dsc.NumRotatableBonds); ds.push(L.heavy + ' ' + dsc.NumHeavyAtoms);
+        ds.push(L.rings + ' ' + dsc.NumRings); ds.push(L.arom + ' ' + dsc.NumAromaticRings);
+        if (dsc.CrippenClogP !== undefined) ds.push('LogP ' + f2(dsc.CrippenClogP, 2));
+        r += '<div class="mi"><b>' + L.comp + '</b>' + ds.map(chip).join('') + '</div>'; } }
+    r += sec(3, L.sec3);
+    let n3 = 0;
+    if (fp && fp.XLogP !== undefined && fp.XLogP !== null) { r += '<div class="mi"><b>XLogP</b>' + fp.XLogP + '</div>'; n3++; }
+    const exs = DB.pubEx || [];
+    const chem = [];
+    exs.forEach(function (p2) {
+      const kk = (PKX && PKX[p2.k]) || p2.k;
+      if (/stabili|oxid|hydrolys|reactiv|decompos|polymorph|hygro/i.test(p2.k)) { chem.push(p2); return; }
+      r += '<div class="mi"><b>' + escH(kk) + '</b>' + escH(p2.v) + '</div>'; n3++;
+    });
+    if (!n3) r += '<div class="mi" style="opacity:.55">…</div>';
+    if (chem.length) { r += sec(4, L.sec4); chem.forEach(function (p2) { const kk = (PKX && PKX[p2.k]) || p2.k; r += '<div class="mi"><b>' + escH(kk) + '</b>' + escH(p2.v) + '</div>'; }); }
+    r += sec(5, L.sec5);
+    if (DB.hz.st === 'hit') {
+      if (DB.hz.signal) r += '<div class="mi"><b>' + L.hzSig + '</b>' + (DB.hz.signal === 'Danger' ? '<span style="color:#c8102e;font-weight:700">Danger</span>' : '<span style="color:#b8860b;font-weight:700">Warning</span>') + '</div>';
+      if (DB.hz.pics && DB.hz.pics.length) r += '<div class="mi"><b>' + L.hzPict + '</b>' + DB.hz.pics.map(ghPict).join('') + '</div>';
+      DB.hz.hs.forEach(function (h) { const m = /^(H\d{3})\s*(\([^)]*\))?\s*:\s*(.+)$/.exec(h); if (m) { let txt = (HSX && HSX[m[1]]) || m[3].replace(/\s*\[[^\]]*\]\s*$/, ''); r += '<div class="mi"><b>' + escH(m[1] + (m[2] ? ' ' + m[2] : '')) + '</b>' + escH(txt) + '</div>'; } else { r += '<div class="mi"><b>H</b>' + escH(h) + '</div>'; } });
+      if (DB.hz.ps && DB.hz.ps.length && typeof PSX !== 'undefined') { r += '<div class="mi"><b>' + L.hzP + '</b>' + DB.hz.ps.map(function (p) { return '<span class="pchip" title="' + escH(p + (PSX[p] ? ' · ' + PSX[p] : '')) + '">' + p + '</span>'; }).join('') + '</div>'; }
+    } else { r += '<div class="mi" style="opacity:.55">…</div>'; }
+    el.innerHTML = r; el.style.display = '';
+    const mv = (nid, sid) => { const n = $(nid), s2 = $(sid); if (n && s2 && n.parentElement !== s2) s2.appendChild(n); };
+    mv('mwBlock', 'slot1'); mv('compTable', 'slot1'); mv('engSw', 'slot2'); mv('structWrap', 'slot2'); mv('dlWrap', 'slot2');
+    if (typeof mwBlockVis !== 'undefined') {} $('slot1').style.display = $('mwBlock') && $('mwBlock').children.length ? '' : 'none';
+  }
+  function setInfoUnified() { renderDb(); }
+let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null; let lastChebl = null;
+  function rdkitReady() {
+    if (RDK || rdkitFailed) return Promise.resolve(RDK);
+    if (!window.__rdkP) {
+      window.__rdkP = new Promise(function (resolve, reject) {
+        var sc = document.createElement('script');
+        sc.src = '/js/rdkit/RDKit_minimal.js?v=1';
+        sc.onload = function () { window.initRDKitModule({ locateFile: function (f) { return '/js/rdkit/' + f; } }).then(resolve, reject); };
+        sc.onerror = function () { reject(new Error('rdkit-load')); };
+        document.head.appendChild(sc);
+      });
+      window.__rdkP.then(function (m) { RDK = m; onRdkitUp(); }, function () { rdkitFailed = true; });
+    }
+    return window.__rdkP;
+  }
+  rdkitReady();
+  initEngSw(function () { if (lastSmiles) draw(lastSmiles); });
+  function onRdkitUp() {
+    if (lastSmiles) { draw(lastSmiles); }
+    if (lastPc !== null) { setInfoUnified(); }
+  }
+  function rdkitDrawOne(cell, frag, w, h) {
+    try {
+      var m = RDK.get_mol(frag);
+      if (!m) return false;
+      cell.innerHTML = m.get_svg(w, h);
+      cell.dataset.eng = 'rdkit';
+      m.delete();
+      return true;
+    } catch (e) { return false; }
+  }
+  function rdkitDescs(smiles) {
+    if (!RDK) return null;
+    try {
+      var m = RDK.get_mol(smiles);
+      if (!m) return null;
+      var out = null;
+      try { out = JSON.parse(m.get_descriptors()); } catch (e1) {}
+      m.delete();
+      return out;
+    } catch (e) { return null; }
+  }
+  
+  async function cheblEnrich(cid, myGen) {
+    let acts = [];
+    try {
+      const r = await fetch('https://www.ebi.ac.uk/chembl/api/data/activity.json?molecule_chembl_id=' + cid + '&limit=3');
+      if (r.ok) { const j = await r.json(); acts = j.activities || []; }
+    } catch (e) {}
+    let rxCui = '';
+    try {
+      const pn = lastChebl && lastChebl.mo && lastChebl.mo.pref_name;
+      if (pn) {
+        const r2 = await fetch('https://rxnav.nlm.nih.gov/REST/rxcui.json?name=' + encodeURIComponent(pn));
+        if (r2.ok) { const j2 = await r2.json(); const g = j2.idGroup; rxCui = g && g.rxnormId && g.rxnormId[0] ? g.rxnormId[0] : ''; }
+      }
+    } catch (e2) {}
+    if (myGen !== curGen) return;
+    if (DB && DB.chebl && DB.chebl.cid === cid) { DB.chebl.acts = acts; DB.chebl.rx = rxCui; renderDb(); }
+  }
+  let curGen = 0;
+  function setVia(t) { $('sVia').textContent = t; $('sVia').style.display = ''; }
+  async function go() {
+    const raw = $('q').value.trim();
+    const myGen = ++curGen;
+    $('err').textContent = '';
+    $('resultPanel').style.display = 'none';
+    if (!raw) { $('err').textContent = L.empty; return; }
+    let fCounts = null;                 // ① 化学式（严格语法）
+    try { fCounts = parseFormula(raw); } catch (e) {}
+    const preferSmiles = fCounts && (fCounts.H === undefined) && chainLike(raw);   // CCO/NC(CO)… 链式串 → SMILES 优先
+    if (fCounts && !preferSmiles) {
+      initDb(); renderCounts(fCounts); showResult(false, L.modeF, null);
+      const pc = await pubchemData('fastformula', hillFormula(fCounts));
+      if (myGen !== curGen) return;
+      const smi = pc && pc.smiles;   // 普通分子式 → PubChem 最近匹配结构（渐进式）
+      if (myGen !== curGen) return;
+      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; $('dlWrap').style.display = ''; setVia(L.viaF); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(smi, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); }); } catch (e) {} } else { dbSet('pub', 'miss', {}); }
+      finalizeDb(myGen);
+      return;
+    }
+    try {                               // ② SMILES
+      const sc = smilesCounts(raw);
+      initDb(); renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified();
+      bridge(raw, null, myGen);
+      pubchemData('smiles', raw).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; pubHit(pc2, myGen); setVia(L.viaSmi); setInfoUnified(); pubName(pc2.cid, raw, function (nm) { bridge(null, nm, myGen); }); } else { dbSet('pub', 'miss', {}); } });
+      finalizeDb(myGen);
+      return;
+    } catch (e2) {}
+    if (fCounts) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }   // 链式但 SMILES 失败 → 回落公式
+    if (/^chembl\d+$/i.test(raw)) {                 /* ChEMBL ID -> drug info card + structure */
+      const cid = raw.toUpperCase();
+      initDb(); showResult(false, 'ChEMBL', null);
+      try {
+        const r = await fetch('https://www.ebi.ac.uk/chembl/api/data/molecule/' + cid + '.json');
+        if (myGen !== curGen) return;
+        if (!r.ok) throw new Error('http');
+        const j = await r.json();
+        const mo = (j.molecules && j.molecules[0]) || j;
+        const smi = mo && mo.molecule_structures && mo.molecule_structures.canonical_smiles;
+        if (!smi) throw new Error('nosmi');
+        const sc = smilesCounts(smi);
+        if (sc) renderCounts(sc);
+        draw(smi); showResult(true, 'ChEMBL', null);
+        lastPc = null; lastChebl = { cid: cid, mo: mo }; dbSet('chebl', 'hit', { cid: cid, mo: mo, acts: [], rx: '' }); setInfoUnified();
+        cheblEnrich(cid, myGen);
+        bridge(smi, mo.pref_name, myGen);
+        pubchemData('smiles', smi).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; pubHit(pc2, myGen); setInfoUnified(); pubName(pc2.cid, raw, function (nm) { bridge(null, nm, myGen); }); } else { dbSet('pub', 'miss', {}); } });
+        finalizeDb(myGen);
+      } catch (e1) {
+        if (myGen === curGen) { $('err').textContent = L.cheblErr; $('resultPanel').style.display = 'none'; }
+      }
+      return;
+    }
+    if (/^\d{2,7}-\d{2}-\d$/.test(raw)) {            /* CAS number -> NCI CIR -> SMILES */
+      initDb(); showResult(false, 'CAS', null);
+      try {
+        const r = await fetch('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(raw) + '/smiles');
+        if (myGen !== curGen) return;
+        const smi = r.ok ? (await r.text()).trim() : '';
+        if (!smi || !/^[A-Za-z0-9@+\-\[\]\(\)=#$%\\/.]+$/.test(smi)) throw new Error('bad');
+        const sc = smilesCounts(smi);
+        if (sc) renderCounts(sc);
+        draw(smi); showResult(true, 'CAS', null); lastPc = null; dbSet('cir', 'hit', { cas: raw, id: raw }); setInfoUnified(); bridge(smi, null, myGen);
+        pubchemData('smiles', smi).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; pubHit(pc2, myGen); setVia(L.viaCir); setInfoUnified(); pubName(pc2.cid, raw, function (nm) { bridge(null, nm, myGen); }); } else { dbSet('pub', 'miss', {}); } });
+        finalizeDb(myGen);
+      } catch (e0) {
+        if (myGen === curGen) { $('err').textContent = L.casErr; $('resultPanel').style.display = 'none'; }
+      }
+      return;
+    }
+
+    if (/^\d{1,12}$/.test(raw)) {        // ③ CID
+      initDb();
+      const pc = await pubchemData('cid', raw);
+      if (myGen !== curGen) return;
+      if (pc && pc.smiles) {
+        try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(pc.smiles, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); }); finalizeDb(myGen); return; } catch (e) {}
+      } else { dbSet('pub', 'miss', {}); }
+      ['np', 'chebl', 'rx', 'cir'].forEach(function (k) { if (DB[k].st === 'pending') dbSet(k, 'miss', {}); });
+      $('err').textContent = L.pub; return;
+    }
+    if (/^InChI=/.test(raw) || /^[A-Z]{14}-[A-Z]{10}-[A-Z]$/.test(raw)) {   // ④ InChI / InChIKey
+      initDb();
+      const pc = await pubchemData(/^InChI=/.test(raw) ? 'inchi' : 'inchikey', raw);
+      if (myGen !== curGen) return;
+      if (pc && pc.smiles) {
+        try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(pc.smiles, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); }); finalizeDb(myGen); return; } catch (e) {}
+      } else { dbSet('pub', 'miss', {}); }
+      ['np', 'chebl', 'rx', 'cir'].forEach(function (k) { if (DB[k].st === 'pending') dbSet(k, 'miss', {}); });
+      $('err').textContent = L.pub; return;
+    }
+
+initDb();
+    bridge(null, raw, myGen);   // RxNorm 名称桥
+    let npHit = await npFirst(raw);   // ⑤a COCONUT 本地库先行
+    if (myGen !== curGen) return;
+    if (npHit) {
+      try {
+        const scN = smilesCounts(npHit[2]);
+        renderCounts(scN);
+        draw(npHit[2]);
+        showResult(true, L.modeS, L.npVia);
+        lastPc = { smiles: npHit[2], name: npHit[1], cid: null, molfile: null, np: true, npId: npHit[0], npMw: npHit[4] };
+        dbSet('np', 'hit', { name: npHit[1], id: npHit[0], mw: npHit[4] });
+        setInfoUnified();
+        bridge(npHit[2], null, myGen);
+      } catch (eN) {}
+    }
+    const pc = await pubchemData('name', raw);   // ⑤ 名称 → PubChem
+    if (myGen !== curGen) return;
+    const smi = pc && pc.smiles;
+    if (myGen !== curGen) return;
+    if (smi) {
+      try {
+        const sc = smilesCounts(smi);
+        renderCounts(sc); draw(smi); if (DB.np.st !== 'hit') showResult(true, L.modeS, L.via); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(smi, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); });
+      } catch (e3) {}
+    }
+    finalizeDb(myGen);
+    if (!npHit && !smi) $('err').textContent = L.pub;
+  }
+  $('calcBtn').addEventListener('click', go);
+  $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+  document.querySelectorAll('.eg').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); $('q').value = a.getAttribute('data-f'); go(); }));
+  document.querySelectorAll('.eg-s').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); $('q').value = a.getAttribute('data-s'); go(); }));
+  function saveBlob(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 800);
+  }
+  function exportFmt(fmt) {
+    const svg = document.querySelector('#structSvg svg');
+    if (!svg) return;
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const data = new XMLSerializer().serializeToString(clone);
+    const base = 'tubecalc-structure';
+    if (fmt === 'svg') { saveBlob(new Blob([data], { type: 'image/svg+xml;charset=utf-8' }), base + '.svg'); return; }
+    const url = URL.createObjectURL(new Blob([data], { type: 'image/svg+xml;charset=utf-8' }));
+    const img = new Image();
+    img.onload = function () {
+      const w = img.naturalWidth || 520, h = img.naturalHeight || 380, scale = 3;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext('2d');
+      if (fmt === 'jpeg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(function (b) { if (b) saveBlob(b, base + '.' + (fmt === 'jpeg' ? 'jpg' : fmt)); }, 'image/' + fmt, 0.95);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); };
+    img.src = url;
+  }
+  $('dlBtn').addEventListener('click', function (e) { e.stopPropagation(); $('dlMenu').classList.toggle('open'); });
+  document.querySelectorAll('#dlMenu .dl-item').forEach(function (b) {
+    b.addEventListener('click', function (e) { e.stopPropagation(); $('dlMenu').classList.remove('open'); exportFmt(b.getAttribute('data-fmt')); });
+  });
+  document.addEventListener('click', function () { $('dlMenu').classList.remove('open'); });
+})();
+</script>

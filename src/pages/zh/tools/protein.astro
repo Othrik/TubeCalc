@@ -1,0 +1,651 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+---
+
+<Layout active="protein" lang="zh" title="蛋白质序列分析 · TubeCalc"
+  note="Target–disease–drug associations via Open Targets Platform (GraphQL). 原理：分子量＝平均残基质量之和＋H2O；ε280 按 Trp 5500 / Tyr 1490 / 胱氨酸 125 估算；pI 为 Bjellqvist pKa 近似值。文献：Gill SC, von Hippel PH. Anal Biochem. 1989;182(2):319-26；Bjellqvist B, et al. Electrophoresis. 1993;14(12):1223-31."
+>
+  <Fragment slot="head">
+    <style is:inline>
+
+/* AF server 风格序列视图：每行 N 残基（10 个一组），组间加宽间隙，编号在每 10 个残基上方，末尾标总数 */
+.af-seq { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-top: 4px; overflow-x: auto; }
+.af-ruler, .af-res { display: flex; flex-wrap: nowrap; }
+.af-ruler { height: 14px; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.af-res { font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; letter-spacing: 0; }
+.af-seq i, .af-seq b { font-style: normal; font-weight: 400; flex: 0 0 auto; }
+.af-seq i { width: 15px; text-align: center; }
+.af-seq b { width: 8px; }
+@media (max-width: 560px) { .af-res { font-size: 12.5px; } .af-seq i { width: 13px; } .af-seq b { width: 7px; } }
+/* 氨基酸组成可视化：类别总览条 + 按含量排序的条形图（颜色=化学类别） */
+.aa-strip { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 4px 0 8px; }
+.aa-strip i { font-style: normal; min-width: 2px; }
+.aa-legend { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size: 12px; color: var(--muted); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.aa-legend b { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
+.aa-row { display: grid; grid-template-columns: 26px 196px 1fr 92px; gap: 8px; align-items: center; padding: 3.5px 0; font-size: 13px; }
+.aa-chip { width: 22px; height: 22px; border-radius: 7px; color: #fff; font-weight: 600; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.aa-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aa-name b { font-weight: 600; }
+.aa-bar { height: 10px; border-radius: 5px; background: var(--accent-soft); overflow: hidden; }
+.aa-bar i { display: block; height: 100%; border-radius: 5px; font-style: normal; }
+.aa-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.aa-val b { color: var(--text); font-weight: 600; }
+@media (max-width: 560px) { .aa-row { grid-template-columns: 24px 120px 1fr 76px; gap: 6px; font-size: 12.5px; } .aa-chip { width: 20px; height: 20px; border-radius: 6px; } .aa-name { white-space: normal; line-height: 1.25; font-size: 12px; } }
+/* 电荷 / 疏水性曲线画布 */
+canvas.plot { width: 100%; display: block; }
+.plot-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.kd-win { display: inline-block; margin-left: 10px; font-weight: 400; font-size: 12.5px; }
+    </style>
+  </Fragment>
+
+<main class="container">
+  <h1 class="page-title">蛋白质序列分析</h1>
+  <p class="page-desc">粘贴蛋白质序列（单字母码，可带 FASTA 头部），计算分子量、理论 pI、消光系数 <span class="ktx">\varepsilon_&#123;280&#125;</span>、电荷曲线与氨基酸组成。</p>
+
+  <div class="panel">
+    <div class="field-head">
+      <label for="protIn">输入序列（20 种标准氨基酸，单字母码）</label>
+      <button type="button" class="demo-link" id="exBtn" title="填入人泛素 Ub（76 aa）示例序列演示用法">载入示例序列</button>
+    </div>
+        <div class="uniprot-row">
+      <input id="uniprotIn" type="text" placeholder="UniProt accession，如 P04637" />
+      <button type="button" class="btn btn-ghost" id="uniprotBtn">从 UniProt 获取</button>
+    </div>
+    <div class="hint" id="uniprotInfo" style="display:none"></div>
+    <div id="otPanel" style="display:none">
+      <div class="panel">
+        <div class="field-head">靶点关联（Open Targets） <span class="hint" id="otStatus"></span></div>
+        <div class="ot-card" id="otCard"></div>
+      </div>
+      <div class="panel">
+        <div class="field-head">关联疾病 Top10</div>
+        <div id="otDiseases"></div>
+      </div>
+      <div class="panel">
+        <div class="field-head">已知药物</div>
+        <div id="otDrugs"></div>
+      </div>
+    </div>
+
+<textarea autocapitalize="none" autocorrect="off" spellcheck="false" id="protIn" rows="6" placeholder="直接粘贴氨基酸序列或 FASTA（&gt;头部行自动剥离）&#10;例如：MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+    <div class="hint" id="fastaNote" style="display:none"></div>
+    <div class="row">
+      <button class="btn" id="runBtn">分析</button>
+      <button class="btn btn-ghost" id="copyBtn">复制结果</button>
+      <button class="btn btn-ghost" id="clearBtn">清空</button>
+    </div>
+    <div class="error" id="err"></div>
+  </div>
+
+  <div class="panel" id="seqPanel" style="display:none">
+    <label>序列视图</label>
+    <div id="afSeq" class="af-seq"></div>
+  </div>
+
+  <div class="panel" id="sumPanel" style="display:none">
+    <label>理化参数汇总</label>
+    <div id="sumBody"></div>
+  </div>
+
+  <div class="panel" id="compPanel" style="display:none">
+    <label>氨基酸组成</label>
+    <div id="compBody"></div>
+  </div>
+
+  <div class="panel" id="chargePanel" style="display:none">
+    <label>电荷–pH 曲线</label>
+    <canvas id="chargeCv" class="plot"></canvas>
+    <div class="plot-hint">净电荷（Bjellqvist pKa）随 pH 变化；虚线为理论 pI（净电荷＝0）。pH 高于 pI 时蛋白带负电，适合阴离子交换；低于 pI 带正电，适合阳离子交换。悬停查看数值。</div>
+  </div>
+
+  <div class="panel" id="hydPanel" style="display:none">
+    <label>Kyte-Doolittle 疏水性图谱<span class="kd-win">窗口 <select id="kdWin">
+      <option value="7">7</option><option value="9" selected>9</option><option value="11">11</option>
+      <option value="13">13</option><option value="15">15</option><option value="19">19</option>
+    </select> 残基</span></label>
+    <canvas id="hydCv" class="plot"></canvas>
+    <div class="plot-hint">滑动窗口平均疏水值；虚线 1.6 为跨膜倾向经验参考（窗口 19 时最有效）。高分区段倾向位于疏水核心 / 跨膜区。悬停查看每个残基的数值。</div>
+  </div>
+
+</main>
+
+
+<script is:inline>
+'use strict';
+const AA = 'ACDEFGHIKLMNPQRSTVWY';
+// 平均残基质量（ExPASy）
+const RES_MASS = {A:71.0788,R:156.1875,N:114.1038,D:115.0886,C:103.1388,E:129.1155,Q:128.1307,G:57.0519,H:137.1411,I:113.1594,L:113.1594,K:128.1741,M:131.1926,F:147.1766,P:97.1167,S:87.0782,T:101.1051,W:186.2132,Y:163.1760,V:99.1326};
+const H2O = 18.01524;
+// Kyte-Doolittle 疏水值
+const KD = {A:1.8,R:-4.5,N:-3.5,D:-3.5,C:2.5,Q:-3.5,E:-3.5,G:-0.4,H:-3.2,I:4.5,L:3.8,K:-3.9,M:1.9,F:2.8,P:-1.6,S:-0.8,T:-0.7,W:-0.9,Y:-1.3,V:4.2};
+// Bjellqvist pKa
+const PKA = {nTerm:7.50,cTerm:3.55,K:10.00,R:12.00,H:5.98,D:4.05,E:4.45,C:9.00,Y:10.00};
+
+const AA_NAME = {A:'Ala Alanine 丙氨酸',R:'Arg Arginine 精氨酸',N:'Asn Asparagine 天冬酰胺',D:'Asp Aspartic acid 天冬氨酸',C:'Cys Cysteine 半胱氨酸',E:'Glu Glutamic acid 谷氨酸',Q:'Gln Glutamine 谷氨酰胺',G:'Gly Glycine 甘氨酸',H:'His Histidine 组氨酸',I:'Ile Isoleucine 异亮氨酸',L:'Leu Leucine 亮氨酸',K:'Lys Lysine 赖氨酸',M:'Met Methionine 甲硫氨酸',F:'Phe Phenylalanine 苯丙氨酸',P:'Pro Proline 脯氨酸',S:'Ser Serine 丝氨酸',T:'Thr Threonine 苏氨酸',W:'Trp Tryptophan 色氨酸',Y:'Tyr Tyrosine 酪氨酸',V:'Val Valine 缬氨酸'};
+
+function cleanSeq(s) {
+  const lines = s.split(/\r?\n/);
+  const hasFasta = lines.some(l => l.trim().charAt(0) === '>');
+  const body = hasFasta ? lines.filter(l => l.trim().charAt(0) !== '>').join('') : s;
+  return body.toUpperCase().replace(/[^A-Z]/g, '');
+}
+function fastaHeader(s) {
+  for (const l of s.split(/\r?\n/)) {
+    if (l.trim().charAt(0) === '>') return l.trim().replace(/^>\s*/, '');
+  }
+  return '';
+}
+function checkSeq(s) {
+  if (!s) return '请输入序列';
+  const bad = s.split('').filter(c => !AA.includes(c));
+  if (bad.length) {
+    const u = [...new Set(bad)].join(' ');
+    return '包含不属于 20 种标准氨基酸的字符：' + u + '（B/J/O/U/X/Z 等模糊码暂不支持）';
+  }
+  return '';
+}
+function fmt(x, d) { return Number(x).toFixed(d === undefined ? 2 : d); }
+
+function analyze(s) {
+  const cnt = {};
+  for (const a of AA) cnt[a] = 0;
+  for (const c of s) cnt[c]++;
+  const n = s.length;
+  let mw = H2O;
+  for (const c of s) mw += RES_MASS[c];
+  // ε280（Gill & von Hippel）
+  const eRed  = 5500 * cnt.W + 1490 * cnt.Y;                    // 全部 Cys 还原
+  const ssNum = Math.floor(cnt.C / 2);
+  const eOx   = eRed + 125 * ssNum;                             // Cys 全部成二硫键
+  const absRed  = eRed / mw;                                    // 1 g/L（1 mg/mL），1 cm
+  const absOx   = eOx / mw;
+  // GRAVY
+  let gravy = 0;
+  for (const c of s) gravy += KD[c];
+  gravy /= n;
+  // 理论 pI：电荷函数 + 二分
+  let lo = 0, hi = 14;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (chargeAt(cnt, mid) > 0) lo = mid; else hi = mid;
+  }
+  const pI = (lo + hi) / 2;
+  return { cnt, n, mw, eRed, eOx, absRed, absOx, gravy, pI, ssNum };
+}
+
+// 净电荷（Bjellqvist pKa，含 N/C 末端）
+function chargeAt(cnt, pH) {
+  const pos = cnt.K / (1 + Math.pow(10, pH - PKA.K))
+            + cnt.R / (1 + Math.pow(10, pH - PKA.R))
+            + cnt.H / (1 + Math.pow(10, pH - PKA.H))
+            + 1 / (1 + Math.pow(10, pH - PKA.nTerm));
+  const neg = cnt.D / (1 + Math.pow(10, PKA.D - pH))
+            + cnt.E / (1 + Math.pow(10, PKA.E - pH))
+            + cnt.C / (1 + Math.pow(10, PKA.C - pH))
+            + cnt.Y / (1 + Math.pow(10, PKA.Y - pH))
+            + 1 / (1 + Math.pow(10, PKA.cTerm - pH));
+  return pos - neg;
+}
+
+// 化学类别（Lehninger 四分类）
+const AA_CLASS = { G:0, A:0, V:0, L:0, I:0, M:0, F:0, W:0, P:0, S:1, T:1, N:1, Q:1, Y:1, C:1, K:2, R:2, H:2, D:3, E:3 };
+const AA_CLS = [
+  { name: '非极性（疏水）', color: '#5e5ce6' },
+  { name: '极性（不带电）', color: '#22a5b4' },
+  { name: '带正电（碱性）', color: '#e8890c' },
+  { name: '带负电（酸性）', color: '#ff453a' }
+];
+function compTable(st) {
+  const n = st.n, massT = st.mw - H2O;   // 残基总质量（去末端水）
+  // 类别总览条 + 图例
+  const clsN = [0, 0, 0, 0];
+  for (const a of AA) clsN[AA_CLASS[a]] += st.cnt[a];
+  let html = '<div class="aa-strip">' + clsN.map((c, i) =>
+    c ? '<i style="flex:' + c + ';background:' + AA_CLS[i].color + '" title="' + AA_CLS[i].name + '：' + c + ' 个 · ' + fmt(100 * c / n, 1) + '%"></i>' : ''
+  ).join('') + '</div>';
+  html += '<div class="aa-legend">' + AA_CLS.map((c, i) =>
+    '<span><b style="background:' + c.color + '"></b>' + c.name + ' ' + clsN[i] + ' · ' + fmt(100 * clsN[i] / n, 1) + '%</span>'
+  ).join('') + '</div>';
+  // 逐氨基酸条形（按含量降序，条宽相对最高值；悬停含质量占比）
+  const present = AA.split('').filter(a => st.cnt[a] > 0)
+    .sort((x, y) => st.cnt[y] - st.cnt[x] || (x < y ? -1 : 1));
+  const max = Math.max.apply(null, present.map(a => st.cnt[a]));
+  html += present.map(a => {
+    const cls = AA_CLS[AA_CLASS[a]];
+    const pct = 100 * st.cnt[a] / n, mpct = 100 * st.cnt[a] * RES_MASS[a] / massT;
+    return '<div class="aa-row" title="' + AA_NAME[a] + '：' + st.cnt[a] + ' 个 · 摩尔 ' + fmt(pct, 1) + '% · 质量 ' + fmt(mpct, 1) + '%">'
+      + '<span class="aa-chip" style="background:' + cls.color + '">' + a + '</span>'
+      + '<span class="aa-name"><b>' + AA_NAME[a].slice(0, 3) + '</b>' + AA_NAME[a].slice(3) + '</span>'
+      + '<span class="aa-bar"><i style="width:' + (100 * st.cnt[a] / max).toFixed(1) + '%;background:' + cls.color + '"></i></span>'
+      + '<span class="aa-val"><b>' + st.cnt[a] + '</b> · ' + fmt(pct, 1) + '%</span></div>';
+  }).join('');
+  return html;
+}
+
+function summaryText(st) {
+  const L = [];
+  L.push('长度\t' + st.n + ' aa');
+  L.push('分子量\t' + fmt(st.mw, 2) + ' Da（' + fmt(st.mw / 1000, 3) + ' kDa）');
+  L.push('理论 pI\t' + fmt(st.pI, 2));
+  L.push('ε280（Cys 还原）\t' + st.eRed + ' M⁻¹cm⁻¹');
+  L.push('ε280（全部成二硫键）\t' + st.eOx + ' M⁻¹cm⁻¹');
+  L.push('A280 @1 mg/mL（还原）\t' + fmt(st.absRed, 3));
+  L.push('A280 @1 mg/mL（氧化）\t' + fmt(st.absOx, 3));
+  L.push('GRAVY\t' + fmt(st.gravy, 3));
+  const negC = st.cnt.D + st.cnt.E, posC = st.cnt.K + st.cnt.R;
+  L.push('酸性残基 D+E\t' + negC);
+  L.push('碱性残基 K+R\t' + posC);
+  L.push('');
+  L.push('氨基酸\t数目\t占比 (%)');
+  for (const a of AA) L.push(a + '\t' + st.cnt[a] + '\t' + fmt(100 * st.cnt[a] / st.n, 1));
+  return L.join('\n');
+}
+
+function render(st) {
+  let html = '<table class="tbl"><tr><th>指标</th><th>数值</th></tr>';
+  html += '<tr><td>序列长度</td><td>' + st.n + ' aa</td></tr>';
+  html += '<tr><td>分子量</td><td>' + fmt(st.mw, 2) + ' Da（' + fmt(st.mw / 1000, 3) + ' kDa）</td></tr>';
+  html += '<tr><td>理论 pI</td><td>' + fmt(st.pI, 2) + '</td></tr>';
+  html += '<tr><td>ε280（Cys 全部还原）</td><td>' + st.eRed.toLocaleString() + ' M⁻¹·cm⁻¹</td></tr>';
+  html += '<tr><td>ε280（Cys 全部成二硫键' + (st.ssNum ? '，' + st.ssNum + ' 对' : '') + '）</td><td>' + st.eOx.toLocaleString() + ' M⁻¹·cm⁻¹</td></tr>';
+  html += '<tr><td>A280 @1 mg/mL（还原）</td><td>' + fmt(st.absRed, 3) + '</td></tr>';
+  html += '<tr><td>A280 @1 mg/mL（氧化）</td><td>' + fmt(st.absOx, 3) + '</td></tr>';
+  html += '<tr><td>GRAVY 疏水指数</td><td>' + fmt(st.gravy, 3) + (st.gravy > 0 ? '（偏疏水）' : '（偏亲水）') + '</td></tr>';
+  const negC = st.cnt.D + st.cnt.E, posC = st.cnt.K + st.cnt.R;
+  html += '<tr><td>酸性 / 碱性残基</td><td>D+E = ' + negC + '　K+R = ' + posC + '</td></tr>';
+  html += '</table>';
+  document.getElementById('sumBody').innerHTML = html;
+  document.getElementById('compBody').innerHTML = compTable(st);
+  document.getElementById('sumPanel').style.display = '';
+  document.getElementById('compPanel').style.display = '';
+}
+
+let lastText = '';
+
+// ===== AF server 风格序列视图 =====
+function aaName(c) { return AA_NAME[c] || c; }   // 单字母 → "三字母 英文全称 中文"全名
+let afSeqData = '', afResizeTimer = null;
+function afCellW() {   // 探针实测残基格/组间隙宽度（与 CSS 媒体查询联动）
+  const box = document.getElementById('afSeq');
+  const probe = document.createElement('div');
+  probe.className = 'af-res';
+  probe.style.cssText = 'position:absolute;visibility:hidden;';
+  probe.innerHTML = '<i>A</i><b></b>';
+  box.appendChild(probe);
+  const w = probe.children[0].getBoundingClientRect().width, g = probe.children[1].getBoundingClientRect().width;
+  box.removeChild(probe);
+  return { w: w || 15, g: g || 8 };
+}
+function afLayout(seq) {
+  const box = document.getElementById('afSeq');
+  const avail = box.clientWidth || 800;
+  const cw = afCellW();
+  let c = 50;
+  while (c > 10 && c * cw.w + (c / 10 - 1) * cw.g > avail) c -= 10;
+  const n = seq.length;
+  let html = '';
+  for (let off = 0; off < n; off += c) {
+    const line = seq.slice(off, off + c);
+    let ruler = '', letters = '';
+    for (let j = 0; j < line.length; j++) {
+      const pos = off + j + 1;
+      const show = pos % 10 === 0 || pos === n;      // 每 10 个 + 序列末尾
+      ruler += show ? '<i>' + pos + '</i>' : '<i></i>';
+      letters += '<i title="' + pos + ' · ' + aaName(line[j]) + '">' + line[j] + '</i>';
+      if ((j + 1) % 10 === 0 && j + 1 < line.length) { ruler += '<b></b>'; letters += '<b></b>'; }
+    }
+    html += '<div class="af-ruler">' + ruler + '</div><div class="af-res">' + letters + '</div>';
+  }
+  box.innerHTML = html;
+}
+window.addEventListener('resize', () => {
+  clearTimeout(afResizeTimer);
+  afResizeTimer = setTimeout(() => {
+    if (afSeqData) afLayout(afSeqData);
+    drawCharge(); drawHyd();
+  }, 150);
+});
+
+// ===== 画布绘图引擎（电荷曲线 / 疏水性图谱） =====
+let lastSt = null, lastSeq = '';
+const PLOT_M = { l: 46, r: 14, t: 16, b: 30 }, PLOT_H = 190;
+const C_MUT = '#86868b', C_GRID = 'rgba(0,0,0,0.07)';
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function drawPlot(cv, cfg) {
+  const w = cv.clientWidth;
+  if (!w || w < 80) return;                       // 面板隐藏时跳过
+  const h = PLOT_H, dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const M = PLOT_M, pw = w - M.l - M.r, ph = h - M.t - M.b;
+  const X = v => M.l + (v - cfg.xMin) / (cfg.xMax - cfg.xMin) * pw;
+  const Y = v => M.t + (1 - (v - cfg.yMin) / (cfg.yMax - cfg.yMin)) * ph;
+  cv._map = { M, w, cfg };
+  ctx.font = '11px -apple-system, "Helvetica Neue", Arial, sans-serif';
+  // 网格 + 刻度
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (const t of cfg.yTicks) {
+    ctx.strokeStyle = C_GRID; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(M.l, Y(t)); ctx.lineTo(w - M.r, Y(t)); ctx.stroke();
+    ctx.fillStyle = C_MUT; ctx.fillText(cfg.yFmt ? cfg.yFmt(t) : t, M.l - 6, Y(t));
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const t of cfg.xTicks) {
+    ctx.strokeStyle = C_GRID; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(X(t), M.t); ctx.lineTo(X(t), h - M.b); ctx.stroke();
+    ctx.fillStyle = C_MUT; ctx.fillText(cfg.xFmt ? cfg.xFmt(t) : t, X(t), h - M.b + 6);
+  }
+  // 参考水平线
+  for (const hl of (cfg.hLines || [])) {
+    ctx.strokeStyle = hl.color || C_MUT; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(M.l, Y(hl.y)); ctx.lineTo(w - M.r, Y(hl.y)); ctx.stroke();
+    ctx.setLineDash([]);
+    if (hl.label) {
+      ctx.fillStyle = hl.color || C_MUT; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+      ctx.fillText(hl.label, w - M.r - 3, Y(hl.y) - 2);
+    }
+  }
+  // 参考垂直线
+  for (const vm of (cfg.vMarks || [])) {
+    ctx.strokeStyle = vm.color || '#ff453a'; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(X(vm.x), M.t); ctx.lineTo(X(vm.x), h - M.b); ctx.stroke();
+    ctx.setLineDash([]);
+    if (vm.label) {
+      ctx.fillStyle = vm.color || '#ff453a'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText(vm.label, X(vm.x) + 5, M.t + 2);
+    }
+  }
+  // 曲线
+  for (const c of cfg.curves) {
+    ctx.strokeStyle = c.color || '#0a84ff'; ctx.lineWidth = 1.8; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < c.xs.length; i++) {
+      const px = X(c.xs[i]), py = Y(c.ys[i]);
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  // 悬停标记
+  if (cfg.hover && cfg.hover.i >= 0) {
+    const hv = cfg.hover, c = cfg.curves[0];
+    const px = X(c.xs[hv.i]), py = Y(c.ys[hv.i]);
+    ctx.strokeStyle = 'rgba(10,132,255,0.35)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(px, M.t); ctx.lineTo(px, h - M.b); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = '#0a84ff';
+    ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fill();
+    const F = '11.5px -apple-system, "Helvetica Neue", Arial, sans-serif';
+    const segs = hv.segs || [{ t: hv.text }];                 // segs: [{t, b}] 支持局部加粗
+    let tw = 14;
+    for (const g of segs) { ctx.font = g.b ? '600 ' + F : F; tw += ctx.measureText(g.t).width; }
+    let bx = px + 10; if (bx + tw > w - M.r) bx = px - tw - 10;
+    const by = Math.max(M.t + 2, Math.min(py - 24, h - M.b - 22));
+    ctx.fillStyle = 'rgba(0,0,0,0.74)';
+    roundRect(ctx, bx, by, tw, 20, 6); ctx.fill();
+    let tx = bx + 7;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
+    for (const g of segs) {
+      ctx.font = g.b ? '600 ' + F : F;
+      ctx.fillText(g.t, tx, by + 10);
+      tx += ctx.measureText(g.t).width;
+    }
+  }
+}
+// 悬停：最近点查找 + 重绘
+function nearIdx(cv, mx) {
+  const m = cv._map, xs = cv._pts.xs;
+  const px = Math.min(Math.max(mx, m.M.l), m.w - m.M.r);
+  const v = m.cfg.xMin + (px - m.M.l) / (m.w - m.M.l - m.M.r) * (m.cfg.xMax - m.cfg.xMin);
+  let lo = 0, hi = xs.length - 1;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (xs[mid] < v) lo = mid; else hi = mid; }
+  return Math.abs(xs[lo] - v) <= Math.abs(xs[hi] - v) ? lo : hi;
+}
+function bindPlotHover(cv) {
+  cv.addEventListener('mousemove', e => {
+    if (!cv._map || !cv._pts || !cv._redraw) return;
+    const i = nearIdx(cv, e.clientX - cv.getBoundingClientRect().left);
+    if (i === cv._pts.hi) return;
+    cv._pts.hi = i;
+    const hv = { i };
+    if (cv._pts.text) hv.text = cv._pts.text(i);
+    if (cv._pts.segs) hv.segs = cv._pts.segs(i);
+    cv._redraw(hv);
+  });
+  cv.addEventListener('mouseleave', () => {
+    if (cv._pts) { cv._pts.hi = null; if (cv._redraw) cv._redraw(null); }
+  });
+}
+bindPlotHover(document.getElementById('chargeCv'));
+bindPlotHover(document.getElementById('hydCv'));
+
+// —— 电荷–pH 曲线 ——
+function drawCharge() {
+  if (!lastSt) return;
+  const cv = document.getElementById('chargeCv');
+  const xs = [], ys = [];
+  for (let pH = 0; pH <= 14.0001; pH += 0.1) { xs.push(+(pH.toFixed(1))); ys.push(chargeAt(lastSt.cnt, pH)); }
+  const lo = Math.min(-1, Math.floor(Math.min.apply(null, ys)) - 1);
+  const up = Math.max(1, Math.ceil(Math.max.apply(null, ys)) + 1);
+  const step = up - lo > 16 ? 5 : up - lo > 8 ? 2 : 1;
+  const yTicks = [];
+  for (let t = Math.ceil(lo / step) * step; t <= up; t += step) yTicks.push(t);
+  const draw = hover => drawPlot(cv, {
+    xMin: 0, xMax: 14, xTicks: [0, 2, 4, 6, 8, 10, 12, 14], xFmt: v => '' + v,
+    yMin: lo, yMax: up, yTicks, yFmt: v => (v > 0 ? '+' + v : '' + v),
+    hLines: [{ y: 0, color: 'rgba(0,0,0,0.35)' }],
+    vMarks: [{ x: lastSt.pI, color: '#ff453a', label: 'pI ' + fmt(lastSt.pI, 2) }],
+    curves: [{ xs, ys, color: '#0a84ff' }],
+    hover
+  });
+  cv._redraw = draw;
+  cv._pts = { xs, ys, hi: null, text: i => 'pH ' + xs[i].toFixed(1) + ' · ' + (ys[i] >= 0 ? '+' : '') + ys[i].toFixed(2) };
+  draw(null);
+}
+
+// —— Kyte-Doolittle 疏水性图谱 ——
+let kdWindow = 9;
+document.getElementById('kdWin').addEventListener('change', function () {
+  kdWindow = +this.value;
+  drawHyd();
+});
+function kdScores(seq, w) {
+  const n = seq.length, half = w >> 1, out = [];
+  for (let i = 0; i < n; i++) {
+    let s = 0, c = 0;
+    for (let j = Math.max(0, i - half); j <= Math.min(n - 1, i + half); j++) { s += KD[seq[j]]; c++; }
+    out.push(s / c);
+  }
+  return out;
+}
+function drawHyd() {
+  if (!lastSeq) return;
+  const cv = document.getElementById('hydCv');
+  const ys = kdScores(lastSeq, kdWindow);
+  const xs = ys.map((_, i) => i + 1);
+  const n = xs.length;
+  let lo = Math.floor((Math.min.apply(null, ys) - 0.25) * 10) / 10;
+  let up = Math.ceil((Math.max.apply(null, ys) + 0.25) * 10) / 10;
+  const show16 = up >= 1.3;                 // 上界够高才画 1.6 参考线
+  if (!show16) up = Math.max(up, 0.5);
+  const yStep = up - lo > 8 ? 2 : 1;
+  const yTicks = [];
+  for (let t = Math.ceil(lo / yStep) * yStep; t <= up; t += yStep) yTicks.push(+t.toFixed(1));
+  const xStep = [1, 2, 5, 10, 20, 50, 100, 200, 500].find(s => n / s <= 9) || 1000;
+  const xTicks = [];
+  for (let t = 1; t <= n; t += xStep) xTicks.push(t);
+  const hLines = [{ y: 0, color: 'rgba(0,0,0,0.35)' }];
+  if (show16) hLines.push({ y: 1.6, color: '#e8890c', label: '跨膜参考 1.6' });
+  const draw = hover => drawPlot(cv, {
+    xMin: 1, xMax: Math.max(n, 2), xTicks, xFmt: v => '' + v,
+    yMin: lo, yMax: up, yTicks, yFmt: v => '' + (+v).toFixed(1),
+    hLines,
+    curves: [{ xs, ys, color: '#5e5ce6' }],
+    hover
+  });
+  cv._redraw = draw;
+  cv._pts = { xs, ys, hi: null, segs: i => {
+    const nm = aaName(lastSeq[i]);
+    return [{ t: '残基 ' + xs[i] + ' · ' }, { t: nm.slice(0, 3), b: true }, { t: nm.slice(3) + ' · ' + ys[i].toFixed(2) }];
+  } };
+  draw(null);
+}
+
+const HIDE_IDS = ['sumPanel', 'compPanel', 'seqPanel', 'chargePanel', 'hydPanel'];
+
+  const escU = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const OTL = { nm: '标准名称', idc: 'Ensembl ID', bio: '生物型', err: '该蛋白在 Open Targets 无收录', loading: '正在查询 Open Targets…', noDr: '平台中未找到已知药物' };
+const OTAPI = 'https://api.platform.opentargets.org/api/v4/graphql';
+function gq(query, variables) {
+  return fetch(OTAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: query, variables: variables }) }).then(function (r) { if (!r.ok) throw new Error('ot-http'); return r.json(); });
+}
+const OQ1 = 'query($q:String!){search(queryString:$q,entityNames:["target"],page:{size:1,index:0}){hits{id name entity}}}';
+const OQ2 = 'query($id:String!){target(ensemblId:$id){id approvedSymbol approvedName biotype associatedDiseases(page:{size:10,index:0}){rows{disease{id name}score}}drugAndClinicalCandidates{rows{drug{id name mechanismsOfAction{rows{mechanismOfAction}}}maxClinicalStage diseases{disease{name}}}}}}';
+async function runOT(symbol) {
+  const panel = document.getElementById('otPanel');
+  const st = document.getElementById('otStatus');
+  panel.style.display = '';
+  document.getElementById('otCard').innerHTML = '';
+  document.getElementById('otDiseases').innerHTML = '';
+  document.getElementById('otDrugs').innerHTML = '';
+  st.textContent = OTL.loading;
+  try {
+    const r1 = await gq(OQ1, { q: symbol });
+    const hit = r1 && r1.data && r1.data.search && r1.data.search.hits && r1.data.search.hits[0];
+    if (!hit || !hit.id) { st.textContent = OTL.err; return; }
+    const r2 = await gq(OQ2, { id: hit.id });
+    const t = r2 && r2.data && r2.data.target;
+    if (!t) { st.textContent = OTL.err; return; }
+    let h = '<div class="mi"><b>' + OTL.nm + '</b>' + escU(t.approvedName || '') + '</div>';
+    h += '<div class="mi"><b>' + OTL.idc + '</b>' + escU(t.id) + '</div>';
+    h += '<div class="mi"><b>Sym</b>' + escU(t.approvedSymbol || symbol) + '</div>';
+    if (t.biotype) h += '<div class="mi"><b>' + OTL.bio + '</b>' + escU(t.biotype) + '</div>';
+    document.getElementById('otCard').innerHTML = h;
+    const drs = (t.associatedDiseases && t.associatedDiseases.rows) || [];
+    let dh = '';
+    drs.forEach(function (r0) {
+      const pct = Math.max(2, Math.min(100, Math.round(r0.score)));
+      dh += '<div class="d-row"><span class="d-name">' + escU(r0.disease && r0.disease.name) + '</span><span class="d-bar"><i style="width:' + pct + '%"></i></span><b class="d-score">' + r0.score.toFixed(1) + '</b></div>';
+    });
+    document.getElementById('otDiseases').innerHTML = dh || '<div class="hint">' + OTL.noDr + '</div>';
+    const kds = ((t.drugAndClinicalCandidates && t.drugAndClinicalCandidates.rows) || []).slice(0, 10);
+    let kh = '';
+    kds.forEach(function (r0) {
+      const moa = r0.drug && r0.drug.mechanismsOfAction && r0.drug.mechanismsOfAction.rows && r0.drug.mechanismsOfAction.rows[0] ? r0.drug.mechanismsOfAction.rows[0].mechanismOfAction : '';
+      const ind = r0.diseases && r0.diseases[0] && r0.diseases[0].disease ? r0.diseases[0].disease.name : '';
+      const stg = String(r0.maxClinicalStage || '').replace('PHASE_', 'Ph');
+      kh += '<div class="d-row d-drug"><span class="d-name"><b>' + escU(r0.drug && r0.drug.name) + '</b>' + (ind ? ' <i class="d-ind">' + escU(ind) + '</i>' : '') + '</span>' + (moa ? '<span class="d-moa">' + escU(moa) + '</span>' : '') + '<b class="d-score">' + (stg ? escU(stg) : '—') + '</b></div>';
+    });
+    document.getElementById('otDrugs').innerHTML = kh || '<div class="hint">' + OTL.noDr + '</div>';
+    st.textContent = '';
+  } catch (e) { st.textContent = OTL.err; }
+}
+document.getElementById('uniprotBtn').addEventListener('click', async function () {
+    const acc = document.getElementById('uniprotIn').value.trim();
+    const info = document.getElementById('uniprotInfo');
+    const errEl = document.getElementById('err');
+    errEl.textContent = '';
+    if (!acc) { info.style.display = 'none'; return; }
+    info.style.display = ''; info.textContent = '…';
+    try {
+      const r = await fetch('https://rest.uniprot.org/uniprotkb/' + encodeURIComponent(acc) + '.json');
+      if (!r.ok) throw new Error('http ' + r.status);
+      const j = await r.json();
+      let name = j.uniProtkbId || acc;
+      const pd = j.proteinDescription || {};
+      const rec = pd.recommendedName || (pd.alternativeNames && pd.alternativeNames[0]) || null;
+      if (rec && rec.fullName && rec.fullName.value) name = rec.fullName.value;
+      const org = j.organism && j.organism.scientificName ? j.organism.scientificName : '';
+      const seq = j.sequence && j.sequence.value ? j.sequence.value : '';
+      const mass = j.sequence && j.sequence.molWeight ? (j.sequence.molWeight / 1000).toFixed(1) + ' kDa' : '';
+      const enc = encodeURIComponent(acc);
+      info.innerHTML = '<b>' + escU(name) + '</b> · ' + escU(org) + ' · ' + seq.length + ' aa' + (mass ? ' · ' + mass : '')
+        + ' · <a href="https://www.uniprot.org/uniprotkb/' + enc + '" target="_blank" rel="noopener">UniProt</a>'
+        + ' · <a href="https://alphafold.ebi.ac.uk/entry/' + enc + '" target="_blank" rel="noopener">AlphaFold</a>'
+        + ' · <a href="https://www.rcsb.org/uniprot/' + enc + '" target="_blank" rel="noopener">PDB</a>'
+        + ' · ' + '数据 · UniProt (CC BY 4.0)';
+      if (seq) {
+        document.getElementById('protIn').value = '>' + acc + ' ' + name + '\n' + seq;
+        document.getElementById('runBtn').click();
+      }
+      const g0 = j.genes && j.genes[0]; const sym = g0 && ((g0.geneName && g0.geneName.value) || (g0.geneSymbol && g0.geneSymbol.value));
+      if (sym) { runOT(sym); } else { document.getElementById('otPanel').style.display = 'none'; }
+    } catch (e) {
+      info.style.display = 'none';
+      errEl.textContent = '获取失败：请检查 accession 或网络';
+    }
+  });
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  const err = document.getElementById('err');
+  err.textContent = '';
+  const raw = document.getElementById('protIn').value;
+  const s = cleanSeq(raw);
+  const problem = checkSeq(s);
+  const fastaNote = document.getElementById('fastaNote');
+  if (problem) {
+    err.textContent = problem;
+    HIDE_IDS.forEach(id => document.getElementById(id).style.display = 'none');
+    fastaNote.style.display = 'none';
+    afSeqData = '';
+    lastSt = null; lastSeq = '';
+    return;
+  }
+  lastSt = analyze(s);
+  lastSeq = s;
+  render(lastSt);
+  lastText = summaryText(lastSt);
+  afSeqData = s;
+  // FASTA 头部提示
+  const fh = fastaHeader(raw);
+  if (fh) {
+    fastaNote.textContent = '已识别 FASTA 头部：「' + fh + '」，分析时已剥离';
+    fastaNote.style.display = '';
+  } else fastaNote.style.display = 'none';
+  document.getElementById('seqPanel').style.display = '';
+  document.getElementById('chargePanel').style.display = '';
+  document.getElementById('hydPanel').style.display = '';
+  afLayout(s);
+  drawCharge();
+  drawHyd();
+});
+document.getElementById('exBtn').addEventListener('click', () => {
+  document.getElementById('protIn').value = 'MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG';
+  document.getElementById('runBtn').click();
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('protIn').value = '';
+  HIDE_IDS.forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('fastaNote').style.display = 'none';
+  document.getElementById('err').textContent = '';
+  afSeqData = '';
+  lastText = '';
+  lastSt = null; lastSeq = '';
+});
+document.getElementById('copyBtn').addEventListener('click', function () {
+  if (!lastText) return;
+  const self = this;
+  (navigator.clipboard ? navigator.clipboard.writeText(lastText) : Promise.reject())
+    .catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = lastText; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+    })
+    .finally(() => {
+      const old = self.textContent; self.textContent = '已复制';
+      setTimeout(() => { self.textContent = old; }, 1200);
+    });
+});
+</script>
+
+</Layout>
