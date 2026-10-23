@@ -45,7 +45,7 @@ The version lives in `package.json` and is shown in the site footer. Notable cha
 
 面向实验台的免费在线科研小工具集：**溶液配制计算器**（储液/终浓度自动算加样量，支持多溶剂与称量，内置简化稀释 C₁V₁=C₂V₂）、**蛋白质序列分析**、**分子量** 与 **单位换算**。
 
-纯前端运行——所有计算都在浏览器本地完成，无后端、无追踪。
+纯前端运行，无后端。
 
 基于 [Astro](https://astro.build) 构建纯静态站点。
 

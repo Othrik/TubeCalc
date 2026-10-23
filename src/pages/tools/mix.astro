@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 ---
 
 <Layout active="mix" title="溶液配制计算器 · TubeCalc"
-  note="计算全部在浏览器本地进行"
+  note="原理：C₁V₁=C₂V₂ 浓度守恒，逐组分求加样量，水补齐总体积；% w/v 按 g/L 计，纯液体按 100% v/v 计。文献：Sambrook J, Russell DW. Molecular Cloning: A Laboratory Manual. 4th ed. CSHL Press, 2006."
 >
   <Fragment slot="head">
     <script src="/mw.js?v=2" is:inline></script>

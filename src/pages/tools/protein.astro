@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 ---
 
 <Layout active="protein" title="蛋白质序列分析 · TubeCalc"
-  note="分子量＝平均残基质量之和＋H2O；pI 为 Bjellqvist pKa 近似值；ε280 按 Trp 5500 / Tyr 1490 / 胱氨酸 125 估算（Gill &amp;amp; von Hippel）"
+  note="原理：分子量＝平均残基质量之和＋H2O；ε280 按 Trp 5500 / Tyr 1490 / 胱氨酸 125 估算；pI 为 Bjellqvist pKa 近似值。文献：Gill SC, von Hippel PH. Anal Biochem. 1989;182(2):319-26；Bjellqvist B, et al. Electrophoresis. 1993;14(12):1223-31."
 >
   <Fragment slot="head">
     <style is:inline>
