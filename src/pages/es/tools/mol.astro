@@ -152,7 +152,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { iupac: 'Nombre IUPAC', hbd: 'Donantes de puentes H', hba: 'Aceptores de puentes H', rot: 'Enlaces rotatorios', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estructura: coincidencia más cercana de PubChem para esta fórmula', pubHdr: 'Datos de PubChem', rdkHdr: 'RDKit (cálculo local)', exM: 'Masa exacta', rings: 'N.º de anillos', arom: 'Anillos aromáticos', empty: 'Introduce una fórmula, una cadena SMILES o el nombre del compuesto', invalid: 'SMILES no válido: ', pub: 'No se pudo resolver el nombre vía PubChem (sin red o no encontrado). Comprueba el nombre o pega directamente una cadena SMILES.', via: 'Estructura y fórmula resueltas vía PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Interpretado como SMILES: estructura dibujada' };
+  const L = { iupac: 'Nombre IUPAC', hbd: 'Donantes de puentes H', hba: 'Aceptores de puentes H', rot: 'Enlaces rotatorios', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estructura: coincidencia más cercana de PubChem para esta fórmula', pubHdr: 'Datos de PubChem', rdkHdr: 'RDKit (cálculo local)', viaSmi: 'Compuesto coincidente en PubChem', exM: 'Masa exacta', rings: 'N.º de anillos', arom: 'Anillos aromáticos', empty: 'Introduce una fórmula, una cadena SMILES o el nombre del compuesto', invalid: 'SMILES no válido: ', pub: 'No se pudo resolver el nombre vía PubChem (sin red o no encontrado). Comprueba el nombre o pega directamente una cadena SMILES.', via: 'Estructura y fórmula resueltas vía PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Interpretado como SMILES: estructura dibujada' };
   const TH = ['Elemento', 'Átomos', 'Peso atómico', 'Contribución (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -434,7 +434,9 @@ function hillFormula(c) {
     }
     try {                               // ② SMILES
       const sc = smilesCounts(raw);
-      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified(); return;
+      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified();
+      pubchemData('smiles', raw).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; setVia(L.viaSmi); setInfoUnified(); } });
+      return;
     } catch (e2) {}
     if (fCounts) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }   // 链式但 SMILES 失败 → 回落公式
     if (/^\d{1,12}$/.test(raw)) {        // ③ CID

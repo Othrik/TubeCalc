@@ -152,7 +152,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { iupac: 'Nom IUPAC', hbd: 'Donneurs de liaison H', hba: 'Accepteurs de liaison H', rot: 'Liaisons rotatives', chg: 'Charge formelle', heavy: 'Atomes lourds', viaF: 'Structure : correspondance la plus proche de PubChem pour cette formule', pubHdr: 'Données PubChem', rdkHdr: 'RDKit (calcul local)', exM: 'Masse exacte', rings: 'Nombre de cycles', arom: 'Cycles aromatiques', empty: 'Saisissez une formule, une chaîne SMILES ou le nom du composé', invalid: 'SMILES non valide : ', pub: 'Impossible de résoudre le nom via PubChem (pas de réseau ou introuvable). Vérifiez le nom ou collez directement une chaîne SMILES.', via: 'Structure et formule résolues via PubChem', hill: 'Formule moléculaire (Hill) :', modeF: 'Interprété comme formule chimique', modeS: 'Interprété comme SMILES — structure dessinée' };
+  const L = { iupac: 'Nom IUPAC', hbd: 'Donneurs de liaison H', hba: 'Accepteurs de liaison H', rot: 'Liaisons rotatives', chg: 'Charge formelle', heavy: 'Atomes lourds', viaF: 'Structure : correspondance la plus proche de PubChem pour cette formule', pubHdr: 'Données PubChem', rdkHdr: 'RDKit (calcul local)', viaSmi: 'Composé correspondant dans PubChem', exM: 'Masse exacte', rings: 'Nombre de cycles', arom: 'Cycles aromatiques', empty: 'Saisissez une formule, une chaîne SMILES ou le nom du composé', invalid: 'SMILES non valide : ', pub: 'Impossible de résoudre le nom via PubChem (pas de réseau ou introuvable). Vérifiez le nom ou collez directement une chaîne SMILES.', via: 'Structure et formule résolues via PubChem', hill: 'Formule moléculaire (Hill) :', modeF: 'Interprété comme formule chimique', modeS: 'Interprété comme SMILES — structure dessinée' };
   const TH = ['Élément', 'Atomes', 'Masse atomique', 'Contribution (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -434,7 +434,9 @@ function hillFormula(c) {
     }
     try {                               // ② SMILES
       const sc = smilesCounts(raw);
-      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified(); return;
+      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified();
+      pubchemData('smiles', raw).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; setVia(L.viaSmi); setInfoUnified(); } });
+      return;
     } catch (e2) {}
     if (fCounts) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }   // 链式但 SMILES 失败 → 回落公式
     if (/^\d{1,12}$/.test(raw)) {        // ③ CID

@@ -152,7 +152,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { iupac: 'Nome IUPAC', hbd: 'Dadores de pontes H', hba: 'Aceptores de pontes H', rot: 'Ligações rotativas', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estrutura: correspondência mais próxima do PubChem para esta fórmula', pubHdr: 'Dados do PubChem', rdkHdr: 'RDKit (cálculo local)', exM: 'Massa exata', rings: 'N.º de anéis', arom: 'Anéis aromáticos', empty: 'Introduz uma fórmula, uma cadeia SMILES ou o nome do composto', invalid: 'SMILES inválido: ', pub: 'Não foi possível resolver o nome via PubChem (sem rede ou não encontrado). Verifica o nome ou cola diretamente uma cadeia SMILES.', via: 'Estrutura e fórmula resolvidas via PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Interpretado como SMILES: estrutura desenhada' };
+  const L = { iupac: 'Nome IUPAC', hbd: 'Dadores de pontes H', hba: 'Aceptores de pontes H', rot: 'Ligações rotativas', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estrutura: correspondência mais próxima do PubChem para esta fórmula', pubHdr: 'Dados do PubChem', rdkHdr: 'RDKit (cálculo local)', viaSmi: 'Composto correspondente no PubChem', exM: 'Massa exata', rings: 'N.º de anéis', arom: 'Anéis aromáticos', empty: 'Introduz uma fórmula, uma cadeia SMILES ou o nome do composto', invalid: 'SMILES inválido: ', pub: 'Não foi possível resolver o nome via PubChem (sem rede ou não encontrado). Verifica o nome ou cola diretamente uma cadeia SMILES.', via: 'Estrutura e fórmula resolvidas via PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Interpretado como SMILES: estrutura desenhada' };
   const TH = ['Elemento', 'Átomos', 'Peso atómico', 'Contribuição (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -434,7 +434,9 @@ function hillFormula(c) {
     }
     try {                               // ② SMILES
       const sc = smilesCounts(raw);
-      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified(); return;
+      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified();
+      pubchemData('smiles', raw).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; setVia(L.viaSmi); setInfoUnified(); } });
+      return;
     } catch (e2) {}
     if (fCounts) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }   // 链式但 SMILES 失败 → 回落公式
     if (/^\d{1,12}$/.test(raw)) {        // ③ CID

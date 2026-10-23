@@ -152,7 +152,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: 'Interpreted as SMILES — structure drawn' };
+  const L = { iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', viaSmi: 'Compound matched in PubChem', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: 'Interpreted as SMILES — structure drawn' };
   const TH = ['Element', 'Count', 'Atomic weight', 'Contribution (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -434,7 +434,9 @@ function hillFormula(c) {
     }
     try {                               // ② SMILES
       const sc = smilesCounts(raw);
-      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified(); return;
+      renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified();
+      pubchemData('smiles', raw).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; setVia(L.viaSmi); setInfoUnified(); } });
+      return;
     } catch (e2) {}
     if (fCounts) { renderCounts(fCounts); showResult(false, L.modeF, null); return; }   // 链式但 SMILES 失败 → 回落公式
     if (/^\d{1,12}$/.test(raw)) {        // ③ CID
