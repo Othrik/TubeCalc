@@ -88,7 +88,7 @@ a:hover { text-decoration: underline; }
   box-shadow: 0 1px 0 rgba(0, 0, 0, .02);
 }
 .nav-inner {
-  max-width: 1024px; margin: 0 auto; padding: max(0px, env(safe-area-inset-top)) 20px 0;
+  max-width: 1280px; margin: 0 auto; padding: max(0px, env(safe-area-inset-top)) 20px 0;
   height: 56px; display: flex; align-items: center; gap: 18px;
 }
 
@@ -173,7 +173,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* 主体 */
-.container { max-width: none; margin: 0 auto; padding: 36px clamp(20px, 3.5vw, 56px); width: 100%; flex: 1; }
+.container { max-width: 1280px; margin: 0 auto; padding: 36px clamp(20px, 3.5vw, 56px); width: 100%; flex: 1; }
 .hero { text-align: center; margin: 16px 0 40px; }
 .hero h1 {
   font-size: clamp(30px, 5.5vw, 44px); letter-spacing: .3px;
