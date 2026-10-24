@@ -420,7 +420,7 @@ function hillFormula(c) {
     const img = document.createElement('img');
     img.alt = 'CDK 2D structure';
     img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
-    img.src = '/cdk/render?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50);
+    img.src = '/cdk/render?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50) + '&s=2';
     img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
     var cdkTries = 0;
     img.onerror = function () { cdkTries++; if (cdkTries === 1) { img.src = cdkFallback; } else { failCell(cell); } };
