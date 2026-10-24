@@ -10,7 +10,8 @@ import Layout from '../../../layouts/Layout.astro';
   <h1 class="page-title">Outils moléculaires</h1>
   <p class="page-desc">Saisissez une formule chimique (parenthèses imbriquées et hydrates), une chaîne SMILES ou le nom du composé — le type est détecté automatiquement ; les SMILES et les noms dessinent aussi la structure 2D.</p>
 
-  <div class="panel">
+  <div class="panel in-grid">
+    <div class="in-left">
     <label for="q">Formule · SMILES · nom — détection automatique</label>
     <input type="text" id="q" placeholder="ex. C6H12O6, CuSO4·5H2O, CC(=O)Oc1ccccc1C(=O)O ou « caféine »" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
     <div class="hint">Une seule case pour tout : formules chimiques (parenthèses et hydrates), structures SMILES ou noms de composés via PubChem — le type d’entrée est détecté automatiquement.</div>
@@ -18,6 +19,12 @@ import Layout from '../../../layouts/Layout.astro';
     <span class="hint" style="display:inline-block;margin-left:10px">Essayez :
       <a href="#" class="eg" data-f="C6H12O6">C6H12O6</a> · <a href="#" class="eg" data-f="CuSO4·5H2O">CuSO4·5H2O</a> · <a href="#" class="eg" data-f="(NH4)2SO4">(NH4)2SO4</a> · <a href="#" class="eg" data-f="Ca(OH)2">Ca(OH)2</a> · <a href="#" class="eg-s" data-s="CC(=O)Oc1ccccc1C(=O)O">Aspirine</a> · <a href="#" class="eg-s" data-s="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Caféine</a> · <a href="#" class="eg-s" data-s="OC[C@H]1O[C@H](O)[C@H](O)[C@H](O)[C@H]1O">Glucose</a> · <a href="#" class="eg-s" data-s="NC(CO)(CO)CO">Tris</a> · <a href="#" class="eg-s" data-s="OC(=O)CN(CCN(CC(=O)O)CC(=O)O)CC(=O)O">EDTA</a>
     </span>
+    </div>
+    <button type="button" class="draw-card" id="drawBtn">
+      <span class="dc-ico">🧪</span>
+      <span class="dc-tx">Dessiner / charger une molécule</span>
+      <span class="dc-sub">Dessinez ou collez un MOL — détection et recherche automatiques</span>
+    </button>
     <div class="error" id="err"></div>
 
 </div>
@@ -57,7 +64,14 @@ import Layout from '../../../layouts/Layout.astro';
   <style is:inline>
 .struct-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px;margin-top:14px;display:flex;justify-content:center}
 .struct-wrap svg{max-width:100%;height:auto}
-  </style>
+    .in-grid{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:900px){.in-grid{grid-template-columns:1fr 236px;align-items:stretch}}
+  .draw-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1.5px dashed #b9d6f2;border-radius:14px;background:linear-gradient(160deg,#f4f9ff,#eaf3ff);color:#0a66c2;cursor:pointer;font-size:15.5px;font-weight:600;padding:18px 14px;min-height:118px;font-family:inherit;transition:border-color .15s,background .15s}
+  .draw-card:hover{border-color:#0a84ff;background:linear-gradient(160deg,#ecf5ff,#dfeeff)}
+  .draw-card .dc-ico{font-size:26px;line-height:1}
+  .draw-card .dc-sub{font-size:12px;font-weight:400;color:#5a7fa6;line-height:1.55;text-align:center}
+  .draw-card .dc-sub a{color:#0a84ff;text-decoration:underline;pointer-events:none}
+</style>
 </main>
 
 
@@ -323,7 +337,6 @@ function hillFormula(c) {
     document.addEventListener('click', function (ev) { if (dd && !dd.contains(ev.target)) menu.style.display = 'none'; });
     [].forEach.call(menu.querySelectorAll('.eng-item'), function (b) {
       b.addEventListener('click', function () {
-        if (b.dataset.e === 'ketcher') { menu.style.display = 'none'; openKetcher(); return; }
         try { localStorage.setItem('tubecalc_eng', b.dataset.e); } catch (e3) {}
         curB.innerHTML = NAMES[b.dataset.e] + ' <span class="eng-car">&#9662;</span>';
         menu.style.display = 'none';
@@ -355,6 +368,8 @@ function hillFormula(c) {
       document.head.appendChild(sc);
     })(0);
   }
+  var db = $('drawBtn');
+    if (db) db.addEventListener('click', function () { openKetcher(); });
   function kInit() {
     var timer = setInterval(function () {
       if (window.__kReady && window.ketcher) { clearInterval(timer); kReady = true; kShow(); }
