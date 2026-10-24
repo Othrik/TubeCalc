@@ -173,7 +173,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* 主体 */
-.container { max-width: 1024px; margin: 0 auto; padding: 36px 20px; width: 100%; flex: 1; }
+.container { max-width: none; margin: 0 auto; padding: 36px clamp(20px, 3.5vw, 56px); width: 100%; flex: 1; }
 .hero { text-align: center; margin: 16px 0 40px; }
 .hero h1 {
   font-size: clamp(30px, 5.5vw, 44px); letter-spacing: .3px;
@@ -226,10 +226,11 @@ a:hover { text-decoration: underline; }
 
 /* 工具页 */
 .page-title { font-size: clamp(24px, 4.5vw, 30px); margin-bottom: 6px; font-weight: 700; }
-.page-desc { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+.page-desc { color: var(--muted); font-size: 15px; margin-bottom: 24px;   max-width: 1100px; margin-left: 0;
+}
 .panel {
   background: var(--glass); border: 1px solid var(--border);
-  border-radius: 20px; padding: 24px; margin-bottom: 18px;
+  border-radius: 20px; padding: 24px; margin: 0 auto 18px; max-width: 1400px;
   box-shadow: var(--shadow);
 }
 label { display: block; font-size: 13.5px; color: var(--muted); margin: 12px 0 6px; font-weight: 500; }
