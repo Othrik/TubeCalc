@@ -35,7 +35,7 @@ import Layout from '../../../layouts/Layout.astro';
     <div id="resStatics" style="display:none"></div>
     <div id="molInfo" class="mol-info" style="display:none"></div>
   </div>
-    <div class="hint" id="sVia" style="display:none;margin-top:8px"></div>
+    <div class="hint" id="sVia" style="display:none;margin-top:8px"></div><div id="kModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(29,29,31,.5)"><div style="position:absolute;inset:3vh 3vw;background:#fff;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.25)"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid #e5e5ea;flex-wrap:wrap"><b style="font-size:15px">Ketcher</b><div style="display:flex;gap:8px"><button type="button" class="btn" id="kApply">应用</button><button type="button" class="btn" id="kClose" style="background:#8e8e93">关闭</button></div></div><div id="kApp" style="flex:1;min-height:0;position:relative"></div></div></div>
   </div>
 
   <div class="panel result" id="convPanel" style="display:none">
@@ -156,7 +156,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: 'Dangers principaux', hzSig: 'Signal', hzPict: 'Pictogrammes', hzP: "Conseils de prudence", common: 'Nom courant', brand: 'Noms commerciaux', noZh: 'Ce nom chinois n’est pas encore dans le dictionnaire. Essayez un nom anglais, un numéro CAS ou un SMILES.', npName: 'Nom', npVia: 'via COCONUT', iupac: 'Nom IUPAC', hbd: 'Donneurs de liaison H', hba: 'Accepteurs de liaison H', rot: 'Liaisons rotatives', chg: 'Charge formelle', heavy: 'Atomes lourds', viaF: 'Structure : correspondance la plus proche de PubChem pour cette formule', pubHdr: 'Données PubChem', rdkHdr: 'RDKit (calcul local)', viaSmi: 'Composé correspondant dans PubChem', prefName: 'Nom préféré', maxPhase: 'Phase max', molType: 'Type', therapeutic: 'Thérapeutique', bioact: 'Activité', cheblErr: 'Échec ChEMBL : vérifiez l’ID (ex. CHEMBL25)', viaCir: 'Numéro CAS résolu via NCI CIR', casErr: 'CAS non résolu : essayez le nom ou vérifiez le numéro', exM: 'Masse exacte', rings: 'Nombre de cycles', arom: 'Cycles aromatiques', empty: 'Saisissez une formule, une chaîne SMILES ou le nom du composé', invalid: 'SMILES non valide : ', pub: 'Impossible de résoudre le nom via PubChem (pas de réseau ou introuvable). Vérifiez le nom ou collez directement une chaîne SMILES.', via: 'Structure et formule résolues via PubChem', hill: 'Formule moléculaire (Hill) :', modeF: 'Interprété comme formule chimique', modeS: 'Structure 2D' };
+  const L = { hzHdr: 'Dangers principaux', hzSig: 'Signal', hzPict: 'Pictogrammes', hzP: "Conseils de prudence", common: 'Nom courant', brand: 'Noms commerciaux', kApply: 'Appliquer', kClose: 'Fermer', noZh: 'Ce nom chinois n’est pas encore dans le dictionnaire. Essayez un nom anglais, un numéro CAS ou un SMILES.', npName: 'Nom', npVia: 'via COCONUT', iupac: 'Nom IUPAC', hbd: 'Donneurs de liaison H', hba: 'Accepteurs de liaison H', rot: 'Liaisons rotatives', chg: 'Charge formelle', heavy: 'Atomes lourds', viaF: 'Structure : correspondance la plus proche de PubChem pour cette formule', pubHdr: 'Données PubChem', rdkHdr: 'RDKit (calcul local)', viaSmi: 'Composé correspondant dans PubChem', prefName: 'Nom préféré', maxPhase: 'Phase max', molType: 'Type', therapeutic: 'Thérapeutique', bioact: 'Activité', cheblErr: 'Échec ChEMBL : vérifiez l’ID (ex. CHEMBL25)', viaCir: 'Numéro CAS résolu via NCI CIR', casErr: 'CAS non résolu : essayez le nom ou vérifiez le numéro', exM: 'Masse exacte', rings: 'Nombre de cycles', arom: 'Cycles aromatiques', empty: 'Saisissez une formule, une chaîne SMILES ou le nom du composé', invalid: 'SMILES non valide : ', pub: 'Impossible de résoudre le nom via PubChem (pas de réseau ou introuvable). Vérifiez le nom ou collez directement une chaîne SMILES.', via: 'Structure et formule résolues via PubChem', hill: 'Formule moléculaire (Hill) :', modeF: 'Interprété comme formule chimique', modeS: 'Structure 2D' };
   const TH = ['Élément', 'Atomes', 'Masse atomique', 'Contribution (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -323,6 +323,7 @@ function hillFormula(c) {
     document.addEventListener('click', function (ev) { if (dd && !dd.contains(ev.target)) menu.style.display = 'none'; });
     [].forEach.call(menu.querySelectorAll('.eng-item'), function (b) {
       b.addEventListener('click', function () {
+        if (b.dataset.e === 'ketcher') { menu.style.display = 'none'; openKetcher(); return; }
         try { localStorage.setItem('tubecalc_eng', b.dataset.e); } catch (e3) {}
         curB.innerHTML = NAMES[b.dataset.e] + ' <span class="eng-car">&#9662;</span>';
         menu.style.display = 'none';
@@ -330,6 +331,46 @@ function hillFormula(c) {
       });
     });
   }
+  var kLoaded = false, kReady = false;
+  function openKetcher() {
+    var m = $('kModal'); if (!m) return; m.style.display = '';
+    var ab = $('kApply'), cb = $('kClose');
+    if (ab && L.kApply) ab.textContent = L.kApply;
+    if (cb && L.kClose) cb.textContent = L.kClose;
+    if (kReady && window.ketcher) { kShow(); return; }
+    if (kLoaded) return;
+    kLoaded = true;
+    $('kApp').innerHTML = '<div style="padding:24px;color:#8e8e93;font-size:14px">Ketcher loading…</div>';
+    window.global = window; if (!window.process) window.process = { env: {} }; if (!window.ketcher) window.ketcher = {};
+    var css = document.createElement('link'); css.rel = 'stylesheet';
+    css.href = '/ketcher/ketcher.css';
+    var css2 = document.createElement('link'); css2.rel = 'stylesheet'; css2.href = '/ketcher/ketcher-app.css'; document.head.appendChild(css2);
+    document.head.appendChild(css);
+    var seq = ['/ketcher/ketcher-app.js'];
+    (function nxt(i) {
+      if (i >= seq.length) { kInit(); return; }
+      var sc = document.createElement('script'); sc.src = seq[i]; sc.type = 'module';
+      sc.onload = function () { nxt(i + 1); };
+      sc.onerror = function () { $('kApp').innerHTML = '<div style="padding:24px;color:#8e8e93">Ketcher script failed to load</div>'; kLoaded = false; };
+      document.head.appendChild(sc);
+    })(0);
+  }
+  function kInit() {
+    var timer = setInterval(function () {
+      if (window.__kReady && window.ketcher) { clearInterval(timer); kReady = true; kShow(); }
+    }, 250);
+  }
+  function kShow() {
+    if (window.ketcher && lastSmiles) { try { window.ketcher.setMolecule(lastSmiles).catch(function () {}); } catch (e) {} }
+  }
+  (function () {
+    var ab = $('kApply'), cb = $('kClose'), m = $('kModal');
+    if (cb) cb.addEventListener('click', function () { m.style.display = 'none'; });
+    if (ab) ab.addEventListener('click', function () {
+      if (window.ketcher) { window.ketcher.getSmiles().then(function (smi) { m.style.display = 'none'; if (smi) { $('q').value = smi; go(); } }).catch(function () { m.style.display = 'none'; }); }
+      else { m.style.display = 'none'; }
+    });
+  })();
   function draw(smiles) {
     lastSmiles = smiles;
     const d = new SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false, noCondense: true });

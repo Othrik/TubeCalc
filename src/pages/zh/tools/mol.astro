@@ -25,7 +25,7 @@ import Layout from '../../../layouts/Layout.astro';
   <div class="panel result" id="resultPanel" style="display:none">
     <div class="res-head"><div class="hint" id="modeBadge" style="display:none"></div><div class="dl-wrap" id="dlWrap" style="display:none"><button class="btn" id="dlBtn">下载 &#9662;</button><div class="dl-menu" id="dlMenu"><button class="dl-item" data-fmt="svg">SVG</button><button class="dl-item" data-fmt="png">PNG</button><button class="dl-item" data-fmt="jpeg">JPEG</button><button class="dl-item" data-fmt="webp">WebP</button></div></div></div>
 
-    <div class="eng-sw" id="engSw"><span class="eng-lb">绘制引擎</span><div class="eng-dd" id="engDd"><button type="button" class="eng-cur" id="engCur">RDKit <span class="eng-car">&#9662;</span></button><div class="eng-menu" id="engMenu" style="display:none"><button type="button" class="eng-item" data-e="rdkit">RDKit</button><button type="button" class="eng-item" data-e="sd">SmilesDrawer</button><button type="button" class="eng-item" data-e="cdk">CDK</button><button type="button" class="eng-item" data-e="indigo">Indigo</button><button type="button" class="eng-item" data-e="chematic">Chematic</button></div></div></div>
+    <div class="eng-sw" id="engSw"><span class="eng-lb">绘制引擎</span><div class="eng-dd" id="engDd"><button type="button" class="eng-cur" id="engCur">RDKit <span class="eng-car">&#9662;</span></button><div class="eng-menu" id="engMenu" style="display:none"><button type="button" class="eng-item" data-e="rdkit">RDKit</button><button type="button" class="eng-item" data-e="sd">SmilesDrawer</button><button type="button" class="eng-item" data-e="cdk">CDK</button><button type="button" class="eng-item" data-e="indigo">Indigo</button><button type="button" class="eng-item" data-e="chematic">Chematic</button><button type="button" class="eng-item" data-e="ketcher">Ketcher</button></div></div></div>
 <div class="struct-wrap" id="structWrap" style="display:none"><div id="structSvg"></div></div>
     
     <div id="mwBlock"><label style="margin-top:12px">摩尔质量</label>
@@ -35,7 +35,7 @@ import Layout from '../../../layouts/Layout.astro';
     <div id="resStatics" style="display:none"></div>
     <div id="molInfo" class="mol-info" style="display:none"></div>
   </div>
-    <div class="hint" id="sVia" style="display:none;margin-top:8px"></div>
+    <div class="hint" id="sVia" style="display:none;margin-top:8px"></div><div id="kModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(29,29,31,.5)"><div style="position:absolute;inset:3vh 3vw;background:#fff;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.25)"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid #e5e5ea;flex-wrap:wrap"><b style="font-size:15px">Ketcher</b><div style="display:flex;gap:8px"><button type="button" class="btn" id="kApply">应用</button><button type="button" class="btn" id="kClose" style="background:#8e8e93">关闭</button></div></div><div id="kApp" style="flex:1;min-height:0;position:relative"></div></div></div>
   </div>
 
   <div class="panel result" id="convPanel" style="display:none">
@@ -156,7 +156,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: '主要危害', hzSig: '信号词', hzPict: '象形图', hzP: "防范说明", common: '通用名', brand: '商品名', noZh: '暂未收录该中文名，请改用英文名、CAS 号或 SMILES', npName: '名称', npVia: '来自 COCONUT', iupac: 'IUPAC 名称', hbd: '氢键供体', hba: '氢键受体', rot: '可旋转键', chg: '形式电荷', heavy: '重原子数', viaF: '结构式：PubChem 按该分子式匹配的最接近结果', pubHdr: 'PubChem 数据', rdkHdr: 'RDKit 本地计算', viaSmi: '已在 PubChem 匹配该化合物', prefName: '首选名称', maxPhase: '最高研发阶段', molType: '类型', therapeutic: '治疗用', bioact: '生物活性', cheblErr: 'ChEMBL 查询失败：请检查 ID（如 CHEMBL25）', viaCir: 'CAS 号已经 NCI CIR 解析', casErr: 'CAS 号解析失败：请改用化合物名或核对 CAS 号', exM: '精确质量', rings: '环数', arom: '芳香环', empty: '请输入化学式、SMILES 串或化合物名称', invalid: 'SMILES 无效：', pub: '无法经 PubChem 解析该名称（无网络或未收录）。请检查名称，或直接粘贴 SMILES 串。', via: '结构与分子式经 PubChem 解析', hill: '分子式（Hill）：', modeF: '已识别为化学式', modeS: '2D结构式' };
+  const L = { hzHdr: '主要危害', hzSig: '信号词', hzPict: '象形图', hzP: "防范说明", common: '通用名', brand: '商品名', kApply: '应用', kClose: '关闭', noZh: '暂未收录该中文名，请改用英文名、CAS 号或 SMILES', npName: '名称', npVia: '来自 COCONUT', iupac: 'IUPAC 名称', hbd: '氢键供体', hba: '氢键受体', rot: '可旋转键', chg: '形式电荷', heavy: '重原子数', viaF: '结构式：PubChem 按该分子式匹配的最接近结果', pubHdr: 'PubChem 数据', rdkHdr: 'RDKit 本地计算', viaSmi: '已在 PubChem 匹配该化合物', prefName: '首选名称', maxPhase: '最高研发阶段', molType: '类型', therapeutic: '治疗用', bioact: '生物活性', cheblErr: 'ChEMBL 查询失败：请检查 ID（如 CHEMBL25）', viaCir: 'CAS 号已经 NCI CIR 解析', casErr: 'CAS 号解析失败：请改用化合物名或核对 CAS 号', exM: '精确质量', rings: '环数', arom: '芳香环', empty: '请输入化学式、SMILES 串或化合物名称', invalid: 'SMILES 无效：', pub: '无法经 PubChem 解析该名称（无网络或未收录）。请检查名称，或直接粘贴 SMILES 串。', via: '结构与分子式经 PubChem 解析', hill: '分子式（Hill）：', modeF: '已识别为化学式', modeS: '2D结构式' };
   const TH = ['元素', '原子数', '相对原子质量', '贡献 (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -323,6 +323,7 @@ function hillFormula(c) {
     document.addEventListener('click', function (ev) { if (dd && !dd.contains(ev.target)) menu.style.display = 'none'; });
     [].forEach.call(menu.querySelectorAll('.eng-item'), function (b) {
       b.addEventListener('click', function () {
+        if (b.dataset.e === 'ketcher') { menu.style.display = 'none'; openKetcher(); return; }
         try { localStorage.setItem('tubecalc_eng', b.dataset.e); } catch (e3) {}
         curB.innerHTML = NAMES[b.dataset.e] + ' <span class="eng-car">&#9662;</span>';
         menu.style.display = 'none';
@@ -330,6 +331,46 @@ function hillFormula(c) {
       });
     });
   }
+  var kLoaded = false, kReady = false;
+  function openKetcher() {
+    var m = $('kModal'); if (!m) return; m.style.display = '';
+    var ab = $('kApply'), cb = $('kClose');
+    if (ab && L.kApply) ab.textContent = L.kApply;
+    if (cb && L.kClose) cb.textContent = L.kClose;
+    if (kReady && window.ketcher) { kShow(); return; }
+    if (kLoaded) return;
+    kLoaded = true;
+    $('kApp').innerHTML = '<div style="padding:24px;color:#8e8e93;font-size:14px">Ketcher loading…</div>';
+    window.global = window; if (!window.process) window.process = { env: {} }; if (!window.ketcher) window.ketcher = {};
+    var css = document.createElement('link'); css.rel = 'stylesheet';
+    css.href = '/ketcher/ketcher.css';
+    var css2 = document.createElement('link'); css2.rel = 'stylesheet'; css2.href = '/ketcher/ketcher-app.css'; document.head.appendChild(css2);
+    document.head.appendChild(css);
+    var seq = ['/ketcher/ketcher-app.js'];
+    (function nxt(i) {
+      if (i >= seq.length) { kInit(); return; }
+      var sc = document.createElement('script'); sc.src = seq[i]; sc.type = 'module';
+      sc.onload = function () { nxt(i + 1); };
+      sc.onerror = function () { $('kApp').innerHTML = '<div style="padding:24px;color:#8e8e93">Ketcher script failed to load</div>'; kLoaded = false; };
+      document.head.appendChild(sc);
+    })(0);
+  }
+  function kInit() {
+    var timer = setInterval(function () {
+      if (window.__kReady && window.ketcher) { clearInterval(timer); kReady = true; kShow(); }
+    }, 250);
+  }
+  function kShow() {
+    if (window.ketcher && lastSmiles) { try { window.ketcher.setMolecule(lastSmiles).catch(function () {}); } catch (e) {} }
+  }
+  (function () {
+    var ab = $('kApply'), cb = $('kClose'), m = $('kModal');
+    if (cb) cb.addEventListener('click', function () { m.style.display = 'none'; });
+    if (ab) ab.addEventListener('click', function () {
+      if (window.ketcher) { window.ketcher.getSmiles().then(function (smi) { m.style.display = 'none'; if (smi) { $('q').value = smi; go(); } }).catch(function () { m.style.display = 'none'; }); }
+      else { m.style.display = 'none'; }
+    });
+  })();
   function draw(smiles) {
     lastSmiles = smiles;
     const d = new SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false, noCondense: true });
