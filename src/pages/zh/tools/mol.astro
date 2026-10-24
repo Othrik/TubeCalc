@@ -394,7 +394,7 @@ function hillFormula(c) {
     if (ENG === 'cdk') { cdkCell(d, cell, smi, w, h, 1); return; }
     if (ENG === 'indigo') { indigoCell(d, cell, smi, w, h, 1); return; }
     if (ENG === 'chematic') { chemCell(d, cell, smi, w, h, 1); return; }
-    if (ENG === 'sd') { failCell(cell); return; }
+    if (ENG === 'sd') { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); return; }
     if (RDK) {
       if (!rdkitDrawOne(cell, smi, w, h)) { failCell(cell); }
       return;
