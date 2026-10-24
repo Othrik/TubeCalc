@@ -1,7 +1,7 @@
 {
   "name": "tubecalc-site",
   "type": "module",
-  "version": "1.8.6",
+  "version": "1.8.20",
   "private": true,
   "scripts": {
     "dev": "astro dev",
@@ -18,8 +18,5 @@
   },
   "devDependencies": {
     "sharp": "^0.35.5"
-  }
-}
-   "sharp": "^0.35.5"
   }
 }

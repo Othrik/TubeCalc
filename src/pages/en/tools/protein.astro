@@ -2,8 +2,8 @@
 import Layout from '../../../layouts/Layout.astro';
 ---
 
-<Layout active="protein" lang="zh" title="蛋白质序列分析 · TubeCalc"
-  note="Target–disease–drug associations via Open Targets Platform (GraphQL). 原理：分子量＝平均残基质量之和＋H2O；ε280 按 Trp 5500 / Tyr 1490 / 胱氨酸 125 估算；pI 为 Bjellqvist pKa 近似值。文献：Gill SC, von Hippel PH. Anal Biochem. 1989;182(2):319-26；Bjellqvist B, et al. Electrophoresis. 1993;14(12):1223-31."
+<Layout active="protein" lang="en" title="Protein Sequence Analysis · TubeCalc"
+  note="Target–disease–drug associations via Open Targets Platform (GraphQL). Principle: MW = sum of residue masses + H2O; ε280 estimated with Trp 5500 / Tyr 1490 / cystine 125; pI via Bjellqvist pKa values. References: Gill SC, von Hippel PH. Anal Biochem. 1989;182(2):319-26; Bjellqvist B, et al. Electrophoresis. 1993;14(12):1223-31."
 >
   <Fragment slot="head">
     <style is:inline>
@@ -39,72 +39,72 @@ canvas.plot { width: 100%; display: block; }
   </Fragment>
 
 <main class="container">
-  <h1 class="page-title">蛋白质序列分析</h1>
-  <p class="page-desc">粘贴蛋白质序列（单字母码，可带 FASTA 头部），计算分子量、理论 pI、消光系数 <span class="ktx">\varepsilon_&#123;280&#125;</span>、电荷曲线与氨基酸组成。</p>
+  <h1 class="page-title">Protein Sequence Analysis</h1>
+  <p class="page-desc">Paste a protein sequence (single-letter code, FASTA header allowed) to get molecular weight, theoretical pI, extinction coefficient <span class="ktx">\varepsilon_&#123;280&#125;</span>, charge-vs-pH curve and amino-acid composition.</p>
 
   <div class="panel">
     <div class="field-head">
-      <label for="protIn">输入序列（20 种标准氨基酸，单字母码）</label>
-      <button type="button" class="demo-link" id="exBtn" title="填入人泛素 Ub（76 aa）示例序列演示用法">载入示例序列</button>
+      <label for="protIn">Sequence (20 standard amino acids, single-letter code)</label>
+      <button type="button" class="demo-link" id="exBtn" title="Fill in the human ubiquitin (76 aa) example sequence">Load example sequence</button>
     </div>
         <div class="uniprot-row">
-      <input id="uniprotIn" type="text" placeholder="UniProt accession，如 P04637" />
-      <button type="button" class="btn btn-ghost" id="uniprotBtn">从 UniProt 获取</button>
+      <input id="uniprotIn" type="text" placeholder="UniProt accession, e.g. P04637" />
+      <button type="button" class="btn btn-ghost" id="uniprotBtn">Fetch from UniProt</button>
     </div>
     <div class="hint" id="uniprotInfo" style="display:none"></div>
     <div id="otPanel" style="display:none">
       <div class="panel">
-        <div class="field-head">靶点关联（Open Targets） <span class="hint" id="otStatus"></span></div>
+        <div class="field-head">Target associations (Open Targets) <span class="hint" id="otStatus"></span></div>
         <div class="ot-card" id="otCard"></div>
       </div>
       <div class="panel">
-        <div class="field-head">关联疾病 Top10</div>
+        <div class="field-head">Top associated diseases</div>
         <div id="otDiseases"></div>
       </div>
       <div class="panel">
-        <div class="field-head">已知药物</div>
+        <div class="field-head">Known drugs</div>
         <div id="otDrugs"></div>
       </div>
     </div>
 
-<textarea autocapitalize="none" autocorrect="off" spellcheck="false" id="protIn" rows="6" placeholder="直接粘贴氨基酸序列或 FASTA（&gt;头部行自动剥离）&#10;例如：MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
+<textarea autocapitalize="none" autocorrect="off" spellcheck="false" id="protIn" rows="6" placeholder="Paste an amino-acid sequence or FASTA (&gt; header line is stripped automatically)&#10;e.g. MQIFVKTLTGKTITLEVEPSDTIENVKAKIQDKEGIPPDQQRLIFAGKQLEDGRTLSDYNIQKESTLHLVLRLRGG"></textarea>
     <div class="hint" id="fastaNote" style="display:none"></div>
     <div class="row">
-      <button class="btn" id="runBtn">分析</button>
-      <button class="btn btn-ghost" id="copyBtn">复制结果</button>
-      <button class="btn btn-ghost" id="clearBtn">清空</button>
+      <button class="btn" id="runBtn">Analyze</button>
+      <button class="btn btn-ghost" id="copyBtn">Copy results</button>
+      <button class="btn btn-ghost" id="clearBtn">Clear</button>
     </div>
     <div class="error" id="err"></div>
   </div>
 
   <div class="panel" id="seqPanel" style="display:none">
-    <label>序列视图</label>
+    <label>Sequence view</label>
     <div id="afSeq" class="af-seq"></div>
   </div>
 
   <div class="panel" id="sumPanel" style="display:none">
-    <label>理化参数汇总</label>
+    <label>Summary of physicochemical properties</label>
     <div id="sumBody"></div>
   </div>
 
   <div class="panel" id="compPanel" style="display:none">
-    <label>氨基酸组成</label>
+    <label>Amino acid composition</label>
     <div id="compBody"></div>
   </div>
 
   <div class="panel" id="chargePanel" style="display:none">
-    <label>电荷–pH 曲线</label>
+    <label>Net charge vs pH</label>
     <canvas id="chargeCv" class="plot"></canvas>
-    <div class="plot-hint">净电荷（Bjellqvist pKa）随 pH 变化；虚线为理论 pI（净电荷＝0）。pH 高于 pI 时蛋白带负电，适合阴离子交换；低于 pI 带正电，适合阳离子交换。悬停查看数值。</div>
+    <div class="plot-hint">Net charge (Bjellqvist pKa) vs pH; the dashed line marks the theoretical pI (net charge = 0). Above its pI a protein is negatively charged — suited to anion exchange; below it, positively charged — suited to cation exchange. Hover for values.</div>
   </div>
 
   <div class="panel" id="hydPanel" style="display:none">
-    <label>Kyte-Doolittle 疏水性图谱<span class="kd-win">窗口 <select id="kdWin">
+    <label>Kyte-Doolittle hydropathy profile<span class="kd-win">Window <select id="kdWin">
       <option value="7">7</option><option value="9" selected>9</option><option value="11">11</option>
       <option value="13">13</option><option value="15">15</option><option value="19">19</option>
-    </select> 残基</span></label>
+    </select> residues</span></label>
     <canvas id="hydCv" class="plot"></canvas>
-    <div class="plot-hint">滑动窗口平均疏水值；虚线 1.6 为跨膜倾向经验参考（窗口 19 时最有效）。高分区段倾向位于疏水核心 / 跨膜区。悬停查看每个残基的数值。</div>
+    <div class="plot-hint">Sliding-window mean hydropathy; the dashed line at 1.6 is an empirical transmembrane-tendency reference (window size 19 works best). High-scoring segments tend to sit in hydrophobic cores / transmembrane regions. Hover for per-residue values.</div>
   </div>
 
 </main>
@@ -121,7 +121,7 @@ const KD = {A:1.8,R:-4.5,N:-3.5,D:-3.5,C:2.5,Q:-3.5,E:-3.5,G:-0.4,H:-3.2,I:4.5,L
 // Bjellqvist pKa
 const PKA = {nTerm:7.50,cTerm:3.55,K:10.00,R:12.00,H:5.98,D:4.05,E:4.45,C:9.00,Y:10.00};
 
-const AA_NAME = {A:'Ala Alanine 丙氨酸',R:'Arg Arginine 精氨酸',N:'Asn Asparagine 天冬酰胺',D:'Asp Aspartic acid 天冬氨酸',C:'Cys Cysteine 半胱氨酸',E:'Glu Glutamic acid 谷氨酸',Q:'Gln Glutamine 谷氨酰胺',G:'Gly Glycine 甘氨酸',H:'His Histidine 组氨酸',I:'Ile Isoleucine 异亮氨酸',L:'Leu Leucine 亮氨酸',K:'Lys Lysine 赖氨酸',M:'Met Methionine 甲硫氨酸',F:'Phe Phenylalanine 苯丙氨酸',P:'Pro Proline 脯氨酸',S:'Ser Serine 丝氨酸',T:'Thr Threonine 苏氨酸',W:'Trp Tryptophan 色氨酸',Y:'Tyr Tyrosine 酪氨酸',V:'Val Valine 缬氨酸'};
+const AA_NAME = {A:'Ala Alanine',R:'Arg Arginine',N:'Asn Asparagine',D:'Asp Aspartic acid',C:'Cys Cysteine',E:'Glu Glutamic acid',Q:'Gln Glutamine',G:'Gly Glycine',H:'His Histidine',I:'Ile Isoleucine',L:'Leu Leucine',K:'Lys Lysine',M:'Met Methionine',F:'Phe Phenylalanine',P:'Pro Proline',S:'Ser Serine',T:'Thr Threonine',W:'Trp Tryptophan',Y:'Tyr Tyrosine',V:'Val Valine'};
 
 function cleanSeq(s) {
   const lines = s.split(/\r?\n/);
@@ -136,11 +136,11 @@ function fastaHeader(s) {
   return '';
 }
 function checkSeq(s) {
-  if (!s) return '请输入序列';
+  if (!s) return 'Please enter a sequence';
   const bad = s.split('').filter(c => !AA.includes(c));
   if (bad.length) {
     const u = [...new Set(bad)].join(' ');
-    return '包含不属于 20 种标准氨基酸的字符：' + u + '（B/J/O/U/X/Z 等模糊码暂不支持）';
+    return 'Contains characters that are not standard amino acids: ' + u + ' (ambiguous codes B/J/O/U/X/Z are not supported)';
   }
   return '';
 }
@@ -190,10 +190,10 @@ function chargeAt(cnt, pH) {
 // 化学类别（Lehninger 四分类）
 const AA_CLASS = { G:0, A:0, V:0, L:0, I:0, M:0, F:0, W:0, P:0, S:1, T:1, N:1, Q:1, Y:1, C:1, K:2, R:2, H:2, D:3, E:3 };
 const AA_CLS = [
-  { name: '非极性（疏水）', color: '#5e5ce6' },
-  { name: '极性（不带电）', color: '#22a5b4' },
-  { name: '带正电（碱性）', color: '#e8890c' },
-  { name: '带负电（酸性）', color: '#ff453a' }
+  { name: 'Nonpolar (hydrophobic)', color: '#5e5ce6' },
+  { name: 'Polar (uncharged)', color: '#22a5b4' },
+  { name: 'Positively charged (basic)', color: '#e8890c' },
+  { name: 'Negatively charged (acidic)', color: '#ff453a' }
 ];
 function compTable(st) {
   const n = st.n, massT = st.mw - H2O;   // 残基总质量（去末端水）
@@ -201,7 +201,7 @@ function compTable(st) {
   const clsN = [0, 0, 0, 0];
   for (const a of AA) clsN[AA_CLASS[a]] += st.cnt[a];
   let html = '<div class="aa-strip">' + clsN.map((c, i) =>
-    c ? '<i style="flex:' + c + ';background:' + AA_CLS[i].color + '" title="' + AA_CLS[i].name + '：' + c + ' 个 · ' + fmt(100 * c / n, 1) + '%"></i>' : ''
+    c ? '<i style="flex:' + c + ';background:' + AA_CLS[i].color + '" title="' + AA_CLS[i].name + ': ' + c + ' · ' + fmt(100 * c / n, 1) + '%"></i>' : ''
   ).join('') + '</div>';
   html += '<div class="aa-legend">' + AA_CLS.map((c, i) =>
     '<span><b style="background:' + c.color + '"></b>' + c.name + ' ' + clsN[i] + ' · ' + fmt(100 * clsN[i] / n, 1) + '%</span>'
@@ -213,7 +213,7 @@ function compTable(st) {
   html += present.map(a => {
     const cls = AA_CLS[AA_CLASS[a]];
     const pct = 100 * st.cnt[a] / n, mpct = 100 * st.cnt[a] * RES_MASS[a] / massT;
-    return '<div class="aa-row" title="' + AA_NAME[a] + '：' + st.cnt[a] + ' 个 · 摩尔 ' + fmt(pct, 1) + '% · 质量 ' + fmt(mpct, 1) + '%">'
+    return '<div class="aa-row" title="' + AA_NAME[a] + ': ' + st.cnt[a] + ' · mol ' + fmt(pct, 1) + '% · mass ' + fmt(mpct, 1) + '%">'
       + '<span class="aa-chip" style="background:' + cls.color + '">' + a + '</span>'
       + '<span class="aa-name"><b>' + AA_NAME[a].slice(0, 3) + '</b>' + AA_NAME[a].slice(3) + '</span>'
       + '<span class="aa-bar"><i style="width:' + (100 * st.cnt[a] / max).toFixed(1) + '%;background:' + cls.color + '"></i></span>'
@@ -224,35 +224,35 @@ function compTable(st) {
 
 function summaryText(st) {
   const L = [];
-  L.push('长度\t' + st.n + ' aa');
-  L.push('分子量\t' + fmt(st.mw, 2) + ' Da（' + fmt(st.mw / 1000, 3) + ' kDa）');
-  L.push('理论 pI\t' + fmt(st.pI, 2));
-  L.push('ε280（Cys 还原）\t' + st.eRed + ' M⁻¹cm⁻¹');
-  L.push('ε280（全部成二硫键）\t' + st.eOx + ' M⁻¹cm⁻¹');
-  L.push('A280 @1 mg/mL（还原）\t' + fmt(st.absRed, 3));
-  L.push('A280 @1 mg/mL（氧化）\t' + fmt(st.absOx, 3));
+  L.push('Length\t' + st.n + ' aa');
+  L.push('MW\t' + fmt(st.mw, 2) + ' Da (' + fmt(st.mw / 1000, 3) + ' kDa)');
+  L.push('Theoretical pI\t' + fmt(st.pI, 2));
+  L.push('ε280 (Cys reduced)\t' + st.eRed + ' M⁻¹cm⁻¹');
+  L.push('ε280 (all Cys in disulfides)\t' + st.eOx + ' M⁻¹cm⁻¹');
+  L.push('A280 @1 mg/mL (reduced)\t' + fmt(st.absRed, 3));
+  L.push('A280 @1 mg/mL (oxidized)\t' + fmt(st.absOx, 3));
   L.push('GRAVY\t' + fmt(st.gravy, 3));
   const negC = st.cnt.D + st.cnt.E, posC = st.cnt.K + st.cnt.R;
-  L.push('酸性残基 D+E\t' + negC);
-  L.push('碱性残基 K+R\t' + posC);
+  L.push('Acidic residues D+E\t' + negC);
+  L.push('Basic residues K+R\t' + posC);
   L.push('');
-  L.push('氨基酸\t数目\t占比 (%)');
+  L.push('AA\tCount\tMol (%)');
   for (const a of AA) L.push(a + '\t' + st.cnt[a] + '\t' + fmt(100 * st.cnt[a] / st.n, 1));
   return L.join('\n');
 }
 
 function render(st) {
-  let html = '<table class="tbl"><tr><th>指标</th><th>数值</th></tr>';
-  html += '<tr><td>序列长度</td><td>' + st.n + ' aa</td></tr>';
-  html += '<tr><td>分子量</td><td>' + fmt(st.mw, 2) + ' Da（' + fmt(st.mw / 1000, 3) + ' kDa）</td></tr>';
-  html += '<tr><td>理论 pI</td><td>' + fmt(st.pI, 2) + '</td></tr>';
-  html += '<tr><td>ε280（Cys 全部还原）</td><td>' + st.eRed.toLocaleString() + ' M⁻¹·cm⁻¹</td></tr>';
-  html += '<tr><td>ε280（Cys 全部成二硫键' + (st.ssNum ? '，' + st.ssNum + ' 对' : '') + '）</td><td>' + st.eOx.toLocaleString() + ' M⁻¹·cm⁻¹</td></tr>';
-  html += '<tr><td>A280 @1 mg/mL（还原）</td><td>' + fmt(st.absRed, 3) + '</td></tr>';
-  html += '<tr><td>A280 @1 mg/mL（氧化）</td><td>' + fmt(st.absOx, 3) + '</td></tr>';
-  html += '<tr><td>GRAVY 疏水指数</td><td>' + fmt(st.gravy, 3) + (st.gravy > 0 ? '（偏疏水）' : '（偏亲水）') + '</td></tr>';
+  let html = '<table class="tbl"><tr><th>Property</th><th>Value</th></tr>';
+  html += '<tr><td>Length</td><td>' + st.n + ' aa</td></tr>';
+  html += '<tr><td>Molecular weight</td><td>' + fmt(st.mw, 2) + ' Da (' + fmt(st.mw / 1000, 3) + ' kDa）</td></tr>';
+  html += '<tr><td>Theoretical pI</td><td>' + fmt(st.pI, 2) + '</td></tr>';
+  html += '<tr><td>ε280 (all Cys reduced)</td><td>' + st.eRed.toLocaleString() + ' M⁻¹·cm⁻¹</td></tr>';
+  html += '<tr><td>ε280 (all Cys in disulfides' + (st.ssNum ? ', ' + st.ssNum + ' pairs' : '') + ')</td><td>' + st.eOx.toLocaleString() + ' M⁻¹·cm⁻¹</td></tr>';
+  html += '<tr><td>A280 @1 mg/mL (reduced)</td><td>' + fmt(st.absRed, 3) + '</td></tr>';
+  html += '<tr><td>A280 @1 mg/mL (oxidized)</td><td>' + fmt(st.absOx, 3) + '</td></tr>';
+  html += '<tr><td>GRAVY hydropathy</td><td>' + fmt(st.gravy, 3) + (st.gravy > 0 ? ' (hydrophobic)' : ' (hydrophilic)') + '</td></tr>';
   const negC = st.cnt.D + st.cnt.E, posC = st.cnt.K + st.cnt.R;
-  html += '<tr><td>酸性 / 碱性残基</td><td>D+E = ' + negC + '　K+R = ' + posC + '</td></tr>';
+  html += '<tr><td>Acidic / basic residues</td><td>D+E = ' + negC + '　K+R = ' + posC + '</td></tr>';
   html += '</table>';
   document.getElementById('sumBody').innerHTML = html;
   document.getElementById('compBody').innerHTML = compTable(st);
@@ -485,7 +485,7 @@ function drawHyd() {
   const xTicks = [];
   for (let t = 1; t <= n; t += xStep) xTicks.push(t);
   const hLines = [{ y: 0, color: 'rgba(0,0,0,0.35)' }];
-  if (show16) hLines.push({ y: 1.6, color: '#e8890c', label: '跨膜参考 1.6' });
+  if (show16) hLines.push({ y: 1.6, color: '#e8890c', label: 'TM reference 1.6' });
   const draw = hover => drawPlot(cv, {
     xMin: 1, xMax: Math.max(n, 2), xTicks, xFmt: v => '' + v,
     yMin: lo, yMax: up, yTicks, yFmt: v => '' + (+v).toFixed(1),
@@ -496,7 +496,7 @@ function drawHyd() {
   cv._redraw = draw;
   cv._pts = { xs, ys, hi: null, segs: i => {
     const nm = aaName(lastSeq[i]);
-    return [{ t: '残基 ' + xs[i] + ' · ' }, { t: nm.slice(0, 3), b: true }, { t: nm.slice(3) + ' · ' + ys[i].toFixed(2) }];
+    return [{ t: 'Residue ' + xs[i] + ' · ' }, { t: nm.slice(0, 3), b: true }, { t: nm.slice(3) + ' · ' + ys[i].toFixed(2) }];
   } };
   draw(null);
 }
@@ -504,7 +504,7 @@ function drawHyd() {
 const HIDE_IDS = ['sumPanel', 'compPanel', 'seqPanel', 'chargePanel', 'hydPanel'];
 
   const escU = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const OTL = { nm: '标准名称', idc: 'Ensembl ID', bio: '生物型', err: '该蛋白在 Open Targets 无收录', loading: '正在查询 Open Targets…', noDr: '平台中未找到已知药物' };
+  const OTL = { nm: 'Approved name', idc: 'Ensembl ID', bio: 'Biotype', err: 'No Open Targets entry for this protein', loading: 'Querying Open Targets…', noDr: 'No known drugs found in the platform' };
 const OTAPI = 'https://api.platform.opentargets.org/api/v4/graphql';
 function gq(query, variables) {
   return fetch(OTAPI, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: query, variables: variables }) }).then(function (r) { if (!r.ok) throw new Error('ot-http'); return r.json(); });
@@ -573,7 +573,7 @@ document.getElementById('uniprotBtn').addEventListener('click', async function (
         + ' · <a href="https://www.uniprot.org/uniprotkb/' + enc + '" target="_blank" rel="noopener">UniProt</a>'
         + ' · <a href="https://alphafold.ebi.ac.uk/entry/' + enc + '" target="_blank" rel="noopener">AlphaFold</a>'
         + ' · <a href="https://www.rcsb.org/uniprot/' + enc + '" target="_blank" rel="noopener">PDB</a>'
-        + ' · ' + '数据 · UniProt (CC BY 4.0)';
+        + ' · ' + 'data · UniProt (CC BY 4.0)';
       if (seq) {
         document.getElementById('protIn').value = '>' + acc + ' ' + name + '\n' + seq;
         document.getElementById('runBtn').click();
@@ -582,7 +582,7 @@ document.getElementById('uniprotBtn').addEventListener('click', async function (
       if (sym) { runOT(sym); } else { document.getElementById('otPanel').style.display = 'none'; }
     } catch (e) {
       info.style.display = 'none';
-      errEl.textContent = '获取失败：请检查 accession 或网络';
+      errEl.textContent = 'UniProt fetch failed: check the accession or your connection';
     }
   });
 
@@ -609,7 +609,7 @@ document.getElementById('runBtn').addEventListener('click', () => {
   // FASTA 头部提示
   const fh = fastaHeader(raw);
   if (fh) {
-    fastaNote.textContent = '已识别 FASTA 头部：「' + fh + '」，分析时已剥离';
+    fastaNote.textContent = 'FASTA header detected: "' + fh + '" (stripped for analysis)';
     fastaNote.style.display = '';
   } else fastaNote.style.display = 'none';
   document.getElementById('seqPanel').style.display = '';
@@ -642,7 +642,7 @@ document.getElementById('copyBtn').addEventListener('click', function () {
       document.execCommand('copy'); document.body.removeChild(ta);
     })
     .finally(() => {
-      const old = self.textContent; self.textContent = '已复制';
+      const old = self.textContent; self.textContent = 'Copied';
       setTimeout(() => { self.textContent = old; }, 1200);
     });
 });

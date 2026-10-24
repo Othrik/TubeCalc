@@ -2,45 +2,45 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout lang="en" title="TubeCalc"
-  desc="Mixing Calculator, the flagship tool: enter stock and final concentrations, get each component's amount automatically, with multiple solvents and powder weighing; plus molecular weight, protein analysis and dilution tools."
+<Layout lang="zh" title="TubeCalc"
+  desc="主打溶液配制计算器：储液/终浓度自动算加样量，多溶剂与称量支持；另有分子量、蛋白质分析、稀释等免费在线工具。"
   note=""
-  lic="App icon based on Microsoft Fluent Emoji (MIT License)"
+  lic="App 图标基于微软 Fluent Emoji（MIT 许可）制作"
 >
 
 <main class="container">
   <div class="hero">
-    <h1>Complex mixtures, made simple</h1>
-    <p>Flagship · Mixing Calculator: stock and final concentrations in, each component’s amount out — pick your solvent, weigh powders directly, copy TSV into your spreadsheet.</p>
-    <p>Lightweight, free, no sign-up — built for everyday lab calculations.</p>
+    <h1>复杂组分，轻松算清</h1>
+    <p>主打工具 · 溶液配制计算器：储液与终浓度进去，每个组分的加样量自动出来 — 溶剂可选、称量直读、TSV 进表格。</p>
+    <p>轻量、免费、无需注册 — 为实验室日常计算而建。</p>
     <div class="hero-cta">
-      <a class="btn hero-btn" href="/tools/mix/">Open the Mixing Calculator →</a>
-      <a class="hero-more" href="#tools">Browse all tools</a>
+      <a class="btn hero-btn" href="/tools/mix/">打开溶液配制计算器 →</a>
+      <a class="hero-more" href="#tools">浏览全部工具</a>
     </div>
   </div>
 
   <a class="tool-card featured" href="/tools/mix/">
-    <span class="featured-tag">Featured</span>
-    <h3>Mixing Calculator</h3>
-    <p>Plan a whole reaction setup at once: stock → final concentration gives each component’s amount automatically, solvent tops up the volume, and any edit recalculates instantly.</p>
+    <span class="featured-tag">主打工具</span>
+    <h3>溶液配制计算器</h3>
+    <p>整张反应体系一次算清：按"储液 → 终浓度"自动给出每个组分的加样量，溶剂自动补齐，改任何数字即时重算。</p>
     <ul class="feat-list">
-      <li>All units: M/mM/μM, × concentrates, % v/v, % w/v, g/mol powder weighing</li>
-      <li>Solvent choice: water, ethanol, DMSO, glycerol and more, with mass reference</li>
-      <li>Autosaves in your browser; one-click TSV copy into Excel</li>
+      <li>单位全支持：M/mM/μM、× 倍数、% v/v、% w/v、g/mol 称量</li>
+      <li>溶剂可选：水、乙醇、DMSO、甘油等，附质量参考</li>
+      <li>数据本地自动保存，TSV 一键复制进 Excel</li>
     </ul>
-    <span class="open">Open →</span>
+    <span class="open">打开 →</span>
   </a>
-  <h2 class="sec-title" id="tools">All tools</h2>
+  <h2 class="sec-title" id="tools">全部工具</h2>
   <div class="grid">
     <a class="tool-card" href="/tools/protein/">
-      <h3>Protein Sequence Analysis</h3>
-      <p>Molecular weight, theoretical pI, extinction coefficient ε280, A280, amino acid composition and the GRAVY hydropathy index.</p>
-      <span class="open">Open →</span>
+      <h3>蛋白质序列分析</h3>
+      <p>分子量、理论 pI、消光系数 ε280、A280 与氨基酸组成、GRAVY 疏水指数。</p>
+      <span class="open">打开 →</span>
     </a>
     <a class="tool-card" href="/tools/mol/">
-      <h3>Molecular Tools</h3>
-      <p>Type a formula (parentheses and hydrates supported, e.g. CuSO4·5H2O) to get molar mass and elemental composition.</p>
-      <span class="open">Open →</span>
+      <h3>分子工具</h3>
+      <p>输入化学式（支持括号与水合物，如 CuSO4·5H2O），得到摩尔质量与元素组成。</p>
+      <span class="open">打开 →</span>
     </a>
   </div>
 </main>

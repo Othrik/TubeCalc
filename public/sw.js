@@ -1,5 +1,5 @@
-const CV = 'tubecalc-v1.7.2';
-const CORE = ['/', '/index.html', '/mix/', '/dil/', '/protein/', '/mol/', '/mw/',
+const CV = 'tubecalc-v1.8.20';
+const CORE = ['/', '/index.html', '/tools/mix/', '/tools/dil/', '/tools/protein/', '/tools/mol/',
   '/ghs/GHS01.svg', '/ghs/GHS02.svg', '/ghs/GHS03.svg', '/ghs/GHS04.svg', '/ghs/GHS05.svg',
   '/ghs/GHS06.svg', '/ghs/GHS07.svg', '/ghs/GHS08.svg', '/ghs/GHS09.svg'];
 self.addEventListener('install', function (e) {

@@ -7,3 +7,4 @@ build_*.log
 install*.log
 tmp/
 public/ketcher/ketcher-app.js
+.dist_backup/

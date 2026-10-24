@@ -1,0 +1,47 @@
+---
+import Layout from '../../layouts/Layout.astro';
+---
+
+<Layout lang="en" title="TubeCalc"
+  desc="Mixing Calculator, the flagship tool: enter stock and final concentrations, get each component's amount automatically, with multiple solvents and powder weighing; plus molecular weight, protein analysis and dilution tools."
+  note=""
+  lic="App icon based on Microsoft Fluent Emoji (MIT License)"
+>
+
+<main class="container">
+  <div class="hero">
+    <h1>Complex mixtures, made simple</h1>
+    <p>Flagship · Mixing Calculator: stock and final concentrations in, each component’s amount out — pick your solvent, weigh powders directly, copy TSV into your spreadsheet.</p>
+    <p>Lightweight, free, no sign-up — built for everyday lab calculations.</p>
+    <div class="hero-cta">
+      <a class="btn hero-btn" href="/en/tools/mix/">Open the Mixing Calculator →</a>
+      <a class="hero-more" href="#tools">Browse all tools</a>
+    </div>
+  </div>
+
+  <a class="tool-card featured" href="/en/tools/mix/">
+    <span class="featured-tag">Featured</span>
+    <h3>Mixing Calculator</h3>
+    <p>Plan a whole reaction setup at once: stock → final concentration gives each component’s amount automatically, solvent tops up the volume, and any edit recalculates instantly.</p>
+    <ul class="feat-list">
+      <li>All units: M/mM/μM, × concentrates, % v/v, % w/v, g/mol powder weighing</li>
+      <li>Solvent choice: water, ethanol, DMSO, glycerol and more, with mass reference</li>
+      <li>Autosaves in your browser; one-click TSV copy into Excel</li>
+    </ul>
+    <span class="open">Open →</span>
+  </a>
+  <h2 class="sec-title" id="tools">All tools</h2>
+  <div class="grid">
+    <a class="tool-card" href="/en/tools/protein/">
+      <h3>Protein Sequence Analysis</h3>
+      <p>Molecular weight, theoretical pI, extinction coefficient ε280, A280, amino acid composition and the GRAVY hydropathy index.</p>
+      <span class="open">Open →</span>
+    </a>
+    <a class="tool-card" href="/en/tools/mol/">
+      <h3>Molecular Tools</h3>
+      <p>Type a formula (parentheses and hydrates supported, e.g. CuSO4·5H2O) to get molar mass and elemental composition.</p>
+      <span class="open">Open →</span>
+    </a>
+  </div>
+</main>
+</Layout>

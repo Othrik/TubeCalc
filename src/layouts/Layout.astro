@@ -5,10 +5,10 @@ import '../styles/style.css';
 import pkg from '../../package.json';
 const { title, desc = '', active = 'index', note = '', lic = '', lang = 'en' } = Astro.props;
 
-// 语言清单：英文=默认（根路径），其余挂前缀
+// 语言清单：中文=默认（根路径），其余挂前缀
 const LANGS = [
-  { code: 'en', label: 'English', pre: '', html: 'en' },
-  { code: 'zh', label: '中文', pre: '/zh', html: 'zh-CN' },
+  { code: 'zh', label: '中文', pre: '', html: 'zh-CN' },
+  { code: 'en', label: 'English', pre: '/en', html: 'en' },
   { code: 'es', label: 'Español', pre: '/es', html: 'es' },
   { code: 'pt', label: 'Português', pre: '/pt', html: 'pt' },
   { code: 'ru', label: 'Русский', pre: '/ru', html: 'ru' },
@@ -225,7 +225,7 @@ const NAV = [
 })();
 </script>
 <script is:inline>
-  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=45').catch(function () {}); }); }
+  if ('serviceWorker' in navigator) { window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js?v=46').catch(function () {}); }); }
 </script>
 
 <link rel="stylesheet" href="/katex/katex.min.css">
