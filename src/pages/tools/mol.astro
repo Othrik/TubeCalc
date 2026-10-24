@@ -398,9 +398,9 @@ function hillFormula(c) {
     frags.forEach((f) => {
       const cell = document.createElement('span'); cell.className = 'frag'; host.appendChild(cell);
       const smi = f === 'O' ? '[H]O[H]' : f;      /* bare O (water) -> explicit H-O-H */
-      if (ENG === 'cdk') { cdkCell(d, cell, smi, w, h); return; }
-      if (ENG === 'indigo') { indigoCell(d, cell, smi, w, h); return; }
-      if (ENG === 'chematic') { chemCell(d, cell, smi, w, h); return; }
+      if (ENG === 'cdk') { cdkCell(d, cell, smi, w, h, n); return; }
+      if (ENG === 'indigo') { indigoCell(d, cell, smi, w, h, n); return; }
+      if (ENG === 'chematic') { chemCell(d, cell, smi, w, h, n); return; }
       if (ENG === 'sd') { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); return; }
       if (RDK) {
         if (!rdkitDrawOne(cell, smi, w, h)) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); }
@@ -418,21 +418,21 @@ function hillFormula(c) {
   let indigoPromise = null;
   function loadIndigo() {
     if (indigoPromise) return indigoPromise;
-    indigoPromise = import('https://unpkg.com/indigo-ketcher@1.46.0/indigo-ketcher-separate-wasm.js')
-      .then(function (m) { const init = m.default || m; return init({ locateFile: function (f) { return 'https://unpkg.com/indigo-ketcher@1.46.0/' + f; } }); })
+    indigoPromise = import('/indigo/indigo-ketcher-separate-wasm.js')
+      .then(function (m) { const init = m.default || m; return init({ locateFile: function (f) { return '/indigo/' + f; } }); })
       .then(function (mod) { return mod.indigo ? mod.indigo(mod) : mod; });
     return indigoPromise;
   }
-  function cdkCell(d, cell, smi, w, h) {
+  function cdkCell(d, cell, smi, w, h, n) {
     cell.dataset.eng = 'cdk'; cell.textContent = '…';
     const img = document.createElement('img');
     img.alt = 'CDK 2D structure';
-    img.style.maxWidth = '100%'; img.style.height = h + 'px';
-    img.src = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + w + '&h=' + (h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
+    img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
+    img.src = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
     img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
     img.onerror = function () { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); };
   }
-  async function indigoCell(d, cell, smi, w, h) {
+  async function indigoCell(d, cell, smi, w, h, n) {
     cell.dataset.eng = 'indigo'; cell.textContent = '…';
     try {
       const eng = await loadIndigo();
@@ -441,18 +441,17 @@ function hillFormula(c) {
       const tmp = document.createElement('div'); tmp.innerHTML = svg;
       const el = tmp.querySelector('svg');
       if (!el) throw new Error('no svg');
-      el.style.maxWidth = '100%'; el.style.height = h + 'px';
+      el.style.maxWidth = '100%'; el.style.height = 'auto'; el.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
       cell.textContent = ''; cell.appendChild(el);
     } catch (e) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); }
   }
-  function chemCell(d, cell, smi, w, h) {
+  function chemCell(d, cell, smi, w, h, n) {
     cell.dataset.eng = 'chematic';
     cell.textContent = '…';
     const img = document.createElement('img');
     img.alt = '2D structure';
-    img.style.maxWidth = '100%';
-    img.style.height = h + 'px';
-    img.src = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/' + encodeURIComponent(smi) + '/PNG?image_size=' + (w * 1.6 | 0) + 'x' + (h * 1.6 | 0);
+    img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
+    img.src = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/' + encodeURIComponent(smi) + '/PNG?image_size=' + (n === 1 ? 640 : (w * 1.6 | 0)) + 'x' + (n === 1 ? 480 : (h * 1.6 | 0));
     img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
     img.onerror = function () { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); };
   }
