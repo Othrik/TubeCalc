@@ -8,23 +8,25 @@ import Layout from '../../../layouts/Layout.astro';
 
 <main class="container">
   <h1 class="page-title">Ferramentas moleculares</h1>
-  <p class="page-desc">Escreve uma fórmula química (parênteses aninhados e hidratos), uma cadeia SMILES ou o nome do composto — o tipo é detetado automaticamente; SMILES e nomes também desenham a estrutura 2D. Prefere desenhar? Use «Desenhar / carregar molécula» à direita — desenhe ou cole um MOL e pesquise de imediato.</p>
+  <p class="page-desc">Escreve uma fórmula química (parênteses aninhados, hidratos e cargas), uma cadeia SMILES, um número CAS, um ID ChEMBL, um CID PubChem, um InChI/InChIKey ou o nome do composto (comum ou IUPAC) — o tipo é detetado automaticamente; SMILES e nomes também desenham a estrutura 2D. Ou desenha / cola uma estrutura no painel à direita e clica Pesquisar.</p>
 
   <div class="panel in-grid">
     <div class="in-left">
-    <label for="q">Fórmula · SMILES · nome — deteção automática</label>
+    <label for="q">Fórmula · SMILES · CAS · ID · nome — deteção automática</label>
     <input type="text" id="q" placeholder="p. ex. C6H12O6, CuSO4·5H2O, CC(=O)Oc1ccccc1C(=O)O ou «cafeína»" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
-    <div class="hint">Uma só caixa para tudo: fórmulas químicas (parênteses e hidratos), estruturas SMILES ou nomes de compostos via PubChem — o tipo de entrada é detetado automaticamente.</div>
+    <div class="hint">Uma só caixa para tudo: fórmulas (parênteses / hidratos / cargas, ex.: CuSO4·5H2O), SMILES, número CAS (50-78-2), ID ChEMBL (CHEMBL25), CID numérico PubChem (2244), InChI/InChIKey ou nomes de compostos — deteção automática.</div>
     <button class="btn" id="calcBtn">Calcular</button>
     <span class="hint" style="display:inline-block;margin-left:10px">Experimente:
-      <a href="#" class="eg" data-f="C6H12O6">C6H12O6</a> · <a href="#" class="eg" data-f="CuSO4·5H2O">CuSO4·5H2O</a> · <a href="#" class="eg" data-f="(NH4)2SO4">(NH4)2SO4</a> · <a href="#" class="eg" data-f="Ca(OH)2">Ca(OH)2</a> · <a href="#" class="eg-s" data-s="CC(=O)Oc1ccccc1C(=O)O">Aspirina</a> · <a href="#" class="eg-s" data-s="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Cafeína</a> · <a href="#" class="eg-s" data-s="OC[C@H]1O[C@H](O)[C@H](O)[C@H](O)[C@H]1O">Glicose</a> · <a href="#" class="eg-s" data-s="NC(CO)(CO)CO">Tris</a> · <a href="#" class="eg-s" data-s="OC(=O)CN(CCN(CC(=O)O)CC(=O)O)CC(=O)O">EDTA</a>
+      <a href="#" class="eg" data-f="C6H12O6">C6H12O6</a> · <a href="#" class="eg" data-f="CuSO4·5H2O">CuSO4·5H2O</a> · <a href="#" class="eg" data-f="(NH4)2SO4">(NH4)2SO4</a> · <a href="#" class="eg" data-f="Ca(OH)2">Ca(OH)2</a> · <a href="#" class="eg" data-f="50-78-2">50-78-2</a> · <a href="#" class="eg" data-f="CHEMBL25">CHEMBL25</a> · <a href="#" class="eg-s" data-s="CC(=O)Oc1ccccc1C(=O)O">Aspirina</a> · <a href="#" class="eg-s" data-s="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">Cafeína</a> · <a href="#" class="eg-s" data-s="OC[C@H]1O[C@H](O)[C@H](O)[C@H](O)[C@H]1O">Glicose</a> · <a href="#" class="eg-s" data-s="NC(CO)(CO)CO">Tris</a> · <a href="#" class="eg-s" data-s="OC(=O)CN(CCN(CC(=O)O)CC(=O)O)CC(=O)O">EDTA</a>
     </span>
     </div>
-    <button type="button" class="draw-card" id="drawBtn">
-      <span class="dc-ico">🧪</span>
-      <span class="dc-tx">Desenhar / carregar molécula</span>
-      <span class="dc-sub">Desenhe ou cole MOL — detecção e busca automáticas</span>
-    </button>
+    <div class="k-embed" id="kEmbed">
+      <div class="k-embed-bar"><span>🧪 Desenhar / carregar molécula</span><button type="button" class="btn" id="kApply">Search</button></div>
+      <div class="k-embed-body">
+        <div class="k-embload" id="kEmbLoad">A carregar o editor… (primeira vez ~10–30 s, depois em cache)</div>
+        <div id="kApp"></div>
+      </div>
+    </div>
     <div class="error" id="err"></div>
 
 </div>
@@ -42,7 +44,7 @@ import Layout from '../../../layouts/Layout.astro';
     <div id="resStatics" style="display:none"></div>
     <div id="molInfo" class="mol-info" style="display:none"></div>
   </div>
-    <div class="hint" id="sVia" style="display:none;margin-top:8px"></div><div id="kModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(29,29,31,.5)"><div style="position:absolute;inset:3vh 3vw;background:#fff;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.25)"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid #e5e5ea;flex-wrap:wrap"><b style="font-size:15px">Ketcher</b><div style="display:flex;gap:8px"><button type="button" class="btn" id="kApply">应用</button><button type="button" class="btn" id="kClose" style="background:#8e8e93">关闭</button></div></div><div id="kApp" style="flex:1;min-height:0;position:relative"></div></div></div>
+    <div class="hint" id="sVia" style="display:none;margin-top:8px"></div>
   </div>
 
   <div class="panel result" id="convPanel" style="display:none">
@@ -65,11 +67,14 @@ import Layout from '../../../layouts/Layout.astro';
 .struct-wrap{border:1px solid var(--border);border-radius:12px;background:#fff;padding:12px;margin-top:14px;display:flex;justify-content:center}
 .struct-wrap svg{max-width:100%;height:auto}
     .in-grid{display:grid;grid-template-columns:1fr;gap:14px}
-  @media(min-width:900px){.in-grid{grid-template-columns:1fr 236px;align-items:stretch}}
-  .draw-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1.5px dashed #b9d6f2;border-radius:14px;background:linear-gradient(160deg,#f4f9ff,#eaf3ff);color:#0a66c2;cursor:pointer;font-size:15.5px;font-weight:600;padding:18px 14px;min-height:118px;font-family:inherit;transition:border-color .15s,background .15s}
-  .draw-card:hover{border-color:#0a84ff;background:linear-gradient(160deg,#ecf5ff,#dfeeff)}
-  .draw-card .dc-ico{font-size:26px;line-height:1}
-  .draw-card .dc-sub{font-size:12px;font-weight:400;color:#5a7fa6;line-height:1.55;text-align:center}
+@media(min-width:900px){.in-grid{grid-template-columns:1fr 1.02fr;align-items:stretch}}
+.k-embed{display:flex;flex-direction:column;border:1.5px solid #b9d6f2;border-radius:14px;background:linear-gradient(160deg,#f2f8ff,#eaf3ff);overflow:hidden;min-height:380px}
+.k-embed-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid #d7e8fa;font-size:14.5px;font-weight:600;color:#0a66c2}
+.k-embed-bar .btn{padding:7px 16px;font-size:13.5px;flex:none}
+.k-embed-body{flex:1;min-height:0;position:relative;background:#fff}
+.k-embed-body #kApp{position:absolute;inset:0}
+.k-embload{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8e8e93;font-size:14px;text-align:center;padding:0 18px;line-height:1.6;z-index:2;background:#fff}
+@media(max-width:899px){.k-embed{min-height:330px}}
   .draw-card .dc-sub a{color:#0a84ff;text-decoration:underline;pointer-events:none}
 </style>
 </main>
@@ -170,7 +175,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: 'Perigos principais', hzSig: 'Sinal', hzPict: 'Pictogramas', hzP: "Frases de prudência", common: 'Nome comum', brand: 'Nomes comerciais', kApply: 'Aplicar', kClose: 'Fechar', noZh: 'Este nome em chinês ainda não está no dicionário. Tente nome em inglês, número CAS ou SMILES.', npName: 'Nome', npVia: 'via COCONUT', iupac: 'Nome IUPAC', hbd: 'Dadores de pontes H', hba: 'Aceptores de pontes H', rot: 'Ligações rotativas', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estrutura: correspondência mais próxima do PubChem para esta fórmula', pubHdr: 'Dados do PubChem', rdkHdr: 'RDKit (cálculo local)', viaSmi: 'Composto correspondente no PubChem', prefName: 'Nome preferido', maxPhase: 'Fase máx.', molType: 'Tipo', therapeutic: 'Terapêutico', bioact: 'Atividade', cheblErr: 'Falha no ChEMBL: verifique o ID (ex. CHEMBL25)', viaCir: 'Número CAS resolvido via NCI CIR', casErr: 'Não foi possível resolver o CAS: tente o nome ou confira o número', exM: 'Massa exata', rings: 'N.º de anéis', arom: 'Anéis aromáticos', empty: 'Introduz uma fórmula, uma cadeia SMILES ou o nome do composto', invalid: 'SMILES inválido: ', pub: 'Não foi possível resolver o nome via PubChem (sem rede ou não encontrado). Verifica o nome ou cola diretamente uma cadeia SMILES.', via: 'Estrutura e fórmula resolvidas via PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Estrutura 2D' };
+  const L = { hzHdr: 'Perigos principais', hzSig: 'Sinal', hzPict: 'Pictogramas', hzP: "Frases de prudência", common: 'Nome comum', brand: 'Nomes comerciais', kApply: 'Pesquisar', kClose: 'Fechar', noZh: 'Este nome em chinês ainda não está no dicionário. Tente nome em inglês, número CAS ou SMILES.', npName: 'Nome', npVia: 'via COCONUT', iupac: 'Nome IUPAC', hbd: 'Dadores de pontes H', hba: 'Aceptores de pontes H', rot: 'Ligações rotativas', chg: 'Carga formal', heavy: 'Átomos pesados', viaF: 'Estrutura: correspondência mais próxima do PubChem para esta fórmula', pubHdr: 'Dados do PubChem', rdkHdr: 'RDKit (cálculo local)', viaSmi: 'Composto correspondente no PubChem', prefName: 'Nome preferido', maxPhase: 'Fase máx.', molType: 'Tipo', therapeutic: 'Terapêutico', bioact: 'Atividade', cheblErr: 'Falha no ChEMBL: verifique o ID (ex. CHEMBL25)', viaCir: 'Número CAS resolvido via NCI CIR', casErr: 'Não foi possível resolver o CAS: tente o nome ou confira o número', exM: 'Massa exata', rings: 'N.º de anéis', arom: 'Anéis aromáticos', empty: 'Introduz uma fórmula, uma cadeia SMILES ou o nome do composto', invalid: 'SMILES inválido: ', pub: 'Não foi possível resolver o nome via PubChem (sem rede ou não encontrado). Verifica o nome ou cola diretamente uma cadeia SMILES.', via: 'Estrutura e fórmula resolvidas via PubChem', hill: 'Fórmula molecular (Hill):', modeF: 'Interpretado como fórmula química', modeS: 'Estrutura 2D' };
   const TH = ['Elemento', 'Átomos', 'Peso atómico', 'Contribuição (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -345,47 +350,38 @@ function hillFormula(c) {
     });
   }
   var kLoaded = false, kReady = false;
-  function openKetcher() {
-    var m = $('kModal'); if (!m) return; m.style.display = '';
-    var ab = $('kApply'), cb = $('kClose');
-    if (ab && L.kApply) ab.textContent = L.kApply;
-    if (cb && L.kClose) cb.textContent = L.kClose;
-    if (kReady && window.ketcher) { kShow(); return; }
+  function initKetcher() {
+    if (kReady && window.ketcher) return;
     if (kLoaded) return;
     kLoaded = true;
-    $('kApp').innerHTML = '<div style="padding:24px;color:#8e8e93;font-size:14px">Ketcher loading…</div>';
+    var ab = $('kApply'); if (ab && L.kApply) ab.textContent = L.kApply;
     window.global = window; if (!window.process) window.process = { env: {} }; if (!window.ketcher) window.ketcher = {};
-    var css = document.createElement('link'); css.rel = 'stylesheet';
-    css.href = '/ketcher/ketcher.css';
     var css2 = document.createElement('link'); css2.rel = 'stylesheet'; css2.href = '/ketcher/ketcher-app.css'; document.head.appendChild(css2);
-    document.head.appendChild(css);
+    var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = '/ketcher/ketcher.css'; document.head.appendChild(css);
     var seq = ['/ketcher/ketcher-app.js'];
     (function nxt(i) {
       if (i >= seq.length) { kInit(); return; }
       var sc = document.createElement('script'); sc.src = seq[i]; sc.type = 'module';
       sc.onload = function () { nxt(i + 1); };
-      sc.onerror = function () { $('kApp').innerHTML = '<div style="padding:24px;color:#8e8e93">Ketcher script failed to load</div>'; kLoaded = false; };
+      sc.onerror = function () { var el = $('kEmbLoad'); if (el) el.textContent = 'Failed to load — check network'; kLoaded = false; };
       document.head.appendChild(sc);
     })(0);
   }
-  var db = $('drawBtn');
-    if (db) db.addEventListener('click', function () { openKetcher(); });
   function kInit() {
     var timer = setInterval(function () {
-      if (window.__kReady && window.ketcher) { clearInterval(timer); kReady = true; kShow(); }
+      if (window.__kReady && window.ketcher) { clearInterval(timer); kReady = true; var el = $('kEmbLoad'); if (el) el.style.display = 'none'; kShow(); }
     }, 250);
   }
   function kShow() {
     if (window.ketcher && lastSmiles) { try { window.ketcher.setMolecule(lastSmiles).catch(function () {}); } catch (e) {} }
   }
   (function () {
-    var ab = $('kApply'), cb = $('kClose'), m = $('kModal');
-    if (cb) cb.addEventListener('click', function () { m.style.display = 'none'; });
+    var ab = $('kApply');
     if (ab) ab.addEventListener('click', function () {
-      if (window.ketcher) { window.ketcher.getSmiles().then(function (smi) { m.style.display = 'none'; if (smi) { $('q').value = smi; go(); } }).catch(function () { m.style.display = 'none'; }); }
-      else { m.style.display = 'none'; }
+      if (window.__kReady && window.ketcher) { window.ketcher.getSmiles().then(function (smi) { if (smi) { $('q').value = smi; go(); } }).catch(function () {}); }
     });
   })();
+  initKetcher();
   function draw(smiles) {
     lastSmiles = smiles;
     const d = new SmilesDrawer.SmiDrawer({ width: 520, height: 380, padding: 14, bondThickness: 1.1, terminalCarbons: false, noCondense: true });
