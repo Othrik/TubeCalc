@@ -86,6 +86,11 @@ import Layout from '../../../layouts/Layout.astro';
 .cand-sub{display:block;font-size:12px;color:#646A73;margin-top:2px}
 .cand-smi{display:block;font-size:11px;color:#758092;word-break:break-all;margin-top:4px}
 .cand-id{display:block;font-size:11px;color:#BABFC9;margin-top:4px}
+.cand-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.cand-badge{display:inline-block;font-size:10.5px;line-height:1;padding:3px 6px;border-radius:5px;background:#F0F2F5;color:#4E5969;border:1px solid #E5E6EB}
+.cand-badge.b-pub{background:#EEF4FD;color:#165DFF;border-color:#D6E4FF}
+.cand-badge.b-che{background:#F1F5F0;color:#3D6B35;border-color:#DFE9DC}
+.cand-badge.b-np{background:#F5F0E9;color:#8A6D3B;border-color:#EAE0CE}
 </style>
 </main>
 
@@ -185,7 +190,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: 'Primary Hazards', hzSig: 'Signal', hzPict: 'Pictograms', hzP: "Precautionary statements", common: 'Common name', brand: 'Brand names', kApply: 'Search', kClose: 'Close', noZh: 'This Chinese name is not in our dictionary yet. Try an English name, CAS number, or SMILES.', npName: 'Name', npVia: 'via COCONUT', iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', viaSmi: 'Compound matched in PubChem', prefName: 'Preferred name', maxPhase: 'Max phase', molType: 'Type', therapeutic: 'Therapeutic', bioact: 'Bioactivity', cheblErr: 'ChEMBL query failed: check the ID (e.g. CHEMBL25)', viaCir: 'CAS number resolved via NCI CIR', casErr: 'CAS number not resolvable: try the compound name or check the CAS-RN', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: '2D Structure', fail: 'Render failed', npLike: 'NP-likeness', npCls: 'Natural product class', npOrg: 'Organisms', npDb: 'Source databases', candHdr: 'This formula matches multiple natural-product candidates in COCONUT — pick one', candPubHdr: 'This formula matches multiple candidates in PubChem — pick one' };
+  const L = { hzHdr: 'Primary Hazards', hzSig: 'Signal', hzPict: 'Pictograms', hzP: "Precautionary statements", common: 'Common name', brand: 'Brand names', kApply: 'Search', kClose: 'Close', noZh: 'This Chinese name is not in our dictionary yet. Try an English name, CAS number, or SMILES.', npName: 'Name', npVia: 'via COCONUT', iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', viaSmi: 'Compound matched in PubChem', prefName: 'Preferred name', maxPhase: 'Max phase', molType: 'Type', therapeutic: 'Therapeutic', bioact: 'Bioactivity', cheblErr: 'ChEMBL query failed: check the ID (e.g. CHEMBL25)', viaCir: 'CAS number resolved via NCI CIR', casErr: 'CAS number not resolvable: try the compound name or check the CAS-RN', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: '2D Structure', fail: 'Render failed', npLike: 'NP-likeness', npCls: 'Natural product class', npOrg: 'Organisms', npDb: 'Source databases', candHdr: 'This formula matches the following candidates across PubChem / ChEMBL / COCONUT (multi-DB entries merged) — pick one', candPubHdr: 'This formula matches multiple candidates in PubChem — pick one' };
   const TH = ['Element', 'Count', 'Atomic weight', 'Contribution (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -554,44 +559,112 @@ function hillFormula(c) {
     w.style.display = '';
   }
 
-  async function pubchemFormulaCands(value) {   // all PubChem fastformula candidates
-    const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/fastformula/' + encodeURIComponent(value) + '/property/Title,IsomericSMILES,SMILES,CID/JSON';
+  async function pubchemFormulaCands(value) {   // all PubChem fastformula candidates (with InChIKey for cross-DB merge)
+    const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/fastformula/' + encodeURIComponent(value) + '/property/Title,IsomericSMILES,SMILES,InChIKey,CID/JSON';
     const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
     try {
       const r = await fetch(url, { signal: ctl.signal });
       if (!r.ok) return [];
       const j = await r.json();
       const ps = (j.PropertyTable && j.PropertyTable.Properties) || [];
-      return ps.map(function (p) { return { name: p.Title, smiles: p.IsomericSMILES || p.SMILES || null, cid: p.CID }; }).filter(function (p) { return p.smiles; }).slice(0, 10);
+      return ps.map(function (p) { return { name: p.Title, smiles: p.IsomericSMILES || p.SMILES || null, cid: p.CID, inchikey: p.InChIKey || '' }; }).filter(function (p) { return p.smiles; }).slice(0, 20);
     } catch (e) { return []; } finally { clearTimeout(to); }
   }
 
-  function showPubCandidates(pcs, onPick) {   // candidate grid (PubChem)
+  async function chemblFormulaCands(value) {   // ChEMBL formula lookup (EBI remote; switch to local /chembl/search once deployed)
+    const url = 'https://www.ebi.ac.uk/chembl/api/data/molecule.json?molecule_properties__full_molformula=' + encodeURIComponent(value) + '&limit=20';
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 9000);
+    try {
+      const r = await fetch(url, { signal: ctl.signal });
+      if (!r.ok) return [];
+      const j = await r.json();
+      const ms = j.molecules || [];
+      return ms.map(function (m) {
+        const mp = m.molecule_properties || {};
+        return { chembl_id: m.molecule_chembl_id, name: m.pref_name || '', smiles: mp.canonical_smiles || null, inchikey: mp.standard_inchi_key || '', mw: mp.full_mwt || '', formula: mp.molecular_formula || value };
+      }).filter(function (m) { return m.smiles; });
+    } catch (e) { return []; } finally { clearTimeout(to); }
+  }
+
+  function mergeCandidates(pcs, ches, nps) {   // merge across 3 DBs by full InChIKey; priority PubChem > ChEMBL > COCONUT
+    const byKey = {};
+    const order = [];
+    function push(key, src, data) {
+      let e = byKey[key];
+      if (!e) { e = { key: key, name: '', smiles: null, mw: '', formula: '', sources: { pub: null, che: null, np: null }, inchikey: key === 'nokeysmi:' + src.pkey ? '' : key }; byKey[key] = e; order.push(key); }
+      e.sources[src] = data;
+      if (src === 'pub' && (e.name === '' || !e.smiles)) { e.name = data.name; e.smiles = data.smiles; e.mw = ''; }
+      if (src === 'che' && e.smiles === null) { e.name = data.name; e.smiles = data.smiles; e.mw = data.mw; e.formula = data.formula; }
+      if (src === 'np' && e.smiles === null) { e.name = data.name; e.smiles = data.smiles; e.mw = data.mw; e.formula = data.formula; }
+    }
+    pcs.forEach(function (p) {
+      const key = p.inchikey && p.inchikey.length >= 25 ? p.inchikey.toUpperCase() : ('nokeysmi:' + p.smiles);
+      push(key, 'pub', p);
+    });
+    ches.forEach(function (c) {
+      const key = c.inchikey && c.inchikey.length >= 25 ? c.inchikey.toUpperCase() : ('nokeysmi:' + c.smiles);
+      push(key, 'che', c);
+    });
+    nps.forEach(function (n) {
+      const f = n[5] || {};
+      const ike = (f.standard_inchi_key || '').toUpperCase();
+      const key = ike.length >= 25 ? ike : ('nokeysmi:' + n[2]);
+      push(key, 'np', { id: n[0], name: n[1], smiles: n[2], mw: n[4], full: f });
+    });
+    return order.map(function (k) { return byKey[k]; }).sort(function (a, b) {
+      const sa = (a.sources.pub ? 1 : 0) + (a.sources.che ? 1 : 0) + (a.sources.np ? 1 : 0);
+      const sb = (b.sources.pub ? 1 : 0) + (b.sources.che ? 1 : 0) + (b.sources.np ? 1 : 0);
+      if (sa !== sb) return sb - sa;
+      if (a.sources.pub && !b.sources.pub) return -1;
+      if (!a.sources.pub && b.sources.pub) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }
+
+  function showMergedCandidates(cands, onPick) {   // merged candidate grid (all DBs + source badges)
     const w = $('candWrap');
-    w.innerHTML = '<div class="cand-hd">' + L.candPubHdr + '</div>';
+    w.innerHTML = '<div class="cand-hd">' + L.candHdr + '</div>';
     const grid = document.createElement('div');
     grid.className = 'cand-grid';
-    pcs.forEach(function (pc) {
+    cands.forEach(function (c) {
       const card = document.createElement('button');
       card.type = 'button';
       card.className = 'cand-card';
-      card.innerHTML = '<b>' + escH(pc.name || 'CID ' + pc.cid) + '</b>' +
-        '<span class="cand-sub">PubChem CID ' + pc.cid + '</span>' +
-        '<span class="cand-smi">' + escH(String(pc.smiles).slice(0, 90)) + '</span>';
-      card.addEventListener('click', function () { w.style.display = 'none'; onPick(pc); });
+      let badges = '';
+      if (c.sources.pub) badges += '<span class="cand-badge b-pub">PubChem ' + c.sources.pub.cid + '</span>';
+      if (c.sources.che) badges += '<span class="cand-badge b-che">ChEMBL ' + c.sources.che.chembl_id + '</span>';
+      if (c.sources.np) badges += '<span class="cand-badge b-np">COCONUT ' + c.sources.np.id + '</span>';
+      let extra = '';
+      if (c.sources.np) {
+        const f = c.sources.np.full || {};
+        if (f.chemical_super_class || f.chemical_class) extra += '<span class="cand-sub">' + escH(f.chemical_super_class || '') + (f.chemical_class ? ' / ' + escH(f.chemical_class) : '') + '</span>';
+        if (f.np_likeness !== undefined && f.np_likeness !== null && f.np_likeness !== '') extra += '<span class="cand-sub">' + L.npLike + ' ' + escH(f.np_likeness) + '</span>';
+      }
+      card.innerHTML = '<b>' + escH(c.name || '(unnamed)') + '</b>' +
+        '<span class="cand-sub">' + escH(c.formula || '') + (c.mw ? ' · ' + escH(c.mw) + ' g/mol' : '') + '</span>' +
+        '<span class="cand-badges">' + badges + '</span>' + extra;
+      card.addEventListener('click', function () { w.style.display = 'none'; onPick(c); });
       grid.appendChild(card);
     });
     w.appendChild(grid);
     w.style.display = '';
   }
 
-  function renderPubHit(pc, gen, rawName) {   // render a PubChem candidate (fastformula path)
+  function renderCandidate(c, gen, rawName) {   // render merged candidate (data priority: PubChem > ChEMBL > COCONUT)
     if (gen !== curGen) return;
+    const smi = c.smiles;
+    if (!smi) return;
     try {
-      const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles);
+      const sc = smilesCounts(smi); renderCounts(sc); draw(smi);
       $('structWrap').style.display = ''; $('dlWrap').style.display = ''; $('sVia').style.display='none';
       showResult(true, L.modeS, L.viaF);
-      lastPc = pc; pubHit(pc, gen); setInfoUnified(); bridge(pc.smiles, null, gen); pubName(pc.cid, rawName, function (nm) { bridge(null, nm, gen); });
+      const pcObj = c.sources.pub ? { smiles: smi, name: c.name, cid: c.sources.pub.cid, molfile: null } : null;
+      lastPc = pcObj;
+      if (c.sources.pub) pubHit(pcObj, gen);
+      if (c.sources.che) dbSet('chebl', 'hit', { cid: c.sources.che.chembl_id, mo: { pref_name: c.name || '' }, acts: [], rx: '' });
+      if (c.sources.np) dbSet('np', 'hit', { name: c.name, id: c.sources.np.id, mw: c.mw, full: c.sources.np.full });
+      setInfoUnified(); bridge(smi, null, gen);
+      if (c.sources.pub && rawName) pubName(c.sources.pub.cid, rawName, function (nm) { bridge(null, nm, gen); });
     } catch (e) {}
   }
 
@@ -839,19 +912,16 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
     if (fCounts && !preferSmiles) {
       initDb(); renderCounts(fCounts); showResult(false, L.modeF, null);
       const hill = hillFormula(fCounts);
-      const nps = await npBy('formula', hill, 10);   // ① local COCONUT formula exact hit (all candidates)
+      const [pcs, ches, nps] = await Promise.all([   // three sources in parallel: PubChem → ChEMBL → COCONUT
+        pubchemFormulaCands(hill),
+        chemblFormulaCands(hill),
+        npBy('formula', hill, 20)
+      ]);
       if (myGen !== curGen) return;
-      if (nps.length === 1) { renderNpHit(nps[0], myGen); finalizeDb(myGen); return; }
-      if (nps.length > 1) {   // multiple isomers: let user pick
-        showCandidates(nps, function (n) { renderNpHit(n, myGen); finalizeDb(myGen); });
-        return;
-      }
-      const pcs = await pubchemFormulaCands(hill);   // ② PubChem fastformula all candidates
-      if (myGen !== curGen) return;
-      if (pcs.length === 1) { renderPubHit(pcs[0], myGen, raw); finalizeDb(myGen); return; }
-      if (pcs.length > 1) { showPubCandidates(pcs, function (pc) { renderPubHit(pc, myGen, raw); finalizeDb(myGen); }); return; }
-      dbSet('pub', 'miss', {});
-      finalizeDb(myGen);
+      const cands = mergeCandidates(pcs, ches, nps);   // merge by InChIKey; multi-DB entries first
+      if (cands.length === 0) { dbSet('pub', 'miss', {}); dbSet('che', 'miss', {}); dbSet('np', 'miss', {}); finalizeDb(myGen); return; }
+      if (cands.length === 1) { renderCandidate(cands[0], myGen, raw); finalizeDb(myGen); return; }
+      showMergedCandidates(cands, function (c) { renderCandidate(c, myGen, raw); finalizeDb(myGen); });
       return;
     }
     try {                               // ② SMILES
