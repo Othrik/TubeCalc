@@ -502,6 +502,15 @@ function hillFormula(c) {
   } catch (e) { return null; }
   }
 
+  async function npBy(mode, q, limit) {   // COCONUT exact-key lookup: inchikey|smiles|formula
+    try {
+      const r = await fetch('/coconut/search?mode=' + mode + '&q=' + encodeURIComponent(String(q || '')) + '&limit=' + (limit || 3), { cache: 'no-store' });
+      if (!r.ok) throw new Error('api');
+      const j = await r.json();
+      return (j.hits || []).map(function (h) { return [h.identifier, h.name, h.canonical_smiles, h.molecular_weight, h.molecular_weight, h]; });
+    } catch (e) { return []; }
+  }
+
   function bridge(smiles, name, myGen) {
     if (myGen !== curGen || !DB) return;
     if (smiles && !DB._s) { DB._s = smiles;
@@ -745,7 +754,21 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
     const preferSmiles = fCounts && (fCounts.H === undefined) && chainLike(raw);   // CCO/NC(CO)… 链式串 → SMILES 优先
     if (fCounts && !preferSmiles) {
       initDb(); renderCounts(fCounts); showResult(false, L.modeF, null);
-      const pc = await pubchemData('fastformula', hillFormula(fCounts));
+      const hill = hillFormula(fCounts);
+      const nps = await npBy('formula', hill, 5);   // ① local COCONUT formula exact hit (natural products first)
+      if (myGen !== curGen) return;
+      if (nps.length) {
+        try {
+          const scN = smilesCounts(nps[0][2]);
+          renderCounts(scN); draw(nps[0][2]); showResult(true, L.modeS, L.npVia);
+          lastPc = { smiles: nps[0][2], name: nps[0][1], cid: null, molfile: null, np: true, npId: nps[0][0], npMw: nps[0][4] };
+          dbSet('np', 'hit', { name: nps[0][1], id: nps[0][0], mw: nps[0][4], full: nps[0][5] });
+          setInfoUnified(); bridge(nps[0][2], null, myGen);
+        } catch (eN) {}
+        finalizeDb(myGen);
+        return;
+      }
+      const pc = await pubchemData('fastformula', hill);
       if (myGen !== curGen) return;
       const smi = pc && pc.smiles;   // 普通分子式 → PubChem 最近匹配结构（渐进式）
       if (myGen !== curGen) return;
@@ -757,6 +780,14 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
       const sc = smilesCounts(raw);
       initDb(); renderCounts(sc); draw(raw); showResult(true, L.modeS, null); lastPc = null; setInfoUnified();
       bridge(raw, null, myGen);
+      npBy('smiles', raw, 3).then(function (nps) {   // ②b COCONUT canonical_smiles exact-hit enhancement (NP badge)
+        if (myGen !== curGen || !nps.length) return;
+        try {
+          const n = nps[0];
+          if (DB.np.st === 'pending') dbSet('np', 'hit', { name: n[1], id: n[0], mw: n[4], full: n[5] });
+          setInfoUnified();
+        } catch (eN) {}
+      });
       pubchemData('smiles', raw).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; pubHit(pc2, myGen); setVia(L.viaSmi); setInfoUnified(); pubName(pc2.cid, raw, function (nm) { bridge(null, nm, myGen); }); } else { dbSet('pub', 'miss', {}); } });
       finalizeDb(myGen);
       return;
@@ -816,6 +847,21 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
     }
     if (/^InChI=/.test(raw) || /^[A-Z]{14}-[A-Z]{10}-[A-Z]$/.test(raw)) {   // ④ InChI / InChIKey
       initDb();
+      if (!/^InChI=/.test(raw)) {   // ④a InChIKey → local COCONUT exact hit (offline instant)
+        const nps = await npBy('inchikey', raw.toUpperCase(), 3);
+        if (myGen !== curGen) return;
+        if (nps.length) {
+          try {
+            const scN = smilesCounts(nps[0][2]);
+            renderCounts(scN); draw(nps[0][2]); showResult(true, L.modeS, L.npVia);
+            lastPc = { smiles: nps[0][2], name: nps[0][1], cid: null, molfile: null, np: true, npId: nps[0][0], npMw: nps[0][4] };
+            dbSet('np', 'hit', { name: nps[0][1], id: nps[0][0], mw: nps[0][4], full: nps[0][5] });
+            setInfoUnified(); bridge(nps[0][2], null, myGen);
+          } catch (eN) {}
+          finalizeDb(myGen);
+          return;
+        }
+      }
       const pc = await pubchemData(/^InChI=/.test(raw) ? 'inchi' : 'inchikey', raw);
       if (myGen !== curGen) return;
       if (pc && pc.smiles) {
@@ -836,8 +882,9 @@ initDb();
       if (/^cid:[0-9]+$/.test(en0)) { window._zhCnGen = null; go(en0.slice(4)); return; }
     }
     bridge(null, raw, myGen);   // RxNorm 名称桥
-    let npHit = await npFirst(raw);   // ⑤a COCONUT 本地库先行
+    const [npHit, pc] = await Promise.all([npFirst(raw), pubchemData('name', raw)]);   // ⑤a parallel: COCONUT local ∥ PubChem name
     if (myGen !== curGen) return;
+    let npDrawn = false;
     if (npHit) {
       try {
         const scN = smilesCounts(npHit[2]);
@@ -848,16 +895,18 @@ initDb();
         dbSet('np', 'hit', { name: npHit[1], id: npHit[0], mw: npHit[4], full: npHit[5] });
         setInfoUnified();
         bridge(npHit[2], null, myGen);
+        npDrawn = true;
       } catch (eN) {}
     }
-    const pc = await pubchemData('name', raw);   // ⑤ 名称 → PubChem
-    if (myGen !== curGen) return;
     const smi = pc && pc.smiles;
     if (myGen !== curGen) return;
     if (smi) {
       try {
-        const sc = smilesCounts(smi);
-        renderCounts(sc); draw(smi); if (DB.np.st !== 'hit') showResult(true, L.modeS, L.via); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(smi, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); });
+        if (!npDrawn) {
+          const sc = smilesCounts(smi);
+          renderCounts(sc); draw(smi); showResult(true, L.modeS, L.via);
+        }
+        lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(smi, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); });
       } catch (e3) {}
     }
     finalizeDb(myGen);
