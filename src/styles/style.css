@@ -506,3 +506,13 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 .eng-item:hover{background:rgba(0,113,227,.08);color:#0071e3}
 
 .panel input[type="text"], .panel input[type="number"], .panel select, .panel textarea { max-width: 760px; }
+
+/* P44: COCONUT-style result layout + mol page width */
+.mol-page { max-width: 1280px; margin-left: auto; margin-right: auto; }
+@media (min-width: 1000px) {
+  #resultPanel.result { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-areas: "head head" "info eng" "info struct"; grid-template-rows: auto auto 1fr; gap: 14px 18px; align-items: start; }
+  #resultPanel .res-head { grid-area: head; }
+  #resultPanel #mwBlock { grid-area: info; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  #resultPanel .eng-sw { grid-area: eng; justify-self: end; }
+  #resultPanel .struct-wrap { grid-area: struct; background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+}

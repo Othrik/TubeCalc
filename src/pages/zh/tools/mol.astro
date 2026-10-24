@@ -6,7 +6,7 @@ import Layout from '../../../layouts/Layout.astro';
   note="原理：分子量＝Σ(相对原子质量×原子数)，支持括号与水合物，相对原子质量取 IUPAC 标准值。文献：Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
 >
 
-<main class="container">
+<main class="container mol-page">
   <h1 class="page-title">分子工具</h1>
   <p class="page-desc">输入化学式（支持嵌套括号、水合物与电荷）、SMILES 串、CAS 号、ChEMBL ID、PubChem CID、InChI/InChIKey 或化合物名（中英文通用名 / IUPAC 名）——输入类型自动识别，SMILES 与名称还会绘制 2D 结构式；也可以直接在右侧画板中手绘或粘贴结构，点「检索」出结果。</p>
 
@@ -428,9 +428,11 @@ function hillFormula(c) {
     const img = document.createElement('img');
     img.alt = 'CDK 2D structure';
     img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
-    img.src = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
+    var cdkFallback = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
+    img.src = '/cdk/render?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50);
     img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
-    img.onerror = function () { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); };
+    var cdkTries = 0;
+    img.onerror = function () { cdkTries++; if (cdkTries === 1) { img.src = cdkFallback; } else { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); } };
   }
   async function indigoCell(d, cell, smi, w, h, n) {
     cell.dataset.eng = 'indigo'; cell.textContent = '…';

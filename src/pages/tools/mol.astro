@@ -6,7 +6,7 @@ import Layout from '../../layouts/Layout.astro';
   note="Principle: MW = Σ(atomic weight × count), with parentheses and hydrates supported; atomic weights are IUPAC standard values. Reference: Meija J, Coplen TB, Berglund M, et al. Atomic weights of the elements 2013. Pure Appl Chem. 2016;88(3):265-91."
 >
 
-<main class="container">
+<main class="container mol-page">
   <h1 class="page-title">Molecular Tools</h1>
   <p class="page-desc">Type a chemical formula (nested parentheses, hydrates &amp; charges), a SMILES string, a CAS number, a ChEMBL ID, a PubChem CID, an InChI/InChIKey, or a compound name (English/Chinese common or IUPAC) — detected automatically, with a 2D structure drawing for SMILES and names. Or sketch / paste a structure in the pad on the right and hit Search.</p>
 
@@ -428,9 +428,11 @@ function hillFormula(c) {
     const img = document.createElement('img');
     img.alt = 'CDK 2D structure';
     img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
-    img.src = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
+    var cdkFallback = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
+    img.src = '/cdk/render?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50);
     img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
-    img.onerror = function () { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); };
+    var cdkTries = 0;
+    img.onerror = function () { cdkTries++; if (cdkTries === 1) { img.src = cdkFallback; } else { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); } };
   }
   async function indigoCell(d, cell, smi, w, h, n) {
     cell.dataset.eng = 'indigo'; cell.textContent = '…';
