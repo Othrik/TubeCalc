@@ -175,7 +175,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: 'Primary Hazards', hzSig: 'Signal', hzPict: 'Pictograms', hzP: "Precautionary statements", common: 'Common name', brand: 'Brand names', kApply: 'Search', kClose: 'Close', noZh: 'This Chinese name is not in our dictionary yet. Try an English name, CAS number, or SMILES.', npName: 'Name', npVia: 'via COCONUT', iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', viaSmi: 'Compound matched in PubChem', prefName: 'Preferred name', maxPhase: 'Max phase', molType: 'Type', therapeutic: 'Therapeutic', bioact: 'Bioactivity', cheblErr: 'ChEMBL query failed: check the ID (e.g. CHEMBL25)', viaCir: 'CAS number resolved via NCI CIR', casErr: 'CAS number not resolvable: try the compound name or check the CAS-RN', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: '2D Structure', fail: 'Render failed' };
+  const L = { hzHdr: 'Primary Hazards', hzSig: 'Signal', hzPict: 'Pictograms', hzP: "Precautionary statements", common: 'Common name', brand: 'Brand names', kApply: 'Search', kClose: 'Close', noZh: 'This Chinese name is not in our dictionary yet. Try an English name, CAS number, or SMILES.', npName: 'Name', npVia: 'via COCONUT', iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', viaSmi: 'Compound matched in PubChem', prefName: 'Preferred name', maxPhase: 'Max phase', molType: 'Type', therapeutic: 'Therapeutic', bioact: 'Bioactivity', cheblErr: 'ChEMBL query failed: check the ID (e.g. CHEMBL25)', viaCir: 'CAS number resolved via NCI CIR', casErr: 'CAS number not resolvable: try the compound name or check the CAS-RN', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: '2D Structure', fail: 'Render failed', npLike: 'NP-likeness', npCls: 'Natural product class', npOrg: 'Organisms', npDb: 'Source databases' };
   const TH = ['Element', 'Count', 'Atomic weight', 'Contribution (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -474,6 +474,14 @@ function hillFormula(c) {
     }, 20000);
   }
   async function npFirst(q) {
+    // ① Server-side full COCONUT API (40+ fields), falls back to local shards
+    try {
+      const r = await fetch('/coconut/search?q=' + encodeURIComponent(String(q || '')) + '&limit=3', { cache: 'no-store' });
+      if (!r.ok) throw new Error('api');
+      const j = await r.json();
+      const h = j.hits && j.hits[0];
+      if (h) return [h.identifier, h.name, h.canonical_smiles, h.molecular_weight, h.molecular_weight, h];
+    } catch (e) {}
   try {
     if (!window.__npMeta) {
       const r = await fetch('/data/np_meta.json', { cache: 'default' });
@@ -502,7 +510,7 @@ function hillFormula(c) {
       if (DB.pub.st === 'pending') pubchemData('smiles', smiles).then(function (p) { if (myGen !== curGen) return; if (p && p.smiles) { pubHit(p, myGen); pubName(p.cid, null, function (nm) { bridge(null, nm, myGen); }); } else { dbSet('pub', 'miss', {}); } });
     }
     if (name && DB._n !== name) { DB._n = name;
-      if (DB.np.st === 'pending' || DB.np.st === 'miss') npFirst(name).then(function (h) { if (myGen !== curGen) return; if (h) dbSet('np', 'hit', { name: h[1], id: h[0], mw: h[4] }); else if (DB.np.st === 'pending') dbSet('np', 'miss', {}); });
+      if (DB.np.st === 'pending' || DB.np.st === 'miss') npFirst(name).then(function (h) { if (myGen !== curGen) return; if (h) dbSet('np', 'hit', { name: h[1], id: h[0], mw: h[4], full: h[5] }); else if (DB.np.st === 'pending') dbSet('np', 'miss', {}); });
       if (DB.rx.st === 'pending' || DB.rx.st === 'miss') rxByName(name);
       if (DB.chebl.st === 'pending' || DB.chebl.st === 'miss') cheblByName(name);
     }
@@ -614,7 +622,18 @@ function hillFormula(c) {
     const fp = DB.pub.props;
     let cat = null;
     if (DB.np.st === 'hit') cat = L.catNP; else if (DB.rx.st === 'hit') cat = L.catDrug; else if (DB.chebl.st === 'hit') cat = L.catBio; else if (DB.pub.st === 'hit') cat = L.catSm;
-    if (cat) r += '<div class="mi"><b>' + L.cat + '</b>' + cat + '</div>'; r += '<div id="slot1" class="mw-slot"></div>';
+    if (cat) r += '<div class="mi"><b>' + L.cat + '</b>' + cat + '</div>';
+    if (DB.np.st === 'hit' && DB.np.full) {
+      const f = DB.np.full;
+      const bits = [];
+      if (f.np_likeness !== undefined && f.np_likeness !== null && f.np_likeness !== '') bits.push(L.npLike + ' ' + f.np_likeness);
+      if (f.chemical_super_class) bits.push(f.chemical_super_class);
+      if (f.chemical_class) bits.push(f.chemical_class);
+      if (f.np_classifier_pathway) bits.push(f.np_classifier_pathway);
+      if (bits.length) r += '<div class="mi"><b>' + L.npCls + '</b>' + bits.map(chip).join('') + '</div>';
+      if (f.organisms) r += '<div class="mi"><b>' + L.npOrg + '</b>' + escH(String(f.organisms).slice(0, 120)) + '</div>';
+      if (f.collections) r += '<div class="mi"><b>' + L.npDb + '</b>' + escH(String(f.collections).slice(0, 120)) + '</div>';
+    } r += '<div id="slot1" class="mw-slot"></div>';
     r += sec(2, L.sec2); r += '<div id="slot2" class="st-slot"></div>';
     if (lastSmiles) r += '<div class="mi"><b>' + L.canSm + '</b><span style="word-break:break-all">' + escH(lastSmiles) + '</span></div>';
     if (fp && fp.InChIKey) r += '<div class="mi"><b>InChIKey</b>' + fp.InChIKey + '</div>';
@@ -826,7 +845,7 @@ initDb();
         draw(npHit[2]);
         showResult(true, L.modeS, L.npVia);
         lastPc = { smiles: npHit[2], name: npHit[1], cid: null, molfile: null, np: true, npId: npHit[0], npMw: npHit[4] };
-        dbSet('np', 'hit', { name: npHit[1], id: npHit[0], mw: npHit[4] });
+        dbSet('np', 'hit', { name: npHit[1], id: npHit[0], mw: npHit[4], full: npHit[5] });
         setInfoUnified();
         bridge(npHit[2], null, myGen);
       } catch (eN) {}
