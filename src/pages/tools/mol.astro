@@ -175,7 +175,7 @@ document.getElementById('molIn').addEventListener('input', convertMassMol);
 <script is:inline>
 (function () {
   'use strict';
-  const L = { hzHdr: 'Primary Hazards', hzSig: 'Signal', hzPict: 'Pictograms', hzP: "Precautionary statements", common: 'Common name', brand: 'Brand names', kApply: 'Search', kClose: 'Close', noZh: 'This Chinese name is not in our dictionary yet. Try an English name, CAS number, or SMILES.', npName: 'Name', npVia: 'via COCONUT', iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', viaSmi: 'Compound matched in PubChem', prefName: 'Preferred name', maxPhase: 'Max phase', molType: 'Type', therapeutic: 'Therapeutic', bioact: 'Bioactivity', cheblErr: 'ChEMBL query failed: check the ID (e.g. CHEMBL25)', viaCir: 'CAS number resolved via NCI CIR', casErr: 'CAS number not resolvable: try the compound name or check the CAS-RN', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: '2D Structure' };
+  const L = { hzHdr: 'Primary Hazards', hzSig: 'Signal', hzPict: 'Pictograms', hzP: "Precautionary statements", common: 'Common name', brand: 'Brand names', kApply: 'Search', kClose: 'Close', noZh: 'This Chinese name is not in our dictionary yet. Try an English name, CAS number, or SMILES.', npName: 'Name', npVia: 'via COCONUT', iupac: 'IUPAC name', hbd: 'H-bond donors', hba: 'H-bond acceptors', rot: 'Rotatable bonds', chg: 'Formal charge', heavy: 'Heavy atoms', viaF: 'Structure: closest PubChem match for this formula', pubHdr: 'PubChem data', rdkHdr: 'RDKit (computed locally)', viaSmi: 'Compound matched in PubChem', prefName: 'Preferred name', maxPhase: 'Max phase', molType: 'Type', therapeutic: 'Therapeutic', bioact: 'Bioactivity', cheblErr: 'ChEMBL query failed: check the ID (e.g. CHEMBL25)', viaCir: 'CAS number resolved via NCI CIR', casErr: 'CAS number not resolvable: try the compound name or check the CAS-RN', exM: 'Exact mass', rings: 'Ring count', arom: 'Aromatic rings', empty: 'Please enter a formula, a SMILES string, or a compound name', invalid: 'Invalid SMILES: ', pub: 'Could not resolve the name via PubChem (no network, or name not found). Check the name or paste a SMILES string directly.', via: 'Structure & formula resolved via PubChem', hill: 'Molecular formula (Hill):', modeF: 'Interpreted as chemical formula', modeS: '2D Structure', fail: 'Render failed' };
   const TH = ['Element', 'Count', 'Atomic weight', 'Contribution (g/mol)'];
   const $ = (id) => document.getElementById(id);
   const TC_MASS = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,
@@ -333,7 +333,7 @@ function hillFormula(c) {
     var box = document.getElementById('engSw');
     if (!box || box.dataset.done) return;
     box.dataset.done = '1';
-    var NAMES = { rdkit: 'RDKit', sd: 'SmilesDrawer', cdk: 'CDK', indigo: 'Indigo', chematic: 'Chematic' };
+    var NAMES = { rdkit: 'RDKit', sd: 'SmilesDrawer', cdk: 'CDK', indigo: 'Indigo', chematic: 'PubChem' };
     var cur = getEngPref(); if (!NAMES[cur]) cur = 'rdkit';
     var curB = document.getElementById('engCur'), menu = document.getElementById('engMenu'), dd = document.getElementById('engDd');
     if (!curB || !menu) return;
@@ -394,25 +394,25 @@ function hillFormula(c) {
     if (ENG === 'cdk') { cdkCell(d, cell, smi, w, h, 1); return; }
     if (ENG === 'indigo') { indigoCell(d, cell, smi, w, h, 1); return; }
     if (ENG === 'chematic') { chemCell(d, cell, smi, w, h, 1); return; }
-    if (ENG === 'sd') { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); return; }
+    if (ENG === 'sd') { failCell(cell); return; }
     if (RDK) {
-      if (!rdkitDrawOne(cell, smi, w, h)) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); }
+      if (!rdkitDrawOne(cell, smi, w, h)) { failCell(cell); }
       return;
     }
     if (!rdkitFailed) { cell.dataset.eng = 'wait'; cell.textContent = '…'; return; }
-    cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi);
+    failCell(cell);
   }
+  function failCell(cell) { cell.dataset.eng = 'fail'; cell.textContent = L.fail; }
   function sdCell(d, cell, f) {
     try {
-      d.draw(f, 'svg', 'light', function (svg) { if (svg) cell.appendChild(svg); }, function () { cell.textContent = '·'; });
-    } catch (e) { cell.textContent = '·'; }
+      d.draw(f, 'svg', 'light', function (svg) { if (svg) cell.appendChild(svg); }, function () { failCell(cell); });
+    } catch (e) { failCell(cell); }
   }
   let indigoPromise = null;
   function loadIndigo() {
     if (indigoPromise) return indigoPromise;
     indigoPromise = import('/indigo/indigo-ketcher-separate-wasm.js')
-      .then(function (m) { const init = m.default || m; return init({ locateFile: function (f) { return '/indigo/' + f; } }); })
-      .then(function (mod) { return mod.indigo ? mod.indigo(mod) : mod; });
+      .then(function (m) { return (m.default || m)({ locateFile: function (f) { return '/indigo/' + f; } }); });
     return indigoPromise;
   }
   function cdkCell(d, cell, smi, w, h, n) {
@@ -420,24 +420,25 @@ function hillFormula(c) {
     const img = document.createElement('img');
     img.alt = 'CDK 2D structure';
     img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
-    var cdkFallback = 'https://www.simolecule.com/cdkdepict/depict/cog/svg?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50) + '&zoom=1.3&abbr=on&hdisp=bridgehead&showtitle=false';
     img.src = '/cdk/render?smi=' + encodeURIComponent(smi) + '&w=' + (n === 1 ? 560 : w) + '&h=' + (n === 1 ? 460 : h + 50);
     img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
     var cdkTries = 0;
-    img.onerror = function () { cdkTries++; if (cdkTries === 1) { img.src = cdkFallback; } else { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); } };
+    img.onerror = function () { cdkTries++; if (cdkTries === 1) { img.src = cdkFallback; } else { failCell(cell); } };
   }
   async function indigoCell(d, cell, smi, w, h, n) {
     cell.dataset.eng = 'indigo'; cell.textContent = '…';
     try {
-      const eng = await loadIndigo();
-      const mol = eng.loadMolecule(smi);
-      const svg = eng.render(mol, '{"render-output-format":"svg","render-padding":10,"render-background-color":"1,1,1,0"}');
+      const mod = await loadIndigo();
+      const o = new mod.MapStringString(); o.set('render-output-format', 'svg');
+      let raw = mod.render(smi, o);
+      if (raw.indexOf('<svg') < 0) raw = atob(raw);
+      const svg = raw;
       const tmp = document.createElement('div'); tmp.innerHTML = svg;
       const el = tmp.querySelector('svg');
       if (!el) throw new Error('no svg');
       el.style.maxWidth = '100%'; el.style.height = 'auto'; el.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
       cell.textContent = ''; cell.appendChild(el);
-    } catch (e) { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); }
+    } catch (e) { failCell(cell); }
   }
   function chemCell(d, cell, smi, w, h, n) {
     cell.dataset.eng = 'chematic';
@@ -447,7 +448,7 @@ function hillFormula(c) {
     img.style.maxWidth = '100%'; img.style.height = 'auto'; img.style.width = n === 1 ? 'min(100%, 560px)' : w + 'px';
     img.src = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/' + encodeURIComponent(smi) + '/PNG?image_size=' + (n === 1 ? 640 : (w * 1.6 | 0)) + 'x' + (n === 1 ? 480 : (h * 1.6 | 0));
     img.onload = function () { cell.textContent = ''; cell.appendChild(img); };
-    img.onerror = function () { cell.dataset.eng = 'sdrawer'; sdCell(d, cell, smi); };
+    img.onerror = function () { failCell(cell); };
   }
   async function pubchemData(kind, value) {   // kind: name|fastformula|cid|inchikey|inchi → SMILES + 性质一次取回
     const url = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/' + kind + '/' + encodeURIComponent(value) +
@@ -729,7 +730,7 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
       if (myGen !== curGen) return;
       const smi = pc && pc.smiles;   // 普通分子式 → PubChem 最近匹配结构（渐进式）
       if (myGen !== curGen) return;
-      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; $('dlWrap').style.display = ''; setVia(L.viaF); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(smi, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); }); } catch (e) {} } else { dbSet('pub', 'miss', {}); }
+      if (smi) { try { smilesCounts(smi); draw(smi); $('structWrap').style.display = ''; $('dlWrap').style.display = ''; $('sVia').style.display='none'; lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(smi, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); }); } catch (e) {} } else { dbSet('pub', 'miss', {}); }
       finalizeDb(myGen);
       return;
     }
