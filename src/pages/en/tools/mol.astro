@@ -983,20 +983,40 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
       return;
     }
 
-    if (/^\d{1,12}$/.test(raw)) {        // ③ CID
+    if (/^\d{1,12}$/.test(raw)) {        // ③ CID (pure digits; on reverse-lookup failure, 7/8 digits fall back to hyphen-less CAS)
       initDb();
       const pc = await pubchemData('cid', raw);
       if (myGen !== curGen) return;
       if (pc && pc.smiles) {
         try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(pc.smiles, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); }); finalizeDb(myGen); return; } catch (e) {}
-      } else { dbSet('pub', 'miss', {}); }
+      }
+      if (raw.length === 7 || raw.length === 8) {   // CID lookup failed → try hyphen-less CAS (xxx-xx-x / xxxx-xx-x)
+        const cas = raw.length === 8 ? raw.slice(0, 5) + '-' + raw.slice(5, 7) + '-' + raw.slice(7) : raw.slice(0, 4) + '-' + raw.slice(4, 6) + '-' + raw.slice(6);
+        try {
+          const r = await fetch('https://cactus.nci.nih.gov/chemical/structure/' + encodeURIComponent(cas) + '/smiles');
+          if (myGen !== curGen) return;
+          const smi2 = r.ok ? (await r.text()).trim() : '';
+          if (smi2 && /^[A-Za-z0-9@+\-\[\]\(\)=#$%\\/.]+$/.test(smi2)) {
+            const sc2 = smilesCounts(smi2);
+            if (sc2) renderCounts(sc2);
+            draw(smi2); showResult(true, 'CAS', null); lastPc = null; dbSet('cir', 'hit', { cas: cas, id: cas }); setInfoUnified(); bridge(smi2, null, myGen);
+            pubchemData('smiles', smi2).then(function (pc2) { if (myGen !== curGen) return; if (pc2 && pc2.smiles) { lastPc = pc2; pubHit(pc2, myGen); setVia(L.viaCir); setInfoUnified(); pubName(pc2.cid, cas, function (nm) { bridge(null, nm, myGen); }); } else { dbSet('pub', 'miss', {}); } });
+            finalizeDb(myGen);
+            return;
+          }
+        } catch (e0) {}
+      }
+      dbSet('pub', 'miss', {});
       ['np', 'chebl', 'rx', 'cir'].forEach(function (k) { if (DB[k].st === 'pending') dbSet(k, 'miss', {}); });
       $('err').textContent = L.pub; return;
     }
-    if (/^InChI=/.test(raw) || /^[A-Z]{14}-[A-Z]{10}-[A-Z]$/.test(raw)) {   // ④ InChI / InChIKey
+    const inchiPrefix = /^inchi=/i.test(raw);
+    if (inchiPrefix || /^[A-Za-z]{14}-[A-Za-z]{10}-[A-Za-z]$/.test(raw)) {   // ④ InChI / InChIKey (case-insensitive)
       initDb();
-      if (!/^InChI=/.test(raw)) {   // ④a InChIKey → local COCONUT exact hit (offline instant)
-        const nps = await npBy('inchikey', raw.toUpperCase(), 3);
+      if (inchiPrefix) raw = 'InChI=' + raw.slice(6);   // normalize prefix (InCHi= → InChI=), keep payload
+      const ikeUpper = raw.toUpperCase();
+      if (!inchiPrefix) {   // ④a InChIKey → local COCONUT exact hit (offline instant)
+        const nps = await npBy('inchikey', ikeUpper, 3);
         if (myGen !== curGen) return;
         if (nps.length) {
           try {
@@ -1010,7 +1030,7 @@ let RDK = null; let rdkitFailed = false; let lastSmiles = ''; let lastPc = null;
           return;
         }
       }
-      const pc = await pubchemData(/^InChI=/.test(raw) ? 'inchi' : 'inchikey', raw);
+      const pc = await pubchemData(inchiPrefix ? 'inchi' : 'inchikey', inchiPrefix ? raw : ikeUpper);
       if (myGen !== curGen) return;
       if (pc && pc.smiles) {
         try { const sc = smilesCounts(pc.smiles); renderCounts(sc); draw(pc.smiles); showResult(true, L.modeS, L.via); lastPc = pc; pubHit(pc, myGen); setInfoUnified(); bridge(pc.smiles, null, myGen); pubName(pc.cid, raw, function (nm) { bridge(null, nm, myGen); }); finalizeDb(myGen); return; } catch (e) {}
@@ -1024,7 +1044,14 @@ initDb();
       let dict0 = null;
       try { const r0 = await fetch('/zhdict.json?t=' + Date.now()); if (r0.ok) dict0 = await r0.json(); } catch (e0) {}
       const en0 = dict0 && dict0[raw];
-      if (!en0) { ['np', 'pub', 'chebl', 'rx', 'cir'].forEach(function (k) { if (DB[k].st === 'pending') dbSet(k, 'miss', {}); }); $('err').textContent = L.noZh; return; }
+      if (!en0) {
+        const pcZh = await pubchemData('name', raw);   // dict miss → fallback: PubChem lookup by Chinese name
+        if (myGen !== curGen) return;
+        if (pcZh && pcZh.smiles) {
+          try { const sc = smilesCounts(pcZh.smiles); renderCounts(sc); draw(pcZh.smiles); showResult(true, L.modeS, L.via); lastPc = pcZh; pubHit(pcZh, myGen); setInfoUnified(); bridge(pcZh.smiles, null, myGen); pubName(pcZh.cid, raw, function (nm) { bridge(null, nm, myGen); }); finalizeDb(myGen); return; } catch (e) {}
+        }
+        ['np', 'pub', 'chebl', 'rx', 'cir'].forEach(function (k) { if (DB[k].st === 'pending') dbSet(k, 'miss', {}); }); $('err').textContent = L.noZh; return;
+      }
       window._zhCnName = raw; window._zhCnGen = myGen;
       raw = en0;
       if (/^cid:[0-9]+$/.test(en0)) { window._zhCnGen = null; go(en0.slice(4)); return; }
