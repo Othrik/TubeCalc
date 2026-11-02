@@ -91,6 +91,49 @@ import Layout from '../../../layouts/Layout.astro';
 .mw-ic[hidden] { display:none; }
 .btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text); }
 
+/* Portrait tablets and phones: readable component cards with stable unit widths. */
+@media (max-width:1100px) {
+  .mix-head { display:none; }
+  .mix-row { position:relative; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding:16px; margin-top:14px; }
+  .mix-row .cell.name { grid-column:1/-1; padding-right:54px; }
+  .mix-row .cell { flex-direction:column; align-items:stretch; gap:6px; min-width:0; }
+  .mix-row .cell::before { content:attr(data-l); font-size:12px; font-weight:600; color:var(--muted); }
+  .mix-row .cell.c2::before { color:#7d7ce0; }
+  .mix-row .cell.c3::before { color:#1a97a8; }
+  .mix-row .cell.c4::before { color:#d97f06; }
+  .mix-row .del { position:absolute; top:38px; right:16px; width:44px; height:44px; font-size:22px; }
+  .mix-row .row-warn, .solv-mass { grid-column:1/-1; overflow-wrap:anywhere; }
+  .mix-row .ig { width:100%; }
+  .mix-row .ig .dd { flex:0 0 88px; min-width:0; }
+  .mix-row .cell.c4 .dd { flex-basis:68px; }
+  .mix-row .dd-btn { width:100%; justify-content:space-between; padding-left:8px; padding-right:8px; }
+  .mix-row input, .mix-controls input { font-size:16px; width:100%; min-width:0; }
+  .mix-row .ig input, .mix-row .dd-btn, .mix-row .vol-out, .mix-controls .btn, .mix-total input, .mix-total .dd-btn { height:46px; }
+  .mix-row .cell.c2.pure .dd { flex:1; }
+  .mix-row.water { grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:end; }
+  .mix-row.water .cell.name { grid-column:1; padding-right:0; }
+  .mix-row.water .cell:nth-child(2), .mix-row.water .cell:nth-child(3), .mix-row.water > div:nth-child(5) { display:none; }
+  .mix-row.water .cell.c4 { grid-column:2; }
+  .mix-controls { gap:12px; }
+  .mix-controls .demo-link { min-height:44px; }
+}
+@media (max-width:600px) {
+  .mix-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .mix-controls .tv-wrap, .mix-controls .demo-link { grid-column:1/-1; }
+  .mix-total .ibox { flex:1; min-width:0; }
+  .mix-total .ibox input { width:100% !important; }
+  .mix-controls .btn { justify-content:center; padding-left:8px; padding-right:8px; font-size:14px; }
+  .mix-controls .demo-link { justify-content:center; }
+  .mix-row { grid-template-columns:minmax(0,1fr); padding:14px; gap:12px; }
+  .mix-row .cell.name, .mix-row .cell.c2, .mix-row .cell.c3, .mix-row .cell.c4 { grid-column:1/-1; }
+  .mix-row .del { right:14px; top:36px; }
+  .mix-row .ig .dd { flex-basis:104px; }
+  .mix-row .cell.c4 .dd { flex-basis:80px; }
+  .mix-row.water { grid-template-columns:minmax(0,1fr); }
+  .mix-row.water .cell.name, .mix-row.water .cell.c4 { grid-column:1; }
+  .mix-row.water .cell.name .ig { flex-wrap:wrap; }
+  .page-desc { font-size:14px; line-height:1.7; }
+}
     </style>
   </Fragment>
 
@@ -105,7 +148,7 @@ import Layout from '../../../layouts/Layout.astro';
     </label>
     <button class="btn" id="addRow">Ajouter un composant</button>
     <button class="btn btn-ghost" id="copyTsv">Copier le tableau (TSV)</button>
-    <button type="button" class="demo-link" id="loadDemo" title="Remplit l’exemple de tampon de 100 mL (comprend un liquide pur et un composant à quantité fixe ; la ligne fixe recalcule sa concentration finale). Remplace la recette en cours">Charger la recette d’exemple</button>
+    <button type="button" class="demo-link" id="loadDemo" title="Charger 1 L de tampon de migration SDS-PAGE 10× : Tris base 250 mM, glycine 1920 mM, SDS 1% m/v. Compléter avec de l’eau à 1 L. Remplace la recette actuelle.">Charger un exemple</button>
   </div>
 
   <div class="mix-head"><span>Composant</span><span>Mère / Masse molaire</span><span>Conc. finale</span><span>Quantité</span><span></span></div>
@@ -118,6 +161,31 @@ import Layout from '../../../layouts/Layout.astro';
 
 
 <script is:inline>
+// Keep unit menus inside the visible viewport, including after scrolling.
+function fitMixMenus() {
+  document.querySelectorAll('main .dd.open .dd-panel').forEach(panel => {
+    panel.style.transform = '';
+    const viewport = window.visualViewport;
+    const left = (viewport ? viewport.offsetLeft : 0) + 12;
+    const top = (viewport ? viewport.offsetTop : 0) + 12;
+    const right = left + (viewport ? viewport.width : innerWidth) - 24;
+    const bottom = top + (viewport ? viewport.height : innerHeight) - 24;
+    panel.style.minWidth = Math.min(172, right - left) + 'px';
+    panel.style.maxWidth = (right - left) + 'px';
+    panel.style.maxHeight = Math.min(300, bottom - top) + 'px';
+    const rect = panel.getBoundingClientRect();
+    const dx = Math.max(left - rect.left, Math.min(0, right - rect.right));
+    const dy = Math.max(top - rect.top, Math.min(0, bottom - rect.bottom));
+    panel.style.transform = `translate(${dx}px, ${dy}px)`;
+  });
+}
+document.addEventListener('click', () => requestAnimationFrame(fitMixMenus), true);
+window.addEventListener('resize', fitMixMenus);
+window.addEventListener('scroll', fitMixMenus, { passive:true });
+if (window.visualViewport) {
+  visualViewport.addEventListener('resize', fitMixMenus);
+  visualViewport.addEventListener('scroll', fitMixMenus);
+}
 const LS_KEY = 'tubecalc_mix_v1';
 const $ = (s, p) => (p || document).querySelector(s);
 // 数字来源图标：铅笔=手动输入 ƒx=自动计算
@@ -214,16 +282,13 @@ function rowVol(r, res) {   // 该行占用的体系体积（μL；质量行不�
 function totalUpt() { return (parseFloat($('#total').value) || 0) * parseFloat($('#totalUnit').value); }
 
 function demo() {
-  return { total: 100, totalUnit: '1000', rows: [
-    { name:'Tris-HCl (pH 7.5)',  sv:1,     su:'1',    fv:50,   fu:'0.001' },
-    { name:'NaCl',               sv:5,     su:'1',    fv:150,  fu:'0.001' },
-    { name:'EDTA',               sv:0.5,   su:'1',    fv:2,    fu:'0.001' },
-    { name:'BSA',                sv:10,    su:'pwv',  fv:0.1,  fu:'pwv' },
-    { name:'Tween-20',           sv:'100', su:'pure', fv:0.05, fu:'pvv' },
-    { name:'Sodium Azide',       sv:5,     su:'pwv',  fv:'',   fu:'pwv', amt:'200', au:'uL' }
+  // 10× Tris–glycine–SDS running buffer, 1 L (pH approximately 8.3).
+  return { total: 1000, totalUnit: '1000', rows: [
+    { name:'Tris base', sv:121.14, su:'gmol', fv:250, fu:'0.001', au:'g' },
+    { name:'Glycine', sv:75.07, su:'gmol', fv:1920, fu:'0.001', au:'g' },
+    { name:'SDS', sv:288.38, su:'gmol', fv:1, fu:'pwv', au:'g' }
   ]};
 }
-
 function sel(list, val, cls) {
   const opt = u => '<option value="' + u[0] + '"' + (u[0] === val ? ' selected' : '') + (u[2] ? ' disabled' : '') + '>' + u[1] + '</option>';
   const grouped = list.length && Array.isArray(list[0][1]);   // [组名, [选项...]] 还是平铺 [值, 名, 禁用]

@@ -518,3 +518,26 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 }
 
 .frag[data-eng=fail]{color:var(--muted,#86868b);font-size:13px;text-align:center}
+
+/* Compact two-row navigation for portrait tablets and phones. */
+@media (max-width:1100px) {
+  .nav-inner { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:44px auto; height:auto; gap:6px 12px; padding:8px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)); }
+  .brand { grid-column:1; grid-row:1; font-size:18px; gap:8px; justify-self:start; }
+  .brand-ic { width:28px; height:28px; }
+  .lang-wrap { grid-column:2; grid-row:1; position:static; margin:0; justify-self:end; }
+  .dd-btn-lang, .lang-sel { height:44px; min-height:44px; max-width:180px; font-size:14px; border:1px solid var(--border); background:var(--card); border-radius:14px; }
+  .nav-links { grid-column:1/-1; grid-row:2; display:flex; width:100%; min-width:0; gap:4px; flex-wrap:nowrap; overflow-x:auto; margin:0; padding:2px 0; scrollbar-width:none; -webkit-overflow-scrolling:touch; scroll-padding-inline:8px; }
+  .nav-links::-webkit-scrollbar { display:none; }
+  .nav-links a { display:flex; align-items:center; justify-content:center; flex:1 0 auto; min-height:44px; padding:8px 14px; font-size:14px; line-height:1.3; border-radius:12px; }
+  .nav-links a.active { box-shadow:0 2px 6px rgba(0,113,227,.16); }
+  .nav-links a:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+  html.ios .nav-inner { height:auto; }
+}
+@media (max-width:480px) {
+  .nav-inner { padding-left:12px; padding-right:12px; gap:4px 8px; }
+  .nav-links a { flex:0 0 auto; padding:8px 12px; font-size:13px; }
+  .dd-btn-lang { max-width:156px; }
+}
+@media (display-mode:standalone) and (max-width:1100px) {
+  html.ios .nav-inner { padding-top:max(8px,env(safe-area-inset-top)); height:auto; }
+}

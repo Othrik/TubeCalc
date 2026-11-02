@@ -38,7 +38,7 @@ npm run build    # outputs dist/ with clean directory URLs like /tools/mix/
 
 ### Version
 
-The version lives in `package.json` and is shown in the site footer. Notable changes are tagged (current: `v1.8.2`).
+The version lives in `package.json` and is shown in the site footer. Notable changes are tagged (current: `v1.8.27`).
 
 <a id="中文"></a>
 ## 中文
@@ -72,7 +72,7 @@ npm run build    # 产物输出 dist/，URL 为 /tools/mix/ 目录式干净路�
 
 ### 版本
 
-版本号定义在 `package.json`，页脚展示；重要变更会打 git tag（当前 `v1.8.2`）。
+版本号定义在 `package.json`，页脚展示；重要变更会打 git tag（当前 `v1.8.27`）。
 
 ## Credits
 
@@ -83,3 +83,5 @@ The app icon is based on [Microsoft Fluent Emoji](https://github.com/microsoft/f
 ## License
 
 [MIT](LICENSE)
+
+Development log / 开发日志: [CHANGELOG.md](CHANGELOG.md).
