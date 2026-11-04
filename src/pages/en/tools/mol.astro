@@ -491,7 +491,7 @@ function hillFormula(c) {
     }, 20000);
   }
   async function npFirst(q) {
-    // ① Server-side full COCONUT API (40+ fields), falls back to local shards
+    // ① Server-side full COCONUT API (738K / 44 fields), sole data source (shard fallback removed in v1.8.28)
     try {
       const r = await fetch('/coconut/search?q=' + encodeURIComponent(String(q || '')) + '&limit=3', { cache: 'no-store' });
       if (!r.ok) throw new Error('api');
@@ -499,24 +499,7 @@ function hillFormula(c) {
       const h = j.hits && j.hits[0];
       if (h) return [h.identifier, h.name, h.canonical_smiles, h.molecular_weight, h.molecular_weight, h];
     } catch (e) {}
-  try {
-    if (!window.__npMeta) {
-      const r = await fetch('/data/np_meta.json', { cache: 'default' });
-      if (!r.ok) return null;
-      window.__npMeta = await r.json();
-      window.__npShards = {};
-    }
-    const ql = String(q || '').toLowerCase();
-    if (ql.length < 2 || !/^[a-z]/.test(ql)) return null;
-    let best = null;
-    for (const m of window.__npMeta.shards) { if (ql.indexOf(m.k) === 0 && (!best || m.k.length > best.k.length)) best = m; }
-    if (!best) return null;
-    let items = window.__npShards[best.k];
-    if (!items) { const r = await fetch('/data/np_shards/' + best.f, { cache: 'default' }); if (!r.ok) return null; items = window.__npShards[best.k] = (await r.json()).items; }
-    let hit = null;
-    for (const it of items) { if (it[1] && it[1].toLowerCase() === ql) { hit = it; break; } }
-    return hit;
-  } catch (e) { return null; }
+    return null;
   }
 
   async function npBy(mode, q, limit) {   // COCONUT exact-key lookup: inchikey|smiles|formula
@@ -1122,7 +1105,7 @@ initDb();
       if (/^cid:[0-9]+$/.test(en0)) { window._zhCnGen = null; go(en0.slice(4)); return; }
     }
     bridge(null, raw, myGen);   // RxNorm 名称桥
-    const [npHit, pc] = await Promise.all([npFirst(raw), pubchemData('name', raw)]);   // ⑤a parallel: COCONUT local ∥ PubChem name
+    const [npHit, pc] = await Promise.all([npFirst(raw), pubchemData('name', raw)]);   // ⑤a parallel: COCONUT server API ∥ PubChem name
     if (myGen !== curGen) return;
     let npDrawn = false;
     if (npHit) {

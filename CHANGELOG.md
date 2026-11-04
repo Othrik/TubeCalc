@@ -1,5 +1,17 @@
 # Development log / 开发日志
 
+## v1.8.28 — 2026-11-05 (Asia/Shanghai)
+
+### Changes
+- COCONUT search now relies solely on the server-side full database API (738,794 records / 44 fields): removed the front-end local shard fallback (public/data/np_meta.json + np_shards, ~34 MB).
+- Unified `npFirst()` across all six languages (zh/en/es/fr/pt/ru) on the server API; es/fr/pt/ru previously used the shard-only implementation and are now upgraded to the full API.
+- Server slimming: deleted abandoned ChEMBL localization residue on the main server (/opt/chembl_part_*.bin and related probes/logs, ~17 GB); disk usage dropped from 67% to 24%.
+
+### Validation
+- Astro production build passed; `/zh/` alias regenerated.
+- API verified locally and publicly (`/coconut/search?q=caffeine` → CNP0228556.0 with 14 fields).
+- Built output confirmed free of np_meta.json / np_shards; site `data/` directory removed from server.
+
 ## v1.8.27 — 2026-11-02 (Asia/Shanghai)
 
 ### Changes
