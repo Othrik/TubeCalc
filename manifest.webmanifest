@@ -1,0 +1,32 @@
+{
+  "name": "TubeCalc",
+  "short_name": "TubeCalc",
+  "description": "配方计算、稀释、蛋白质工具与分子量计算——纯本地运行，可离线使用",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f7fa",
+  "theme_color": "#f5f5f7",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png?v=6",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png?v=6",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png?v=6",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
