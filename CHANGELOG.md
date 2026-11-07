@@ -1,5 +1,19 @@
 # Development log / 开发日志
 
+## v1.8.31 — 2026-11-07 (Asia/Shanghai)
+
+### Changes
+- Typography scale unified on a Google-style ladder instead of 18 ad-hoc sizes (10.5/11/11.5/12/12.5/13/13.5/14/14.5/15/16/17/18/20/22/24/26/30px + 4 clamps). The site now uses 12 / 13 / 14 / 15 / 16 for text and 18 / 22 / 24 / 32–44 for headings, so every half-pixel step is gone.
+- Reading sizes raised for comfort: body copy 16px / line-height 1.7, page descriptions 16px / 1.75 with a 74ch measure cap, hints and form labels 14px, table cells 15px, card paragraphs 15px. Heading sizes follow Material-style increments (hero 32–44, page title 26–32, featured card 22, card title 18).
+- Footer re-tiered to 13 / 12 so attribution and licence lines stop competing with body text.
+- Service worker cache version finally bumped: `CV` `tubecalc-v1.8.20` → `tubecalc-v1.8.31`, and the registration query `sw.js?v=46` → `sw.js?v=47`. On activate the worker deletes every cache whose name is not the current `CV`, so returning visitors get the new CSS and font files on the first load instead of one refresh later.
+
+### Validation
+- Size inventory after the change: 12 / 13 / 14 / 15 / 16 / 18 / 22 / 24 + clamps (26–32, 32–44); no non-integer sizes remain in `src/styles` or any `src/pages/**/*.astro`.
+- Layout regression pass on home, mix, dil, protein and mol at 1280px, 1100px, 768px and 375px via iframe viewports: `scrollWidth - clientWidth = 0` on every page (no horizontal overflow), nav stays on two rows below 1100px, mix grid and protein textarea keep their alignment.
+- Computed styles spot-checked: body 16px / 27.2px line-height, `.page-desc` 16px, labels and hints 14px, footer 13px, inputs still 16px (unchanged — the iOS no-zoom threshold).
+- Build: 30 pages, `dist/index.html` carries `sw.js?v=47`.
+
 ## v1.8.30 — 2026-11-07 (Asia/Shanghai)
 
 ### Changes

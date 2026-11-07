@@ -13,7 +13,7 @@ import Layout from '../../layouts/Layout.astro';
 .mix-controls label { margin:0; }   /* 全局 label 上边距 12px 会把"总体积"压低 */
 .mix-controls .btn { margin-top:0; height:42px; box-sizing:border-box; padding-top:0; padding-bottom:0; display:inline-flex; align-items:center; }   /* 全局 .btn margin-top:14px 同样破坏对齐 */
 .mix-controls .demo-link { margin-top:0; height:42px; display:inline-flex; align-items:center; }   /* 文字链与框行同高 */
-.mix-controls label { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--muted); }
+.mix-controls label { display:flex; flex-direction:column; gap:4px; font-size:14px; color:var(--muted); }
 /* 总体积框：蓝色（与稀释页终体积同色，代表"体系规模"） */
 .mix-total .ibox input, .mix-total .dd-btn { background:rgba(0,113,227,.07); border-color:rgba(0,113,227,.30); }   /* .ibox input 需两级特异性压过全局 input 样式 */
 .mix-total { display:flex; gap:8px; }
@@ -22,16 +22,16 @@ import Layout from '../../layouts/Layout.astro';
   padding:10px 12px; border:1px solid var(--border); border-radius:11px; margin-top:10px; background:var(--card); }
 .mix-row.water { background:var(--card); box-shadow: inset 3px 0 0 var(--accent); }   /* 同底色融入卡片流，仅左侧细蓝条标记溶剂身份 */
 #solvSel { flex:0 0 auto; max-width:132px; background:var(--accent-soft); border-color:rgba(0,113,227,.35); font-weight:600; }
-.solv-tag { font-size:12px; color:var(--muted); }
+.solv-tag { font-size:13px; color:var(--muted); }
 .ghost { flex:1; display:flex; align-items:center; justify-content:center; padding:11px 0; line-height:20px;
   border-radius:10px; color:var(--muted); font-size:16px; }   /* 占位框：与组分行输入框同高同宽，结构性列对齐 */
 .ghost.g2 { background:rgba(94,92,230,.05); }
 .ghost.g3 { background:rgba(34,165,180,.06); }
 .mix-row.water .vol-out { flex:1; min-width:0; display:flex; align-items:center; height:42px; padding:0 14px;
   border-radius:12px; font-size:16px; background:rgba(255,159,10,.10); border:1px solid rgba(255,159,10,.40); }   /* 与组分行用量输入框同规格 */
-.solv-mass { grid-column:1/-1; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.solv-mass { grid-column:1/-1; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
 .solv-mass:empty { display:none; }
-.mix-head { font-size:12.5px; color:var(--muted); display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; padding:0 12px; margin-top:18px; }
+.mix-head { font-size:14px; color:var(--muted); display:grid; grid-template-columns: minmax(110px,1.1fr) 1.5fr 1.5fr 1.2fr 44px; gap:10px; padding:0 12px; margin-top:18px; }
 .mix-head span { display:flex; align-items:center; gap:6px; }
 .mix-head span::before { content:''; flex:0 0 8px; width:8px; height:8px; border-radius:3px; background:currentColor; opacity:.35; }
 .mix-head span:nth-child(2)::before { background:#5e5ce6; opacity:1; }
@@ -74,12 +74,12 @@ import Layout from '../../layouts/Layout.astro';
 .cell.c2.pure .dd { flex:1 1 auto; min-width:0; }
 .cell.c2.pure .dd-btn { justify-content:center; position:relative; }
 .cell.c2.pure .dd-ar { position:absolute; right:9px; top:50%; transform:translateY(-50%); }
-.row-warn { color:var(--danger); font-size:12px; grid-column:1/-1; }
+.row-warn { color:var(--danger); font-size:13px; grid-column:1/-1; }
 .del { border:1px solid var(--border); background:var(--card); color:var(--muted); border-radius:8px; cursor:pointer; }
 .del:hover { color:var(--danger); border-color:var(--danger); }
 @media (max-width:760px){ .mix-head{display:none;} .mix-row{grid-template-columns:1fr 1fr;} .mix-row .cell.name{grid-column:1/3;} .mix-row .del{grid-column:2; justify-self:end;} .mix-row .row-warn{grid-column:1/3;}
   .cell{flex-direction:column; align-items:stretch; gap:4px;}
-  .cell::before{content:attr(data-l); font-size:11px; font-weight:600; color:var(--muted);}
+  .cell::before{content:attr(data-l); font-size:12px; font-weight:600; color:var(--muted);}
   .cell.name::before{color:var(--text);} .cell.c2::before{color:#7d7ce0;} .cell.c3::before{color:#1a97a8;} .cell.c4::before{color:#d97f06;} }
 #mixWarn { margin-top:14px; }
 /* 组分名化学式识别：苯环按钮（输入框内侧右缘） */
@@ -97,11 +97,11 @@ import Layout from '../../layouts/Layout.astro';
   .mix-row { position:relative; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding:16px; margin-top:14px; }
   .mix-row .cell.name { grid-column:1/-1; padding-right:54px; }
   .mix-row .cell { flex-direction:column; align-items:stretch; gap:6px; min-width:0; }
-  .mix-row .cell::before { content:attr(data-l); font-size:12px; font-weight:600; color:var(--muted); }
+  .mix-row .cell::before { content:attr(data-l); font-size:13px; font-weight:600; color:var(--muted); }
   .mix-row .cell.c2::before { color:#7d7ce0; }
   .mix-row .cell.c3::before { color:#1a97a8; }
   .mix-row .cell.c4::before { color:#d97f06; }
-  .mix-row .del { position:absolute; top:38px; right:16px; width:44px; height:44px; font-size:22px; }
+  .mix-row .del { position:absolute; top:38px; right:16px; width:44px; height:44px; font-size:24px; }
   .mix-row .row-warn, .solv-mass { grid-column:1/-1; overflow-wrap:anywhere; }
   .mix-row .ig { width:100%; }
   .mix-row .ig .dd { flex:0 0 88px; min-width:0; }
@@ -122,7 +122,7 @@ import Layout from '../../layouts/Layout.astro';
   .mix-controls .tv-wrap, .mix-controls .demo-link { grid-column:1/-1; }
   .mix-total .ibox { flex:1; min-width:0; }
   .mix-total .ibox input { width:100% !important; }
-  .mix-controls .btn { justify-content:center; padding-left:8px; padding-right:8px; font-size:14px; }
+  .mix-controls .btn { justify-content:center; padding-left:8px; padding-right:8px; font-size:15px; }
   .mix-controls .demo-link { justify-content:center; }
   .mix-row { grid-template-columns:minmax(0,1fr); padding:14px; gap:12px; }
   .mix-row .cell.name, .mix-row .cell.c2, .mix-row .cell.c3, .mix-row .cell.c4 { grid-column:1/-1; }
@@ -132,7 +132,7 @@ import Layout from '../../layouts/Layout.astro';
   .mix-row.water { grid-template-columns:minmax(0,1fr); }
   .mix-row.water .cell.name, .mix-row.water .cell.c4 { grid-column:1; }
   .mix-row.water .cell.name .ig { flex-wrap:wrap; }
-  .page-desc { font-size:14px; line-height:1.7; }
+  .page-desc { font-size:15px; line-height:1.7; }
 }
     </style>
   </Fragment>

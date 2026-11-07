@@ -10,10 +10,10 @@ import Layout from '../../../layouts/Layout.astro';
 .dil-wrap { max-width:760px; }
 .dil-card { margin-top:14px; padding:20px 22px; border:1px solid var(--border); border-radius:14px; background:var(--card, rgba(255,255,255,.55)); }
 .dil-title { font-weight:600; font-size:16px; }
-.dil-sub { font-weight:400; font-size:12.5px; color:var(--muted); margin-left:6px; }
+.dil-sub { font-weight:400; font-size:14px; color:var(--muted); margin-left:6px; }
 .dil-grid { display:grid; grid-template-columns:1fr 18px 1fr 18px 1fr 18px 1fr; gap:12px 4px; margin-top:16px; align-items:start; }   /* 各列顶对齐：框行恒在同一水平线 */
-.dil-wrap .dil-grid label { margin:0; font-size:12.5px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0; white-space:nowrap; }   /* 覆盖全局 label 的 12px 上边距（首子豁免导致 C₁ 与其余列错位 12px） */
-.dil-op { align-self:flex-end; height:42px; line-height:42px; color:var(--muted); font-size:15px; text-align:center; }   /* 与 42px 框行严格同高居中 */
+.dil-wrap .dil-grid label { margin:0; font-size:14px; color:var(--muted); display:flex; flex-direction:column; gap:5px; min-width:0; white-space:nowrap; }   /* 覆盖全局 label 的 12px 上边距（首子豁免导致 C₁ 与其余列错位 12px） */
+.dil-op { align-self:flex-end; height:42px; line-height:42px; color:var(--muted); font-size:16px; text-align:center; }   /* 与 42px 框行严格同高居中 */
 .dig { display:flex; align-items:center; gap:6px; min-width:0; }
 /* 数字来源图标与输入框（与溶液配制页同一套框样式） */
 .ibox { position:relative; display:inline-flex; }
@@ -25,7 +25,7 @@ import Layout from '../../../layouts/Layout.astro';
 .src-tag.pencil { color:var(--muted); }
 .src-tag.fx { color:var(--accent); font:italic 700 13px/1 Georgia,'Times New Roman',serif; letter-spacing:.5px; }
 .dig .ibox { flex:1; min-width:0; }
-.dil-grid input { width:100%; height:42px; box-sizing:border-box; padding:7px 8px 7px 30px; border:1px solid var(--border); border-radius:10px; background:var(--bg2, #fff); color:var(--text); font:inherit; font-size:14px; text-align:right; }
+.dil-grid input { width:100%; height:42px; box-sizing:border-box; padding:7px 8px 7px 30px; border:1px solid var(--border); border-radius:10px; background:var(--bg2, #fff); color:var(--text); font:inherit; font-size:15px; text-align:right; }
 .dil-grid .dd { flex:0 1 auto; }
 .dil-grid .dd-btn { height:42px; }
 .dil-grid input:focus { outline:2px solid rgba(10,132,255,.35); border-color:var(--accent, #0a84ff); }
@@ -34,7 +34,7 @@ import Layout from '../../../layouts/Layout.astro';
 .f-v1 .ibox input, .f-v1 .dd-btn { background:rgba(255,159,10,.10); border-color:rgba(255,159,10,.40); }
 .f-c2 .ibox input, .f-c2 .dd-btn { background:rgba(34,165,180,.08); border-color:rgba(34,165,180,.32); }
 .f-v2 .ibox input, .f-v2 .dd-btn { background:rgba(0,113,227,.07); border-color:rgba(0,113,227,.30); }
-.dil-out { margin-top:14px; font-size:14.5px; color:var(--text); line-height:1.7; }
+.dil-out { margin-top:14px; font-size:16px; color:var(--text); line-height:1.7; }
 .dil-out b { color:var(--accent, #0a84ff); }
 .dil-out .warn { color:var(--danger); }
 .pagedesc a { color:var(--accent, #0a84ff); font-weight:600; }

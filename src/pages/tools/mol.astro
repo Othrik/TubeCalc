@@ -60,7 +60,7 @@ import Layout from '../../layouts/Layout.astro';
         <input type="number" inputmode="decimal" id="molIn" step="any" placeholder="留空则按质量计算摩尔">
       </div>
     </div>
-    <div class="big-number" id="convOut" style="font-size:20px"></div>
+    <div class="big-number" id="convOut" style="font-size:22px"></div>
   </div>
 
 
@@ -70,24 +70,24 @@ import Layout from '../../layouts/Layout.astro';
     .in-grid{display:grid;grid-template-columns:1fr;gap:14px}
 @media(min-width:900px){.in-grid{grid-template-columns:1fr 1.02fr;align-items:stretch}}
 .k-embed{display:flex;flex-direction:column;border:1.5px solid #b9d6f2;border-radius:14px;background:linear-gradient(160deg,#f2f8ff,#eaf3ff);overflow:hidden;min-height:380px}
-.k-embed-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid #d7e8fa;font-size:14.5px;font-weight:600;color:#0a66c2}
-.k-embed-bar .btn{padding:7px 16px;font-size:13.5px;flex:none}
+.k-embed-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid #d7e8fa;font-size:16px;font-weight:600;color:#0a66c2}
+.k-embed-bar .btn{padding:7px 16px;font-size:15px;flex:none}
 .k-embed-body{flex:1;min-height:0;position:relative;background:#fff}
 .k-embed-body #kApp{position:absolute;inset:0}
-.k-embload{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8e8e93;font-size:14px;text-align:center;padding:0 18px;line-height:1.6;z-index:2;background:#fff}
+.k-embload{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8e8e93;font-size:15px;text-align:center;padding:0 18px;line-height:1.6;z-index:2;background:#fff}
 @media(max-width:899px){.k-embed{min-height:330px}}
   .draw-card .dc-sub a{color:#0a84ff;text-decoration:underline;pointer-events:none}
 .cand-wrap{margin-top:12px}
-.cand-hd{font-size:13px;color:#646A73;margin-bottom:8px}
+.cand-hd{font-size:14px;color:#646A73;margin-bottom:8px}
 .cand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
 .cand-card{text-align:left;background:#fff;border:1px solid #DEE3E8;border-radius:8px;padding:10px;cursor:pointer;font-family:inherit}
 .cand-card:hover{border-color:#1A2B4A;background:#F7F8FA}
-.cand-card b{display:block;font-size:13px;color:#1F2329;margin-bottom:4px}
-.cand-sub{display:block;font-size:12px;color:#646A73;margin-top:2px}
-.cand-smi{display:block;font-size:11px;color:#758092;word-break:break-all;margin-top:4px}
-.cand-id{display:block;font-size:11px;color:#BABFC9;margin-top:4px}
+.cand-card b{display:block;font-size:14px;color:#1F2329;margin-bottom:4px}
+.cand-sub{display:block;font-size:13px;color:#646A73;margin-top:2px}
+.cand-smi{display:block;font-size:12px;color:#758092;word-break:break-all;margin-top:4px}
+.cand-id{display:block;font-size:12px;color:#BABFC9;margin-top:4px}
 .cand-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.cand-badge{display:inline-block;font-size:10.5px;line-height:1;padding:3px 6px;border-radius:5px;background:#F0F2F5;color:#4E5969;border:1px solid #E5E6EB}
+.cand-badge{display:inline-block;font-size:12px;line-height:1;padding:3px 6px;border-radius:5px;background:#F0F2F5;color:#4E5969;border:1px solid #E5E6EB}
 .cand-badge.b-pub{background:#EEF4FD;color:#165DFF;border-color:#D6E4FF}
 .cand-badge.b-che{background:#F1F5F0;color:#3D6B35;border-color:#DFE9DC}
 .cand-badge.b-np{background:#F5F0E9;color:#8A6D3B;border-color:#EAE0CE}

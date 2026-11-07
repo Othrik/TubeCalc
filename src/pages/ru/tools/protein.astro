@@ -11,30 +11,30 @@ import Layout from '../../../layouts/Layout.astro';
 /* AF server 风格序列视图：每行 N 残基（10 个一组），组间加宽间隙，编号在每 10 个残基上方，末尾标总数 */
 .af-seq { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-top: 4px; overflow-x: auto; }
 .af-ruler, .af-res { display: flex; flex-wrap: nowrap; }
-.af-ruler { height: 14px; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.af-res { font-size: 13.5px; line-height: 1.5; margin-bottom: 10px; letter-spacing: 0; }
+.af-ruler { height: 14px; font-size:12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.af-res { font-size:15px; line-height: 1.5; margin-bottom: 10px; letter-spacing: 0; }
 .af-seq i, .af-seq b { font-style: normal; font-weight: 400; flex: 0 0 auto; }
 .af-seq i { width: 15px; text-align: center; }
 .af-seq b { width: 8px; }
-@media (max-width: 560px) { .af-res { font-size: 12.5px; } .af-seq i { width: 13px; } .af-seq b { width: 7px; } }
+@media (max-width: 560px) { .af-res { font-size:14px; } .af-seq i { width: 13px; } .af-seq b { width: 7px; } }
 /* 氨基酸组成可视化：类别总览条 + 按含量排序的条形图（颜色=化学类别） */
 .aa-strip { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 4px 0 8px; }
 .aa-strip i { font-style: normal; min-width: 2px; }
-.aa-legend { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size: 12px; color: var(--muted); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
+.aa-legend { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size:13px; color: var(--muted); margin-bottom: 14px; font-variant-numeric: tabular-nums; }
 .aa-legend b { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; }
-.aa-row { display: grid; grid-template-columns: 26px 196px 1fr 92px; gap: 8px; align-items: center; padding: 3.5px 0; font-size: 13px; }
-.aa-chip { width: 22px; height: 22px; border-radius: 7px; color: #fff; font-weight: 600; font-size: 12.5px; display: inline-flex; align-items: center; justify-content: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.aa-row { display: grid; grid-template-columns: 26px 196px 1fr 92px; gap: 8px; align-items: center; padding: 3.5px 0; font-size:14px; }
+.aa-chip { width: 22px; height: 22px; border-radius: 7px; color: #fff; font-weight: 600; font-size:14px; display: inline-flex; align-items: center; justify-content: center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .aa-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .aa-name b { font-weight: 600; }
 .aa-bar { height: 10px; border-radius: 5px; background: var(--accent-soft); overflow: hidden; }
 .aa-bar i { display: block; height: 100%; border-radius: 5px; font-style: normal; }
 .aa-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
 .aa-val b { color: var(--text); font-weight: 600; }
-@media (max-width: 560px) { .aa-row { grid-template-columns: 24px 120px 1fr 76px; gap: 6px; font-size: 12.5px; } .aa-chip { width: 20px; height: 20px; border-radius: 6px; } .aa-name { white-space: normal; line-height: 1.25; font-size: 12px; } }
+@media (max-width: 560px) { .aa-row { grid-template-columns: 24px 120px 1fr 76px; gap: 6px; font-size:14px; } .aa-chip { width: 20px; height: 20px; border-radius: 6px; } .aa-name { white-space: normal; line-height: 1.25; font-size:13px; } }
 /* 电荷 / 疏水性曲线画布 */
 canvas.plot { width: 100%; display: block; }
-.plot-hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
-.kd-win { display: inline-block; margin-left: 10px; font-weight: 400; font-size: 12.5px; }
+.plot-hint { font-size:13px; color: var(--muted); margin-top: 8px; }
+.kd-win { display: inline-block; margin-left: 10px; font-weight: 400; font-size:14px; }
     </style>
   </Fragment>
 
