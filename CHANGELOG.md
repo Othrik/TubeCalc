@@ -1,5 +1,15 @@
 # Development log / 开发日志
 
+## v1.8.33 — 2026-11-07 (Asia/Shanghai)
+
+### Changes
+- Fixed formulas rendering visibly larger than the surrounding prose. KaTeX ships `font-size: 1.21em` on `.katex`, so with 16px body copy every formula was laid out at 19.36px; after the font swap to Google Sans Flex (larger x-height than KaTeX_Main) the overshoot became obvious — measured cap height was 17% taller than body text. Added an explicit `body .katex { font-size: 1.04em }`, which brings the formula to 16.64px and makes cap heights equal (ratio 1.000 by canvas measurement), so inline math now sits flush inside a sentence instead of jumping out of it.
+- Service worker cache version bumped `tubecalc-v1.8.32` → `tubecalc-v1.8.33` and registration `sw.js?v=48` → `sw.js?v=49`.
+
+### Validation
+- Canvas metric check on `/en/tools/mix/`: body 16px cap 12.00px vs formula cap 12.00px (was 14.00px before the fix).
+- Zoomed visual check of the English mixing and Chinese mixing/dilution/protein pages: `V = C_final × V_total ÷ C_stock`, `C₁V₁ = C₂V₂` and `ε280` now match neighbouring text in cap height, weight and baseline; subscripts stay legible at ~11.6px and no line-height jump appears in the paragraph.
+
 ## v1.8.32 — 2026-11-07 (Asia/Shanghai)
 
 ### Changes
