@@ -1,5 +1,15 @@
 # Development log / 开发日志
 
+## v1.8.30 — 2026-11-07 (Asia/Shanghai)
+
+### Changes
+- KaTeX formulas now use the site typeface: upright letters, digits, chemical formulas (mhchem) and `\text{}` render in Google Sans Flex with Noto Sans SC for Chinese subscripts, instead of the Times-style KaTeX_Main fallback.
+- Italic variables are synthesised from Google Sans Flex (no true italic axis in the OFL release); large operators and stretchy delimiters keep KaTeX's own glyphs so layout metrics stay correct.
+
+### Validation
+- Local render check on the mixing and dilution pages plus a stress set (C_1V_1 = C_2V_2, \varepsilon_{280}, \ce{C8H10N4O2}, V = C_{\text{终}} \times V_{\text{总}} \div C_{\text{储}}): all glyphs render in the new family, subscripts stay correctly placed, Greek coverage comes from Google Sans Flex's math subset.
+- Known limitation recorded: unused constructs such as `\frac` get tighter numerator/denominator spacing after the substitution.
+
 ## v1.8.29 — 2026-11-07 (Asia/Shanghai)
 
 ### Changes
