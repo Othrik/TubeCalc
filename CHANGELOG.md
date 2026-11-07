@@ -1,5 +1,17 @@
 # Development log / 开发日志
 
+## v1.8.29 — 2026-11-07 (Asia/Shanghai)
+
+### Changes
+- Typography: switched the site from the system font stack to a self-hosted pair — Google Sans Flex (Latin and other non-CJK scripts) with Noto Sans SC (Chinese) as the CJK companion, both under the SIL Open Font License.
+- Fonts are served from the site itself (`public/fonts/gsf`, `public/fonts/nsc`, 111 `@font-face` blocks with `unicode-range`), so no request ever reaches fonts.googleapis.com / fonts.gstatic.com; this keeps the site fully offline-capable and reachable from networks where Google Fonts is blocked.
+- Google Sans Flex is self-hosted only where the licence allows redistribution (SIL OFL 1.1); the existing system stack remains as the fallback chain for any glyph the web fonts do not cover.
+
+### Validation
+- Local build: body `font-family` resolves to "Google Sans Flex", "Noto Sans SC" + system fallbacks; 111 faces registered, only the subsets actually used are fetched (19 on the molecular tool page).
+- Canvas metrics confirm the web fonts are really applied: "TubeCalc" in Google Sans Flex measures 253.05px vs 231.12px in the fallback at 60px; "分子工具" measures 240px in Noto Sans SC.
+- Font payload: Google Sans Flex 208 KB (10 subsets), Noto Sans SC 4.5 MB (101 subsets), lazy-loaded per `unicode-range`.
+
 ## v1.8.28 — 2026-11-05 (Asia/Shanghai)
 
 ### Changes

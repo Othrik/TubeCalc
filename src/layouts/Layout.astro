@@ -1,6 +1,7 @@
 ---
 // 全站统一骨架：<head> + 导航 + 页脚。
 // 每页只声明 title / desc / active（短名：index/mix/protein/…）/ note（页脚方法注释）/ lic（页脚图标署名，可选，首页用），其余内容走 slot。全站链接用绝对路径。
+import '../styles/fonts.css';
 import '../styles/style.css';
 import pkg from '../../package.json';
 const { title, desc = '', active = 'index', note = '', lic = '', lang = 'en' } = Astro.props;

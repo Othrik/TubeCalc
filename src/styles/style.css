@@ -39,7 +39,7 @@ html { overflow-y: scroll; }
 body {
   -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none;
   padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC",
+  font-family: "Google Sans Flex", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC",
     "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   background: var(--bg);
   color: var(--text);
