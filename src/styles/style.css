@@ -541,8 +541,8 @@ input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margi
 @media (display-mode:standalone) and (max-width:1100px) {
   html.ios .nav-inner { padding-top:max(8px,env(safe-area-inset-top)); height:auto; }
 }
-/* KaTeX 公式与全站字体统一：正体字母、数字、化学式与 \text 走 Google Sans Flex + Noto Sans SC；
-   斜体变量在同一字体族上合成斜体（Google Sans Flex 无真斜体，用 oblique 合成）；
+/* KaTeX 公式与全站字体统一：变量字母、数字、化学式与 \text 全部走 Google Sans Flex + Noto Sans SC，
+   并按用户要求一律直立（不做合成斜体，\mathit 也按正体渲染），使公式与正文字形一致。
    大型运算符与可伸缩括号仍用 KaTeX 自带字形，保证排版度量正确。
    注：未被站点使用的复杂结构（如 \frac 分式）在替换字体后分子/分母间距会偏紧。 */
 body .katex,
@@ -559,11 +559,11 @@ body .katex .mathbf {
 }
 body .katex .mathnormal,
 body .katex .mathit {
-  font-family: "Google Sans Flex", "Noto Sans SC", KaTeX_Math, serif;
-  font-style: italic;
+  font-family: "Google Sans Flex", "Noto Sans SC", KaTeX_Main, serif;
+  font-style: normal;
 }
 body .katex .boldsymbol {
-  font-family: "Google Sans Flex", "Noto Sans SC", KaTeX_Math, serif;
-  font-style: italic;
+  font-family: "Google Sans Flex", "Noto Sans SC", KaTeX_Main, serif;
+  font-style: normal;
   font-weight: 700;
 }

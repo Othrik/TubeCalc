@@ -1,5 +1,15 @@
 # Development log / 开发日志
 
+## v1.8.32 — 2026-11-07 (Asia/Shanghai)
+
+### Changes
+- KaTeX formulas are now fully upright: variable letters no longer fall back to KaTeX's italic math face, and the synthesised oblique that was applied to `.mathnormal` / `.mathit` / `.boldsymbol` is removed. Every glyph in a formula — including the `V = C_final × V_total ÷ C_stock` form used on the dilution and mixing pages — now uses the same upright `Google Sans Flex` + `Noto Sans SC` face as the surrounding prose, so formulas no longer look "pasted in" from another type system. `\\mathit` is intentionally upright too, since the site never uses it and the user asked for no italics anywhere.
+- Service worker cache version bumped `tubecalc-v1.8.31` → `tubecalc-v1.8.32` and registration `sw.js?v=47` → `sw.js?v=48`, so returning visitors pick up the new formula styling on their first load rather than after a refresh cycle.
+
+### Validation
+- Computed style check on `/tools/mix/`: `.katex .mathnormal` resolves to `font-style: normal`, family `"Google Sans Flex", "Noto Sans SC", KaTeX_Main, serif`; no inline element inside a formula reports `font-style: italic`.
+- Visual check of `V = C_final × V_total ÷ C_stock` (mix), `C₁V₁ = C₂V₂` (dil) and the ionic-strength formula (protein) at 2x zoom: letters, subscripts and operators all upright, baseline and spacing unchanged from v1.8.31.
+
 ## v1.8.31 — 2026-11-07 (Asia/Shanghai)
 
 ### Changes
